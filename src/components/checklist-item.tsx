@@ -59,8 +59,6 @@ export function ChecklistItemComponent({
     onUpdateSubItem(checklistId, item.id, updatedSubItem);
   }
 
-  const itemDisplay = item.quantity ? `${item.text} (x${item.quantity})` : item.text;
-
   return (
     <Draggable draggableId={item.id} index={index}>
       {(provided, snapshot) => (
@@ -86,13 +84,14 @@ export function ChecklistItemComponent({
               <CollapsibleTrigger asChild>
                 <div className="flex flex-col items-start gap-2 text-left flex-grow" {...provided.dragHandleProps}>
                   <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
-                    {itemDisplay}
+                    {item.text}
+                    {item.quantity && <span className="text-xs text-muted-foreground ml-1.5"> (x{item.quantity})</span>}
                   </span>
                   {item.subItems.length > 0 && (
                     <div className="flex flex-wrap gap-x-2 text-xs italic text-muted-foreground pointer-events-none">
                       {item.subItems.map((sub, index) => (
                         <span key={sub.id} className={cn(sub.checked && "line-through")}>
-                          {sub.text}{sub.quantity ? ` (x${sub.quantity})` : ''}{index < item.subItems.length - 1 ? ',' : ''}
+                          {sub.text}{sub.quantity ? <span className="text-xs"> (x{sub.quantity})</span> : ''}{index < item.subItems.length - 1 ? ',' : ''}
                         </span>
                       ))}
                     </div>
@@ -107,7 +106,6 @@ export function ChecklistItemComponent({
             <CollapsibleContent>
               <div className="pl-8 pt-2 space-y-2">
                 {item.subItems.map((subItem) => {
-                   const subItemDisplay = subItem.quantity ? `${subItem.text} (x${subItem.quantity})` : subItem.text;
                    return (
                     <div key={subItem.id} className="flex items-center justify-between group">
                       <div className="flex items-center gap-3">
@@ -119,7 +117,8 @@ export function ChecklistItemComponent({
                           aria-label={`Mark sub-item ${subItem.text} as complete`}
                         />
                         <label htmlFor={subItem.id} className={cn("text-sm", subItem.checked && "line-through text-muted-foreground")}>
-                          {subItemDisplay}
+                          {subItem.text}
+                          {subItem.quantity && <span className="text-xs text-muted-foreground ml-1"> (x{subItem.quantity})</span>}
                         </label>
                       </div>
                       <Button variant="ghost" size="icon" onClick={() => onDeleteSubItem(checklistId, item.id, subItem.id)} className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" aria-label="Delete sub-item">
