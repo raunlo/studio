@@ -123,46 +123,46 @@ export function ChecklistItemComponent({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         className={cn(
-            "rounded-md border p-2 space-y-2 bg-card transition-all cursor-pointer",
+            "rounded-md border p-2 space-y-2 bg-card transition-all",
             isDraggingOver && "border-primary border-dashed ring-2 ring-primary",
-            isDraggable && "opacity-50 shadow-lg"
+            isDraggable && "opacity-50 shadow-lg cursor-grabbing"
         )}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerMove={handlePointerMove}
     >
         <Collapsible open={!item.isCollapsed} onOpenChange={handleToggleCollapse}>
-        <div 
-            className="flex items-start justify-between"
-            onPointerDown={handlePointerDown}
-            onPointerUp={handlePointerUp}
-            onPointerMove={handlePointerMove}
-        >
-            <div className="flex items-start gap-3 flex-grow">
-            <Checkbox
-                id={item.id}
-                checked={item.checked}
-                onCheckedChange={handleToggleChecked}
-                onClick={(e) => e.stopPropagation()}
-                className={cn("h-5 w-5 mt-0.5", item.checked && "data-[state=checked]:bg-accent data-[state=checked]:border-accent-foreground")}
-                aria-label={`Mark item ${item.text} as complete`}
-            />
-            <CollapsibleTrigger asChild ref={collapsibleTriggerRef}>
-                <button className="flex flex-col items-start gap-2 text-left flex-grow" tabIndex={-1}>
-                  <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
-                      {item.text}
-                  </span>
-                  {item.subItems.length > 0 && (
-                    <div className="flex flex-wrap gap-x-2 text-xs italic text-muted-foreground">
-                      {item.subItems.map((sub, index) => (
-                        <span key={sub.id} className={cn(sub.checked && "line-through")}>
-                          {sub.text}{index < item.subItems.length - 1 ? ',' : ''}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </button>
-            </CollapsibleTrigger>
+        <div className="flex items-start justify-between">
+            <div className="flex items-start gap-3 flex-grow cursor-pointer">
+              <Checkbox
+                  id={item.id}
+                  checked={item.checked}
+                  onCheckedChange={handleToggleChecked}
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onPointerUp={(e) => e.stopPropagation()}
+                  className={cn("h-5 w-5 mt-0.5", item.checked && "data-[state=checked]:bg-accent data-[state=checked]:border-accent-foreground")}
+                  aria-label={`Mark item ${item.text} as complete`}
+              />
+              <CollapsibleTrigger asChild ref={collapsibleTriggerRef}>
+                  <button className="flex flex-col items-start gap-2 text-left flex-grow" tabIndex={-1}>
+                    <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
+                        {item.text}
+                    </span>
+                    {item.subItems.length > 0 && (
+                      <div className="flex flex-wrap gap-x-2 text-xs italic text-muted-foreground">
+                        {item.subItems.map((sub, index) => (
+                          <span key={sub.id} className={cn(sub.checked && "line-through")}>
+                            {sub.text}{index < item.subItems.length - 1 ? ',' : ''}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+              </CollapsibleTrigger>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => onDeleteItem(checklistId, item.id)} aria-label="Delete item">
-            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+            <Button variant="ghost" size="icon" onClick={() => onDeleteItem(checklistId, item.id)} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} aria-label="Delete item">
+              <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
             </Button>
         </div>
         <CollapsibleContent>

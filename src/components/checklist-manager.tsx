@@ -128,13 +128,19 @@ export function ChecklistManager() {
      setChecklists(checklists.map((cl) => (cl.id === id ? { ...cl, title } : cl)));
   };
 
-  const addItem = (checklistId: string, text: string) => {
+  const addItem = (checklistId: string, text: string, subItemTexts: string[]) => {
+    const newSubItems: SubItem[] = subItemTexts.map(subText => ({
+      id: crypto.randomUUID(),
+      text: subText,
+      checked: false,
+    }));
+
     const newItem: ChecklistItem = {
       id: crypto.randomUUID(),
       text,
       checked: false,
       isCollapsed: true,
-      subItems: [],
+      subItems: newSubItems,
     };
     setChecklists(
       checklists.map((cl) =>
