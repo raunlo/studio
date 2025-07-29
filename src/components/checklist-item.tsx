@@ -80,8 +80,6 @@ export function ChecklistItemComponent({
 
   return (
     <div 
-        draggable
-        onDragStart={handleDragStart}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -93,7 +91,12 @@ export function ChecklistItemComponent({
         <Collapsible open={!item.isCollapsed} onOpenChange={handleToggleCollapse}>
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 flex-grow">
-            <div className="cursor-grab" aria-label="Drag to reorder">
+            <div 
+              draggable
+              onDragStart={handleDragStart}
+              className="cursor-grab" 
+              aria-label="Drag to reorder"
+            >
               <GripVertical className="h-5 w-5 text-muted-foreground" />
             </div>
             <Checkbox
