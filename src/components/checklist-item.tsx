@@ -123,7 +123,7 @@ export function ChecklistItemComponent({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         className={cn(
-            "rounded-md border p-2 space-y-2 bg-card transition-all",
+            "rounded-md border p-2 space-y-2 bg-card transition-all cursor-pointer",
             isDraggingOver && "border-primary border-dashed ring-2 ring-primary",
             isDraggable && "opacity-50 shadow-lg cursor-grabbing"
         )}
@@ -133,7 +133,7 @@ export function ChecklistItemComponent({
     >
         <Collapsible open={!item.isCollapsed} onOpenChange={handleToggleCollapse}>
         <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3 flex-grow cursor-pointer">
+            <div className="flex items-start gap-3 flex-grow">
               <Checkbox
                   id={item.id}
                   checked={item.checked}
@@ -141,7 +141,8 @@ export function ChecklistItemComponent({
                   onClick={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}
                   onPointerUp={(e) => e.stopPropagation()}
-                  className={cn("h-5 w-5 mt-0.5", item.checked && "data-[state=checked]:bg-accent data-[state=checked]:border-accent-foreground")}
+                  onPointerMove={(e) => e.stopPropagation()}
+                  className={cn("h-5 w-5 mt-0.5 cursor-pointer", item.checked && "data-[state=checked]:bg-accent data-[state=checked]:border-accent-foreground")}
                   aria-label={`Mark item ${item.text} as complete`}
               />
               <CollapsibleTrigger asChild ref={collapsibleTriggerRef}>
@@ -150,7 +151,7 @@ export function ChecklistItemComponent({
                         {item.text}
                     </span>
                     {item.subItems.length > 0 && (
-                      <div className="flex flex-wrap gap-x-2 text-xs italic text-muted-foreground">
+                      <div className="flex flex-wrap gap-x-2 text-xs italic text-muted-foreground pointer-events-none">
                         {item.subItems.map((sub, index) => (
                           <span key={sub.id} className={cn(sub.checked && "line-through")}>
                             {sub.text}{index < item.subItems.length - 1 ? ',' : ''}
@@ -161,7 +162,7 @@ export function ChecklistItemComponent({
                   </button>
               </CollapsibleTrigger>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => onDeleteItem(checklistId, item.id)} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} aria-label="Delete item">
+            <Button variant="ghost" size="icon" onClick={() => onDeleteItem(checklistId, item.id)} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} onPointerMove={(e) => e.stopPropagation()} aria-label="Delete item" className="cursor-pointer">
               <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
             </Button>
         </div>
@@ -186,7 +187,7 @@ export function ChecklistItemComponent({
                         </Button>
                     </div>
                 ))}
-                <form onSubmit={handleAddSubItem} className="flex gap-2 pt-2">
+                <form onSubmit={handleAddSubItem} className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} onPointerMove={(e) => e.stopPropagation()}>
                     <Input
                         value={newSubItemText}
                         onChange={(e) => setNewSubItemText(e.target.value)}
