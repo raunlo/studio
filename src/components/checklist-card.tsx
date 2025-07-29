@@ -39,7 +39,7 @@ export function ChecklistCard({
 
   const handleAddItem = (itemText: string, quantity: number | undefined, subItems: PredefinedSubItem[]) => {
     if (itemText.trim()) {
-        onAddItem(checklist.id, itemText.trim(), quantity, subItems);
+        onAddItem(checklist.checklistId, itemText.trim(), quantity, subItems);
     }
   };
 
@@ -63,15 +63,15 @@ export function ChecklistCard({
       <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between pb-4">
           <h2 className="text-2xl font-bold font-headline">{checklist.title}</h2>
-          <Button variant="ghost" size="icon" onClick={() => onDelete(checklist.id)} aria-label="Delete checklist">
-            <Trash2 className="h-5 w-5 text-muted-foreground hover:text-destructive" />
+          <Button variant="ghost" size="icon" onClick={() => onDelete(checklist.checklistId)} aria-label="Delete checklist">
+            <Trash2 className="h-5 w-5 text-muted-foreground" />
           </Button>
         </CardHeader>
-        <CardContent className="pb-4 flex-grow">
+        <CardContent className="pt-2 pb-4 flex-grow">
           <div className="pb-4 border-b mb-4">
             <AddItemForm onFormSubmit={handleFormSubmit} onTemplateSelect={handleTemplateSelect} />
           </div>
-          <Droppable droppableId={checklist.id} type="item">
+          <Droppable droppableId={checklist.checklistId} type="item">
             {(provided) => (
               <div
                 {...provided.droppableProps}
@@ -80,10 +80,10 @@ export function ChecklistCard({
               >
                 {checklist.items.map((item, index) => (
                   <ChecklistItemComponent
-                      key={item.id}
+                      key={item.itemId}
                       item={item}
                       index={index}
-                      checklistId={checklist.id}
+                      checklistId={checklist.checklistId}
                       {...itemHandlers}
                   />
                 ))}

@@ -1,21 +1,22 @@
 export type SubItem = {
-  id: string;
+  subItemId: string;
   text: string;
   checked: boolean;
   quantity?: number;
 };
 
 export type ChecklistItem = {
-  id: string;
+  itemId: string;
   text: string;
   checked: boolean;
   isCollapsed: boolean;
   subItems: SubItem[];
   quantity?: number;
+  position: number;
 };
 
 export type Checklist = {
-  id: string;
+  checklistId: string;
   title: string;
   items: ChecklistItem[];
 };

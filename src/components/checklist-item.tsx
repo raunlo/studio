@@ -48,7 +48,7 @@ export function ChecklistItemComponent({
     e.preventDefault();
     if(newSubItemText.trim()) {
         const quantity = newSubItemQuantity ? parseInt(newSubItemQuantity) : undefined;
-        onAddSubItem(checklistId, item.id, newSubItemText.trim(), quantity);
+        onAddSubItem(checklistId, item.itemId, newSubItemText.trim(), quantity);
         setNewSubItemText("");
         setNewSubItemQuantity("");
     }
@@ -56,11 +56,11 @@ export function ChecklistItemComponent({
 
   const handleToggleSubItemChecked = (subItem: SubItem, checked: boolean) => {
     const updatedSubItem = { ...subItem, checked };
-    onUpdateSubItem(checklistId, item.id, updatedSubItem);
+    onUpdateSubItem(checklistId, item.itemId, updatedSubItem);
   }
 
   return (
-    <Draggable draggableId={item.id} index={index}>
+    <Draggable draggableId={item.itemId} index={index}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
@@ -71,13 +71,18 @@ export function ChecklistItemComponent({
           )}
         >
           <div className="flex items-start gap-3">
-            <Checkbox
-              id={item.id}
-              checked={item.checked}
-              onCheckedChange={handleToggleChecked}
-              className="h-5 w-5 mt-1 shrink-0"
-              aria-label={`Mark item ${item.text} as complete`}
-            />
+             <div
+              className="flex items-center pt-1"
+              {...provided.dragHandleProps}
+            >
+              <Checkbox
+                id={item.itemId}
+                checked={item.checked}
+                onCheckedChange={handleToggleChecked}
+                className="h-5 w-5 shrink-0"
+                aria-label={`Mark item ${item.text} as complete`}
+              />
+            </div>
             <Collapsible
               open={!item.isCollapsed}
               onOpenChange={handleToggleCollapse}
@@ -87,16 +92,15 @@ export function ChecklistItemComponent({
                 <CollapsibleTrigger asChild>
                   <div
                     className="flex flex-col items-start gap-2 text-left flex-grow cursor-pointer pt-0.5"
-                    {...provided.dragHandleProps}
                   >
                     <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
                       {item.text}
                       {item.quantity && <span className="text-xs text-muted-foreground ml-1.5"> (x{item.quantity})</span>}
                     </span>
-                    {item.subItems.length > 0 && item.isCollapsed && (
+                     {item.isCollapsed && item.subItems.length > 0 && (
                       <div className="flex flex-wrap gap-x-2 text-xs text-muted-foreground pointer-events-none italic">
                         {item.subItems.map((sub, index) => (
-                          <span key={sub.id} className={cn(sub.checked && "line-through")}>
+                          <span key={sub.subItemId} className={cn(sub.checked && "line-through")}>
                             {sub.text}{sub.quantity ? <span className="text-xs"> (x{sub.quantity})</span> : ''}{index < item.subItems.length - 1 ? ',' : ''}
                           </span>
                         ))}
@@ -104,7 +108,7 @@ export function ChecklistItemComponent({
                     )}
                   </div>
                 </CollapsibleTrigger>
-                <Button variant="ghost" size="icon" onClick={() => onDeleteItem(checklistId, item.id)} aria-label="Delete item" className="h-8 w-8 shrink-0">
+                <Button variant="ghost" size="icon" onClick={() => onDeleteItem(checklistId, item.itemId)} aria-label="Delete item" className="h-8 w-8 shrink-0">
                   <Trash2 className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </div>
@@ -112,21 +116,21 @@ export function ChecklistItemComponent({
                 <div className="pl-1 pt-2 space-y-2">
                   {item.subItems.map((subItem) => {
                     return (
-                      <div key={subItem.id} className="flex items-center justify-between group">
+                      <div key={subItem.subItemId} className="flex items-center justify-between group">
                         <div className="flex items-center gap-3">
                           <Checkbox
-                            id={subItem.id}
+                            id={subItem.subItemId}
                             checked={subItem.checked}
                             onCheckedChange={(checked) => handleToggleSubItemChecked(subItem, checked as boolean)}
                             className="h-4 w-4"
                             aria-label={`Mark sub-item ${subItem.text} as complete`}
                           />
-                          <label htmlFor={subItem.id} className={cn("text-sm", subItem.checked && "line-through text-muted-foreground")}>
+                          <label htmlFor={subItem.subItemId} className={cn("text-sm", subItem.checked && "line-through text-muted-foreground")}>
                             {subItem.text}
                             {subItem.quantity && <span className="text-xs text-muted-foreground ml-1"> (x{subItem.quantity})</span>}
                           </label>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => onDeleteSubItem(checklistId, item.id, subItem.id)} className="h-7 w-7 transition-opacity opacity-100" aria-label="Delete sub-item">
+                        <Button variant="ghost" size="icon" onClick={() => onDeleteSubItem(checklistId, item.itemId, subItem.subItemId)} className="h-7 w-7 opacity-100" aria-label="Delete sub-item">
                           <Trash2 className="h-4 w-4 text-muted-foreground" />
                         </Button>
                       </div>
