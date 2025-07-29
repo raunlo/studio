@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Checklist, ChecklistItem, SubItem } from "@/lib/types";
@@ -9,6 +10,7 @@ import { ChecklistCard } from "@/components/checklist-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { suggestTasks } from "@/ai/flows/suggest-tasks-flow";
 import { useToast } from "@/hooks/use-toast";
+import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 
 const LOCAL_STORAGE_KEY = "nestedChecklists";
 
@@ -203,18 +205,21 @@ export function ChecklistManager() {
     }));
   };
   
-  const reorderItems = (checklistId: string, draggedItemId: string, targetItemId: string) => {
+  const onDragEnd = (result: DropResult) => {
+    const { source, destination, draggableId } = result;
+
+    if (!destination) {
+      return;
+    }
+
+    const checklistId = source.droppableId;
+    
     setChecklists(checklists.map(cl => {
       if (cl.id !== checklistId) return cl;
   
-      const items = [...cl.items];
-      const draggedIndex = items.findIndex(item => item.id === draggedItemId);
-      const targetIndex = items.findIndex(item => item.id === targetItemId);
-  
-      if (draggedIndex === -1 || targetIndex === -1) return cl;
-  
-      const [draggedItem] = items.splice(draggedIndex, 1);
-      items.splice(targetIndex, 0, draggedItem);
+      const items = Array.from(cl.items);
+      const [reorderedItem] = items.splice(source.index, 1);
+      items.splice(destination.index, 0, reorderedItem);
   
       return { ...cl, items };
     }));
@@ -264,29 +269,30 @@ export function ChecklistManager() {
         </div>
       )}
 
-      <div className="space-y-6">
-        {checklists.map((checklist) => (
-          <ChecklistCard
-            key={checklist.id}
-            checklist={checklist}
-            onDelete={deleteChecklist}
-            onUpdateTitle={updateChecklistTitle}
-            onAddItem={addItem}
-            onDeleteItem={deleteItem}
-            onUpdateItem={updateItem}
-            onAddSubItem={addSubItem}
-            onDeleteSubItem={deleteSubItem}
-            onUpdateSubItem={updateSubItem}
-            onReorderItems={reorderItems}
-          />
-        ))}
-        {checklists.length === 0 && !isSuggesting && (
-            <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg">
-                <h3 className="text-xl font-semibold text-muted-foreground">No checklists yet!</h3>
-                <p className="text-muted-foreground mt-2">Create your first checklist above to get started.</p>
-            </div>
-        )}
-      </div>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="space-y-6">
+          {checklists.map((checklist) => (
+            <ChecklistCard
+              key={checklist.id}
+              checklist={checklist}
+              onDelete={deleteChecklist}
+              onUpdateTitle={updateChecklistTitle}
+              onAddItem={addItem}
+              onDeleteItem={deleteItem}
+              onUpdateItem={updateItem}
+              onAddSubItem={addSubItem}
+              onDeleteSubItem={deleteSubItem}
+              onUpdateSubItem={updateSubItem}
+            />
+          ))}
+          {checklists.length === 0 && !isSuggesting && (
+              <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg">
+                  <h3 className="text-xl font-semibold text-muted-foreground">No checklists yet!</h3>
+                  <p className="text-muted-foreground mt-2">Create your first checklist above to get started.</p>
+              </div>
+          )}
+        </div>
+      </DragDropContext>
     </div>
   );
 }

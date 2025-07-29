@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Checklist, ChecklistItem, SubItem } from "@/lib/types";
@@ -7,6 +8,8 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Plus, Trash2 } from "lucide-react";
 import { ChecklistItemComponent } from "@/components/checklist-item";
 import { AddItemModal } from "@/components/add-item-modal";
+import { Droppable, Draggable } from "@hello-pangea/dnd";
+
 
 type ChecklistCardProps = {
   checklist: Checklist;
@@ -18,7 +21,6 @@ type ChecklistCardProps = {
   onAddSubItem: (checklistId: string, itemId: string, text: string) => void;
   onDeleteSubItem: (checklistId: string, itemId: string, subItemId: string) => void;
   onUpdateSubItem: (checklistId: string, itemId: string, subItem: SubItem) => void;
-  onReorderItems: (checklistId: string, draggedItemId: string, targetItemId: string) => void;
 };
 
 export function ChecklistCard({
@@ -26,7 +28,6 @@ export function ChecklistCard({
   onDelete,
   onUpdateTitle,
   onAddItem,
-  onReorderItems,
   ...itemHandlers
 }: ChecklistCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,20 +48,29 @@ export function ChecklistCard({
           </Button>
         </CardHeader>
         <CardContent className="pb-4">
-          <div className="space-y-2">
-              {checklist.items.map((item) => (
+          <Droppable droppableId={checklist.id} type="item">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="space-y-2"
+              >
+                {checklist.items.map((item, index) => (
                   <ChecklistItemComponent
                       key={item.id}
                       item={item}
+                      index={index}
                       checklistId={checklist.id}
-                      onReorder={(draggedId, targetId) => onReorderItems(checklist.id, draggedId, targetId)}
                       {...itemHandlers}
                   />
-              ))}
-              {checklist.items.length === 0 && (
-                   <p className="text-muted-foreground text-center py-4">No items in this checklist yet.</p>
-              )}
-          </div>
+                ))}
+                {provided.placeholder}
+                {checklist.items.length === 0 && (
+                     <p className="text-muted-foreground text-center py-4">No items in this checklist yet.</p>
+                )}
+              </div>
+            )}
+          </Droppable>
         </CardContent>
         <CardFooter>
            <Button onClick={() => setIsModalOpen(true)} className="w-full" variant="outline">
