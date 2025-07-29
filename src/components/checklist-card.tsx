@@ -4,7 +4,7 @@
 import type { Checklist, ChecklistItem, SubItem } from "@/lib/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
 import { ChecklistItemComponent } from "@/components/checklist-item";
 import { AddItemModal } from "@/components/add-item-modal";
@@ -61,13 +61,16 @@ export function ChecklistCard({
   return (
     <>
       <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardHeader className="flex flex-row items-center justify-between pb-4">
           <h2 className="text-2xl font-bold font-headline">{checklist.title}</h2>
           <Button variant="ghost" size="icon" onClick={() => onDelete(checklist.id)} aria-label="Delete checklist">
             <Trash2 className="h-5 w-5 text-muted-foreground hover:text-destructive" />
           </Button>
         </CardHeader>
         <CardContent className="pb-4 flex-grow">
+          <div className="pb-4 border-b mb-4">
+            <AddItemForm onFormSubmit={handleFormSubmit} onTemplateSelect={handleTemplateSelect} />
+          </div>
           <Droppable droppableId={checklist.id} type="item">
             {(provided) => (
               <div
@@ -92,9 +95,6 @@ export function ChecklistCard({
             )}
           </Droppable>
         </CardContent>
-        <CardFooter className="pt-4 border-t">
-           <AddItemForm onFormSubmit={handleFormSubmit} onTemplateSelect={handleTemplateSelect} />
-        </CardFooter>
       </Card>
 
       <AddItemModal 
