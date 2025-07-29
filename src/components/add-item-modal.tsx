@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -11,11 +11,20 @@ type AddItemModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onAddItem: (itemText: string, subItems: string[]) => void;
+  initialText?: string;
+  initialSubItems?: string[];
 };
 
-export function AddItemModal({ isOpen, onClose, onAddItem }: AddItemModalProps) {
-  const [itemText, setItemText] = useState("");
-  const [subItems, setSubItems] = useState<string[]>([""]);
+export function AddItemModal({ isOpen, onClose, onAddItem, initialText = "", initialSubItems = [""] }: AddItemModalProps) {
+  const [itemText, setItemText] = useState(initialText);
+  const [subItems, setSubItems] = useState<string[]>(initialSubItems);
+
+  useEffect(() => {
+    if (isOpen) {
+      setItemText(initialText);
+      setSubItems(initialSubItems.length > 0 ? initialSubItems : [""]);
+    }
+  }, [isOpen, initialText, initialSubItems]);
 
   const handleSubItemChange = (index: number, value: string) => {
     const newSubItems = [...subItems];
@@ -32,7 +41,6 @@ export function AddItemModal({ isOpen, onClose, onAddItem }: AddItemModalProps) 
       const newSubItems = subItems.filter((_, i) => i !== index);
       setSubItems(newSubItems);
     } else {
-      // Clear the last remaining input instead of removing it
       setSubItems([""]);
     }
   };
@@ -42,10 +50,7 @@ export function AddItemModal({ isOpen, onClose, onAddItem }: AddItemModalProps) 
     if (itemText.trim()) {
       const finalSubItems = subItems.map(s => s.trim()).filter(s => s !== "");
       onAddItem(itemText.trim(), finalSubItems);
-      // Reset form and close
-      setItemText("");
-      setSubItems([""]);
-      onClose();
+      handleClose();
     }
   };
   

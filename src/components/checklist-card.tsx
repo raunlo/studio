@@ -5,10 +5,15 @@ import type { Checklist, ChecklistItem, SubItem } from "@/lib/types";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { ChecklistItemComponent } from "@/components/checklist-item";
 import { AddItemModal } from "@/components/add-item-modal";
-import { Droppable, Draggable } from "@hello-pangea/dnd";
+import { Droppable } from "@hello-pangea/dnd";
+import { AddItemForm } from "@/components/add-item-form";
+import { findPredefinedItems } from "@/ai/flows/find-predefined-items-flow";
+import { PredefinedChecklistItem, getPredefinedItemByKey } from "@/lib/knowledge-base";
+import { AddItemSelectionModal } from "./add-item-selection-modal";
+import { useToast } from "@/hooks/use-toast";
 
 
 type ChecklistCardProps = {
@@ -30,13 +35,64 @@ export function ChecklistCard({
   onAddItem,
   ...itemHandlers
 }: ChecklistCardProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
+  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+  const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [itemText, setItemText] = useState("");
+  const [subItems, setSubItems] = useState<string[]>([]);
+  const [foundItems, setFoundItems] = useState<PredefinedChecklistItem[]>([]);
+  const { toast } = useToast();
+
+
   const handleAddItem = (itemText: string, subItems: string[]) => {
     if (itemText.trim()) {
         onAddItem(checklist.id, itemText.trim(), subItems);
     }
   };
+
+  const handleFormSubmit = async (text: string) => {
+    setIsProcessing(true);
+    setItemText(text);
+    try {
+      const result = await findPredefinedItems({ query: text });
+      if (result.items && result.items.length > 0) {
+        // We need to get the full predefined item from the key
+        const fullItems = result.items.map(item => getPredefinedItemByKey(item.key)).filter(Boolean) as PredefinedChecklistItem[];
+        setFoundItems(fullItems);
+        setIsSelectionModalOpen(true);
+      } else {
+        // No matches, open regular add modal
+        setSubItems([]);
+        setIsAddItemModalOpen(true);
+      }
+    } catch (error) {
+      console.error("Error finding predefined items:", error);
+      toast({
+        title: "AI Error",
+        description: "Could not search for templates. Please try again.",
+        variant: "destructive",
+      });
+      // Fallback to regular add modal on error
+      setSubItems([]);
+      setIsAddItemModalOpen(true);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleTemplateSelect = (item: PredefinedChecklistItem) => {
+    setItemText(item.text);
+    setSubItems(item.subItems);
+    setIsSelectionModalOpen(false);
+    setIsAddItemModalOpen(true);
+  }
+
+  const handleSelectNone = () => {
+     // ItemText is already set from the form
+    setSubItems([]);
+    setIsSelectionModalOpen(false);
+    setIsAddItemModalOpen(true);
+  }
 
   return (
     <>
@@ -73,15 +129,25 @@ export function ChecklistCard({
           </Droppable>
         </CardContent>
         <CardFooter>
-           <Button onClick={() => setIsModalOpen(true)} className="w-full" variant="outline">
-             <Plus className="mr-2 h-4 w-4" /> Add Item
-           </Button>
+           <AddItemForm onFormSubmit={handleFormSubmit} isProcessing={isProcessing} />
         </CardFooter>
       </Card>
+
       <AddItemModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isAddItemModalOpen}
+        onClose={() => setIsAddItemModalOpen(false)}
         onAddItem={handleAddItem}
+        initialText={itemText}
+        initialSubItems={subItems}
+      />
+
+      <AddItemSelectionModal
+        isOpen={isSelectionModalOpen}
+        onClose={() => setIsSelectionModalOpen(false)}
+        originalQuery={itemText}
+        foundItems={foundItems}
+        onSelect={handleTemplateSelect}
+        onSelectNone={handleSelectNone}
       />
     </>
   );

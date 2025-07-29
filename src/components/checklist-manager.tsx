@@ -5,7 +5,6 @@ import type { Checklist, ChecklistItem, SubItem } from "@/lib/types";
 import { useState, useEffect } from "react";
 import { ChecklistCard } from "@/components/checklist-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 
 const LOCAL_STORAGE_KEY = "nestedChecklists";
@@ -51,8 +50,6 @@ const defaultChecklists: Checklist[] = [
 export function ChecklistManager() {
   const [checklists, setChecklists] = useState<Checklist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSuggesting, setIsSuggesting] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     try {
@@ -159,7 +156,7 @@ export function ChecklistManager() {
   };
   
   const onDragEnd = (result: DropResult) => {
-    const { source, destination, draggableId } = result;
+    const { source, destination } = result;
 
     if (!destination) {
       return;
@@ -209,7 +206,7 @@ export function ChecklistManager() {
               onUpdateSubItem={updateSubItem}
             />
           ))}
-          {checklists.length === 0 && !isSuggesting && (
+          {checklists.length === 0 && (
               <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg">
                   <h3 className="text-xl font-semibold text-muted-foreground">No checklists yet!</h3>
                   <p className="text-muted-foreground mt-2">Create your first checklist above to get started.</p>
