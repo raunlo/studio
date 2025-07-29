@@ -3,12 +3,8 @@
 
 import type { Checklist, ChecklistItem, SubItem } from "@/lib/types";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, Sparkles } from "lucide-react";
 import { ChecklistCard } from "@/components/checklist-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { suggestTasks } from "@/ai/flows/suggest-tasks-flow";
 import { useToast } from "@/hooks/use-toast";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 
@@ -54,7 +50,6 @@ const defaultChecklists: Checklist[] = [
 
 export function ChecklistManager() {
   const [checklists, setChecklists] = useState<Checklist[]>([]);
-  const [newChecklistTitle, setNewChecklistTitle] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const { toast } = useToast();
@@ -79,48 +74,6 @@ export function ChecklistManager() {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(checklists));
     }
   }, [checklists, isLoading]);
-
-  const addChecklist = async () => {
-    if (!newChecklistTitle.trim()) return;
-
-    const newChecklistId = crypto.randomUUID();
-    const newChecklist: Checklist = {
-      id: newChecklistId,
-      title: newChecklistTitle.trim(),
-      items: [],
-    };
-    
-    // Optimistically add the new checklist with no items
-    setChecklists((prev) => [...prev, newChecklist]);
-    const originalTitle = newChecklistTitle;
-    setNewChecklistTitle("");
-    setIsSuggesting(true);
-
-    try {
-      const result = await suggestTasks({ title: originalTitle });
-      const suggestedItems: ChecklistItem[] = result.tasks.map(taskText => ({
-        id: crypto.randomUUID(),
-        text: taskText,
-        checked: false,
-        isCollapsed: true,
-        subItems: [],
-      }));
-      
-      setChecklists((prev) => prev.map(cl => 
-        cl.id === newChecklistId ? { ...cl, items: suggestedItems } : cl
-      ));
-
-    } catch (error) {
-      console.error("Failed to suggest tasks:", error);
-      toast({
-        variant: "destructive",
-        title: "AI Error",
-        description: "Could not generate suggested tasks. Please add them manually.",
-      });
-    } finally {
-      setIsSuggesting(false);
-    }
-  };
   
   const deleteChecklist = (id: string) => {
     setChecklists(checklists.filter((cl) => cl.id !== id));
@@ -240,35 +193,6 @@ export function ChecklistManager() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          addChecklist();
-        }}
-        className="flex gap-2 mb-8"
-      >
-        <Input
-          value={newChecklistTitle}
-          onChange={(e) => setNewChecklistTitle(e.target.value)}
-          placeholder="Add a new checklist..."
-          className="text-base"
-          disabled={isSuggesting}
-        />
-        <Button type="submit" aria-label="Add checklist and suggest tasks" disabled={isSuggesting}>
-          {isSuggesting ? (
-            <Sparkles className="h-5 w-5 animate-pulse" />
-          ) : (
-            <Plus className="h-5 w-5" />
-          )}
-        </Button>
-      </form>
-
-      {isSuggesting && !checklists.find(cl => cl.title === newChecklistTitle) && (
-        <div className="space-y-4 mb-6">
-            <Skeleton className="h-32 w-full" />
-        </div>
-      )}
-
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="space-y-6">
           {checklists.map((checklist) => (
