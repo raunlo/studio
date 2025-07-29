@@ -152,7 +152,7 @@ export function ChecklistManager() {
 
   if (isLoading) {
     return (
-        <div className="space-y-8 max-w-2xl mx-auto">
+        <div className="space-y-8">
             <div className="space-y-4">
                 <Skeleton className="h-48 w-full" />
             </div>
@@ -161,7 +161,7 @@ export function ChecklistManager() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="space-y-6">
           {checklists.map((checklist) => (
