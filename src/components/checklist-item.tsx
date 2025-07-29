@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ChecklistItemProps = {
@@ -33,20 +33,17 @@ export function ChecklistItemComponent({
 }: ChecklistItemProps) {
   const [newSubItemText, setNewSubItemText] = useState("");
   const [isDraggingOver, setIsDraggingOver] = useState(false);
-  const [isDraggable, setIsDraggable] = useState(false);
-  const pressTimer = useRef<NodeJS.Timeout>();
-  const collapsibleTriggerRef = useRef<HTMLButtonElement>(null);
 
 
   const handleToggleChecked = (checked: boolean) => {
     const updatedSubItems = item.subItems.map(sub => ({ ...sub, checked }));
     onUpdateItem(checklistId, { ...item, checked, subItems: updatedSubItems });
   };
-
+  
   const handleToggleCollapse = (isOpen: boolean) => {
     onUpdateItem(checklistId, { ...item, isCollapsed: !isOpen });
   };
-  
+
   const handleAddSubItem = (e: React.FormEvent) => {
     e.preventDefault();
     if(newSubItemText.trim()) {
@@ -61,16 +58,14 @@ export function ChecklistItemComponent({
   }
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-    if (!isDraggable) {
-      e.preventDefault();
-      return;
-    }
+    e.stopPropagation();
     e.dataTransfer.setData("text/plain", item.id);
     e.dataTransfer.effectAllowed = "move";
   };
   
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     const draggedItemId = e.dataTransfer.getData("text/plain");
     if (draggedItemId && draggedItemId !== item.id) {
         onReorder(draggedItemId, item.id);
@@ -87,84 +82,54 @@ export function ChecklistItemComponent({
     setIsDraggingOver(false);
   };
   
-  const handlePointerDown = () => {
-    pressTimer.current = setTimeout(() => {
-        setIsDraggable(true);
-    }, 300); // 300ms for long press
-  };
-
-  const handlePointerUp = () => {
-    clearTimeout(pressTimer.current);
-    if (!isDraggable) {
-      // This was a click, not a long press for dragging
-      collapsibleTriggerRef.current?.click();
-    }
-    // Reset draggable state after any interaction ends
-    setTimeout(() => setIsDraggable(false), 0);
-  };
-
-  const handlePointerMove = () => {
-    // Cancel long press if mouse moves
-    clearTimeout(pressTimer.current);
-  };
-  
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      clearTimeout(pressTimer.current);
-    };
-  }, []);
-
 
   return (
     <div 
-        draggable={isDraggable}
-        onDragStart={handleDragStart}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         className={cn(
             "rounded-md border p-2 space-y-2 bg-card transition-all",
-            !isDraggable && "cursor-pointer",
             isDraggingOver && "border-primary border-dashed ring-2 ring-primary",
-            isDraggable && "opacity-50 shadow-lg cursor-grabbing"
         )}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerMove={handlePointerMove}
     >
         <Collapsible open={!item.isCollapsed} onOpenChange={handleToggleCollapse}>
-        <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3 flex-grow">
-              <Checkbox
-                  id={item.id}
-                  checked={item.checked}
-                  onCheckedChange={handleToggleChecked}
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onPointerUp={(e) => e.stopPropagation()}
-                  onPointerMove={(e) => e.stopPropagation()}
-                  className={cn("h-5 w-5 mt-0.5 cursor-pointer", item.checked && "data-[state=checked]:bg-accent data-[state=checked]:border-accent-foreground")}
-                  aria-label={`Mark item ${item.text} as complete`}
-              />
-              <CollapsibleTrigger asChild ref={collapsibleTriggerRef}>
-                  <button className="flex flex-col items-start gap-2 text-left flex-grow" tabIndex={-1}>
-                    <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
-                        {item.text}
-                    </span>
-                    {item.subItems.length > 0 && (
-                      <div className="flex flex-wrap gap-x-2 text-xs italic text-muted-foreground pointer-events-none">
-                        {item.subItems.map((sub, index) => (
-                          <span key={sub.id} className={cn(sub.checked && "line-through")}>
-                            {sub.text}{index < item.subItems.length - 1 ? ',' : ''}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </button>
-              </CollapsibleTrigger>
+        <div className="flex items-start justify-between gap-2">
+            <div 
+              draggable 
+              onDragStart={handleDragStart}
+              className="cursor-grab p-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <GripVertical className="h-5 w-5 text-muted-foreground" />
             </div>
-            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onDeleteItem(checklistId, item.id); }} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} onPointerMove={(e) => e.stopPropagation()} aria-label="Delete item" className="cursor-pointer">
+
+            <Checkbox
+                id={item.id}
+                checked={item.checked}
+                onCheckedChange={handleToggleChecked}
+                className={cn("h-5 w-5 mt-0.5", item.checked && "data-[state=checked]:bg-accent data-[state=checked]:border-accent-foreground")}
+                aria-label={`Mark item ${item.text} as complete`}
+            />
+
+            <CollapsibleTrigger asChild>
+                <button className="flex flex-col items-start gap-2 text-left flex-grow" tabIndex={-1}>
+                  <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
+                      {item.text}
+                  </span>
+                  {item.subItems.length > 0 && (
+                    <div className="flex flex-wrap gap-x-2 text-xs italic text-muted-foreground pointer-events-none">
+                      {item.subItems.map((sub, index) => (
+                        <span key={sub.id} className={cn(sub.checked && "line-through")}>
+                          {sub.text}{index < item.subItems.length - 1 ? ',' : ''}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </button>
+            </CollapsibleTrigger>
+            
+            <Button variant="ghost" size="icon" onClick={() => onDeleteItem(checklistId, item.id)} aria-label="Delete item">
               <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
             </Button>
         </div>
@@ -189,7 +154,7 @@ export function ChecklistItemComponent({
                         </Button>
                     </div>
                 ))}
-                <form onSubmit={handleAddSubItem} className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} onPointerMove={(e) => e.stopPropagation()}>
+                <form onSubmit={handleAddSubItem} className="flex gap-2 pt-2">
                     <Input
                         value={newSubItemText}
                         onChange={(e) => setNewSubItemText(e.target.value)}
