@@ -72,12 +72,12 @@ export function ChecklistItemComponent({
           ref={provided.innerRef}
           {...provided.draggableProps}
         >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
                 <Checkbox
                   id={item.id}
                   checked={item.checked}
                   onCheckedChange={handleToggleChecked}
-                  className="h-5 w-5 mt-1"
+                  className="h-5 w-5 mt-1 shrink-0"
                   aria-label={`Mark item ${item.text} as complete`}
                 />
               <CollapsibleTrigger asChild>
@@ -86,8 +86,8 @@ export function ChecklistItemComponent({
                       {item.text}
                       {item.quantity && <span className="text-xs text-muted-foreground ml-1.5"> (x{item.quantity})</span>}
                     </span>
-                    {item.subItems.length > 0 && (
-                      <div className="flex flex-wrap gap-x-2 text-xs italic text-muted-foreground pointer-events-none">
+                    {item.subItems.length > 0 && item.isCollapsed && (
+                      <div className={cn("flex flex-wrap gap-x-2 text-xs text-muted-foreground pointer-events-none", item.isCollapsed && "italic")}>
                         {item.subItems.map((sub, index) => (
                           <span key={sub.id} className={cn(sub.checked && "line-through")}>
                             {sub.text}{sub.quantity ? <span className="text-xs"> (x{sub.quantity})</span> : ''}{index < item.subItems.length - 1 ? ',' : ''}
@@ -98,7 +98,7 @@ export function ChecklistItemComponent({
                   </div>
               </CollapsibleTrigger>
               
-              <Button variant="ghost" size="icon" onClick={() => onDeleteItem(checklistId, item.id)} aria-label="Delete item" className="h-8 w-8">
+              <Button variant="ghost" size="icon" onClick={() => onDeleteItem(checklistId, item.id)} aria-label="Delete item" className="h-8 w-8 shrink-0">
                 <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
               </Button>
             </div>
