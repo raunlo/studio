@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Checklist, ChecklistItem, SubItem } from "@/lib/types";
+import type { Checklist, Item, SubItem } from "@/lib/api";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -19,7 +19,7 @@ type ChecklistCardProps = {
   onUpdateTitle: (id: string, title: string) => void;
   onAddItem: (checklistId: string, text: string, quantity: number | undefined, subItems: PredefinedSubItem[]) => void;
   onDeleteItem: (checklistId: string, itemId: string) => void;
-  onUpdateItem: (checklistId: string, item: ChecklistItem) => void;
+  onUpdateItem: (checklistId: string, item: Item) => void;
   onAddSubItem: (checklistId: string, itemId: string, text: string, quantity: number | undefined) => void;
   onDeleteSubItem: (checklistId: string, itemId: string, subItemId: string) => void;
   onUpdateSubItem: (checklistId: string, itemId: string, subItem: SubItem) => void;

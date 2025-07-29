@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { ChecklistItem, SubItem } from "@/lib/types";
+import type { Item, SubItem } from "@/lib/api";
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,11 @@ import { cn } from "@/lib/utils";
 import { Draggable } from "@hello-pangea/dnd";
 
 type ChecklistItemProps = {
-  item: ChecklistItem;
+  item: Item;
   index: number;
   checklistId: string;
   onDeleteItem: (checklistId: string, itemId: string) => void;
-  onUpdateItem: (checklistId: string, item: ChecklistItem) => void;
+  onUpdateItem: (checklistId: string, item: Item) => void;
   onAddSubItem: (checklistId: string, itemId: string, text: string, quantity: number | undefined) => void;
   onDeleteSubItem: (checklistId: string, itemId: string, subItemId: string) => void;
   onUpdateSubItem: (checklistId: string, itemId: string, subItem: SubItem) => void;
@@ -97,8 +97,8 @@ export function ChecklistItemComponent({
                       {item.text}
                       {item.quantity && <span className="text-xs text-muted-foreground ml-1.5"> (x{item.quantity})</span>}
                     </span>
-                     {item.isCollapsed && item.subItems.length > 0 && (
-                      <div className="flex flex-wrap gap-x-2 text-xs text-muted-foreground pointer-events-none italic">
+                    {item.isCollapsed && item.subItems && item.subItems.length > 0 && (
+                      <div className="flex flex-wrap gap-x-2 text-xs text-muted-foreground pointer-events-none">
                         {item.subItems.map((sub, index) => (
                           <span key={sub.subItemId} className={cn(sub.checked && "line-through")}>
                             {sub.text}{sub.quantity ? <span className="text-xs"> (x{sub.quantity})</span> : ''}{index < item.subItems.length - 1 ? ',' : ''}
@@ -114,7 +114,7 @@ export function ChecklistItemComponent({
               </div>
               <CollapsibleContent>
                 <div className="pl-1 pt-2 space-y-2">
-                  {item.subItems.map((subItem) => {
+                  {item.subItems && item.subItems.map((subItem) => {
                     return (
                       <div key={subItem.subItemId} className="flex items-center justify-between group">
                         <div className="flex items-center gap-3">
@@ -130,7 +130,7 @@ export function ChecklistItemComponent({
                             {subItem.quantity && <span className="text-xs text-muted-foreground ml-1"> (x{subItem.quantity})</span>}
                           </label>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => onDeleteSubItem(checklistId, item.itemId, subItem.subItemId)} className="h-7 w-7 opacity-100" aria-label="Delete sub-item">
+                        <Button variant="ghost" size="icon" onClick={() => onDeleteSubItem(checklistId, item.itemId, subItem.subItemId)} className="h-7 w-7" aria-label="Delete sub-item">
                           <Trash2 className="h-4 w-4 text-muted-foreground" />
                         </Button>
                       </div>

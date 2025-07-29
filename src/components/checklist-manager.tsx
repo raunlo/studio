@@ -1,200 +1,179 @@
 
 "use client";
 
-import type { Checklist, ChecklistItem, SubItem } from "@/lib/types";
-import { useState, useEffect } from "react";
+import type { Checklist, Item, SubItem, UpdateItem } from "@/lib/api";
+import { useState } from "react";
 import { ChecklistCard } from "@/components/checklist-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { PredefinedSubItem } from "@/lib/knowledge-base";
-import * as api from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  useGetChecklists, 
+  useDeleteChecklist,
+  useUpdateChecklistTitle,
+  useAddItem,
+  useDeleteItem,
+  useUpdateItem,
+  useAddSubItem,
+  useDeleteSubItem,
+  useUpdateSubItem,
+  useReorderItem
+} from "@/lib/api";
+import { SWRConfig } from "swr";
+
 
 export function ChecklistManager() {
-  const [checklists, setChecklists] = useState<Checklist[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data, error, isLoading, mutate } = useGetChecklists();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const loadChecklists = async () => {
-      try {
-        setIsLoading(true);
-        const { checklists } = await api.getChecklists();
-        const sortedChecklists = checklists.map(cl => ({
-          ...cl,
-          items: cl.items.sort((a, b) => a.position - b.position)
-        }));
+  const checklists = data?.checklists?.map(cl => ({
+    ...cl,
+    items: cl.items?.sort((a, b) => a.position - b.position) || []
+  })) || [];
 
-        setChecklists(sortedChecklists);
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Failed to load checklists",
-          description: "Could not fetch data from the server. Please try again later.",
-        });
-        setChecklists([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadChecklists();
-  }, [toast]);
 
-  const handleError = (title: string, originalState: Checklist[]) => {
+  const { trigger: deleteChecklistTrigger } = useDeleteChecklist();
+  const { trigger: updateChecklistTitleTrigger } = useUpdateChecklistTitle();
+  const { trigger: addItemTrigger } = useAddItem();
+  const { trigger: deleteItemTrigger } = useDeleteItem();
+  const { trigger: updateItemTrigger } = useUpdateItem();
+  const { trigger: addSubItemTrigger } = useAddSubItem();
+  const { trigger: deleteSubItemTrigger } = useDeleteSubItem();
+  const { trigger: updateSubItemTrigger } = useUpdateSubItem();
+  const { trigger: reorderItemTrigger } = useReorderItem();
+
+  const handleError = (title: string, error: any) => {
+    console.error(error);
     toast({
       variant: "destructive",
       title: title,
       description: "Your change could not be saved. Please try again.",
     });
-    setChecklists(originalState);
-  }
+  };
 
   const deleteChecklist = async (id: string) => {
-    const originalChecklists = [...checklists];
-    setChecklists(checklists.filter((cl) => cl.checklistId !== id));
+    const originalChecklists = data;
+    const updatedChecklists = checklists.filter((cl) => cl.checklistId !== id);
+    mutate({ checklists: updatedChecklists }, { revalidate: false });
     try {
-      await api.deleteChecklist(id);
-    } catch (error) {
-      handleError("Failed to delete checklist", originalChecklists);
+      await deleteChecklistTrigger({ checklistId: id });
+    } catch (e) {
+      handleError("Failed to delete checklist", e);
+      mutate(originalChecklists);
     }
   };
   
   const updateChecklistTitle = async (id: string, title: string) => {
-    const originalChecklists = [...checklists];
-    setChecklists(checklists.map((cl) => (cl.checklistId === id ? { ...cl, title } : cl)));
-     try {
-       await api.updateChecklistTitle(id, title);
-     } catch (error) {
-       handleError("Failed to update title", originalChecklists);
-     }
+    try {
+      await updateChecklistTitleTrigger({ checklistId: id, data: { title } }, {
+        optimisticData: () => {
+          const updatedChecklists = checklists.map((cl) => (cl.checklistId === id ? { ...cl, title } : cl));
+          return { checklists: updatedChecklists };
+        },
+        revalidate: false,
+      });
+    } catch (e) {
+      handleError("Failed to update title", e);
+    }
   };
 
   const addItem = async (checklistId: string, text: string, quantity: number | undefined, subItemTemplates: PredefinedSubItem[]) => {
-    const originalChecklists = [...checklists];
-    // Optimistic UI update (with temporary item)
-    const tempItemId = `temp-${crypto.randomUUID()}`;
-    const newItem: Omit<ChecklistItem, 'itemId' | 'position'> = {
-      text,
-      quantity,
-      checked: false,
-      isCollapsed: true,
-      subItems: subItemTemplates.map(s => ({...s, subItemId: `temp-sub-${crypto.randomUUID()}`, checked: false})),
-    };
-    setChecklists(
-      checklists.map((cl) => {
-        if (cl.checklistId === checklistId) {
-          return { ...cl, items: [...cl.items, {...newItem, itemId: tempItemId, position: cl.items.length }] };
-        }
-        return cl;
-      })
-    );
-
     try {
-        const createdItem = await api.addItem(checklistId, text, quantity, subItemTemplates);
-        setChecklists(prev => prev.map(cl => {
-            if (cl.checklistId !== checklistId) return cl;
-            return {
-                ...cl,
-                items: cl.items.map(it => it.itemId === tempItemId ? createdItem : it)
-            }
-        }));
-    } catch (error) {
-        handleError("Failed to add item", originalChecklists);
+      const subItems = subItemTemplates.map(s => ({ text: s.text, quantity: s.quantity }));
+      await addItemTrigger({ checklistId, data: { text, quantity, subItems }});
+    } catch (e) {
+      handleError("Failed to add item", e);
     }
   };
   
   const deleteItem = async (checklistId: string, itemId: string) => {
-    const originalChecklists = [...checklists];
-    setChecklists(checklists.map(cl => {
-        if (cl.checklistId !== checklistId) return cl;
-        return { ...cl, items: cl.items.filter(item => item.itemId !== itemId) };
-    }));
     try {
-        await api.deleteItem(checklistId, itemId);
-    } catch (error) {
-        handleError("Failed to delete item", originalChecklists);
+      await deleteItemTrigger({ checklistId, itemId }, {
+        optimisticData: () => {
+          const updatedChecklists = checklists.map(cl => {
+              if (cl.checklistId !== checklistId) return cl;
+              return { ...cl, items: cl.items.filter(item => item.itemId !== itemId) };
+          });
+          return { checklists: updatedChecklists };
+        },
+        revalidate: false,
+      });
+    } catch (e) {
+      handleError("Failed to delete item", e);
     }
   };
 
-  const updateItem = async (checklistId: string, updatedItem: ChecklistItem) => {
-    const originalChecklists = [...checklists];
-    setChecklists(checklists.map(cl => {
-        if (cl.checklistId !== checklistId) return cl;
-        return { ...cl, items: cl.items.map(item => item.itemId === updatedItem.itemId ? updatedItem : item) };
-    }));
+  const updateItem = async (checklistId: string, updatedItem: Item) => {
     try {
         const { itemId, ...updateData } = updatedItem;
-        await api.updateItem(checklistId, itemId, updateData);
-    } catch (error) {
-        handleError("Failed to update item", originalChecklists);
+        await updateItemTrigger({ checklistId, itemId, data: updateData as UpdateItem }, {
+          optimisticData: () => {
+            const updatedChecklists = checklists.map(cl => {
+              if (cl.checklistId !== checklistId) return cl;
+              return { ...cl, items: cl.items.map(item => item.itemId === updatedItem.itemId ? updatedItem : item) };
+            });
+            return { checklists: updatedChecklists };
+          },
+          revalidate: false
+        });
+    } catch (e) {
+      handleError("Failed to update item", e);
     }
   };
   
   const addSubItem = async (checklistId: string, itemId: string, text: string, quantity: number | undefined) => {
-    const originalChecklists = [...checklists];
-    const tempSubItemId = `temp-sub-${crypto.randomUUID()}`;
-    setChecklists(checklists.map(cl => {
-        if (cl.checklistId !== checklistId) return cl;
-        const updatedItems = cl.items.map(item => {
-            if (item.itemId !== itemId) return item;
-            const newSubItem: SubItem = { subItemId: tempSubItemId, text, quantity, checked: false };
-            return { ...item, checked: false, subItems: [...item.subItems, newSubItem] };
-        });
-        return { ...cl, items: updatedItems };
-    }));
-
     try {
-        const createdSubItem = await api.addSubItem(checklistId, itemId, text, quantity);
-        setChecklists(prev => prev.map(cl => {
-            if (cl.checklistId !== checklistId) return cl;
-            const newItems = cl.items.map(item => {
-                if (item.itemId !== itemId) return item;
-                const newSubItems = item.subItems.map(si => si.subItemId === tempSubItemId ? createdSubItem : si);
-                return {...item, subItems: newSubItems};
-            });
-            return {...cl, items: newItems};
-        }));
-    } catch (error) {
-        handleError("Failed to add sub-item", originalChecklists);
+        await addSubItemTrigger({ checklistId, itemId, data: { text, quantity }});
+    } catch (e) {
+      handleError("Failed to add sub-item", e);
     }
   };
 
   const deleteSubItem = async (checklistId: string, itemId: string, subItemId: string) => {
-    const originalChecklists = [...checklists];
-    setChecklists(checklists.map(cl => {
-        if (cl.checklistId !== checklistId) return cl;
-        const updatedItems = cl.items.map(item => {
-            if (item.itemId !== itemId) return item;
-            const updatedSubItems = item.subItems.filter(sub => sub.subItemId !== subItemId);
-            const parentChecked = updatedSubItems.length > 0 && updatedSubItems.every(sub => sub.checked);
-            return { ...item, checked: parentChecked, subItems: updatedSubItems };
-        });
-        return { ...cl, items: updatedItems };
-    }));
     try {
-        await api.deleteSubItem(checklistId, itemId, subItemId);
-    } catch(error) {
-        handleError("Failed to delete sub-item", originalChecklists);
+        await deleteSubItemTrigger({ checklistId, itemId, subItemId }, {
+          optimisticData: () => {
+            const updatedChecklists = checklists.map(cl => {
+              if (cl.checklistId !== checklistId) return cl;
+              const updatedItems = cl.items.map(item => {
+                  if (item.itemId !== itemId) return item;
+                  const updatedSubItems = item.subItems.filter(sub => sub.subItemId !== subItemId);
+                  const parentChecked = updatedSubItems.length > 0 && updatedSubItems.every(sub => sub.checked);
+                  return { ...item, checked: parentChecked, subItems: updatedSubItems };
+              });
+              return { ...cl, items: updatedItems };
+            });
+            return { checklists: updatedChecklists };
+          },
+          revalidate: false,
+        });
+    } catch(e) {
+      handleError("Failed to delete sub-item", e);
     }
   };
   
   const updateSubItem = async (checklistId: string, itemId: string, updatedSubItem: SubItem) => {
-    const originalChecklists = [...checklists];
-    setChecklists(checklists.map(cl => {
-        if (cl.checklistId !== checklistId) return cl;
-        const updatedItems = cl.items.map(item => {
-            if (item.itemId !== itemId) return item;
-            const updatedSubItems = item.subItems.map(sub => sub.subItemId === updatedSubItem.subItemId ? updatedSubItem : sub);
-            const parentChecked = updatedSubItems.length > 0 && updatedSubItems.every(sub => sub.checked);
-            return { ...item, checked: parentChecked, subItems: updatedSubItems };
-        });
-        return { ...cl, items: updatedItems };
-    }));
     try {
         const { subItemId, ...updateData } = updatedSubItem;
-        await api.updateSubItem(checklistId, itemId, subItemId, updateData);
-    } catch (error) {
-        handleError("Failed to update sub-item", originalChecklists);
+        await updateSubItemTrigger({ checklistId, itemId, subItemId, data: updateData }, {
+          optimisticData: () => {
+            const updatedChecklists = checklists.map(cl => {
+              if (cl.checklistId !== checklistId) return cl;
+              const updatedItems = cl.items.map(item => {
+                  if (item.itemId !== itemId) return item;
+                  const updatedSubItems = item.subItems.map(sub => sub.subItemId === updatedSubItem.subItemId ? updatedSubItem : sub);
+                  const parentChecked = updatedSubItems.length > 0 && updatedSubItems.every(sub => sub.checked);
+                  return { ...item, checked: parentChecked, subItems: updatedSubItems };
+              });
+              return { ...cl, items: updatedItems };
+            });
+            return { checklists: updatedChecklists };
+          },
+          revalidate: false
+        });
+    } catch (e) {
+      handleError("Failed to update sub-item", e);
     }
   };
   
@@ -207,10 +186,10 @@ export function ChecklistManager() {
 
     const checklistId = source.droppableId;
     
-    const originalChecklists = [...checklists];
+    const originalChecklists = data;
     
-    let reorderedItems: ChecklistItem[] = [];
-    setChecklists(checklists.map(cl => {
+    let reorderedItems: Item[] = [];
+    const updatedChecklists = checklists.map(cl => {
       if (cl.checklistId !== checklistId) return cl;
   
       const items = Array.from(cl.items);
@@ -219,12 +198,14 @@ export function ChecklistManager() {
       reorderedItems = items.map((item, index) => ({...item, position: index}));
   
       return { ...cl, items: reorderedItems };
-    }));
+    });
+    mutate({ checklists: updatedChecklists }, { revalidate: false });
 
     try {
-      await api.reorderItem(checklistId, draggableId, destination.index);
-    } catch(error) {
-      handleError("Failed to reorder item", originalChecklists);
+      await reorderItemTrigger({ checklistId, itemId: draggableId, data: { newPosition: destination.index } });
+    } catch(e) {
+      handleError("Failed to reorder item", e);
+      mutate(originalChecklists);
     }
   };
 
@@ -239,8 +220,17 @@ export function ChecklistManager() {
     )
   }
 
+  if (error) {
+    return (
+      <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg border-destructive">
+          <h3 className="text-xl font-semibold text-destructive">Failed to load checklists</h3>
+          <p className="text-muted-foreground mt-2">Could not connect to the server. Please ensure the API is running and accessible.</p>
+      </div>
+    )
+  }
+
   return (
-    <div>
+    <div className="space-y-6">
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="space-y-6">
           {checklists.map((checklist) => (
