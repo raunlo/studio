@@ -59,18 +59,18 @@ export function ChecklistItemComponent({
   return (
     <Draggable draggableId={item.id} index={index}>
       {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
+        <Collapsible 
+          open={!item.isCollapsed} 
+          onOpenChange={handleToggleCollapse}
           className={cn(
             "rounded-md border p-2 space-y-2 bg-card transition-shadow",
             snapshot.isDragging && "shadow-lg scale-105",
           )}
+          ref={provided.innerRef}
+          {...provided.draggableProps}
         >
-          <Collapsible open={!item.isCollapsed} onOpenChange={handleToggleCollapse}>
             <div className="flex items-start justify-between gap-3">
-              <Checkbox
+               <Checkbox
                 id={item.id}
                 checked={item.checked}
                 onCheckedChange={handleToggleChecked}
@@ -79,7 +79,7 @@ export function ChecklistItemComponent({
               />
 
               <CollapsibleTrigger asChild>
-                <button className="flex flex-col items-start gap-2 text-left flex-grow" tabIndex={-1}>
+                <div className="flex flex-col items-start gap-2 text-left flex-grow" {...provided.dragHandleProps}>
                   <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
                     {item.text}
                   </span>
@@ -92,7 +92,7 @@ export function ChecklistItemComponent({
                       ))}
                     </div>
                   )}
-                </button>
+                </div>
               </CollapsibleTrigger>
               
               <Button variant="ghost" size="icon" onClick={() => onDeleteItem(checklistId, item.id)} aria-label="Delete item" className="h-8 w-8">
@@ -133,8 +133,7 @@ export function ChecklistItemComponent({
                 </form>
               </div>
             </CollapsibleContent>
-          </Collapsible>
-        </div>
+        </Collapsible>
       )}
     </Draggable>
   );
