@@ -93,8 +93,8 @@ export function ChecklistItemComponent({
                       {item.text}
                       {item.quantity && <span className="text-xs text-muted-foreground ml-1.5"> (x{item.quantity})</span>}
                     </span>
-                    {item.subItems.length > 0 && (
-                      <div className={cn("flex flex-wrap gap-x-2 text-xs text-muted-foreground pointer-events-none", item.isCollapsed ? "italic" : "")}>
+                    {item.subItems.length > 0 && item.isCollapsed && (
+                      <div className="flex flex-wrap gap-x-2 text-xs text-muted-foreground pointer-events-none italic">
                         {item.subItems.map((sub, index) => (
                           <span key={sub.id} className={cn(sub.checked && "line-through")}>
                             {sub.text}{sub.quantity ? <span className="text-xs"> (x{sub.quantity})</span> : ''}{index < item.subItems.length - 1 ? ',' : ''}
@@ -126,7 +126,7 @@ export function ChecklistItemComponent({
                             {subItem.quantity && <span className="text-xs text-muted-foreground ml-1"> (x{subItem.quantity})</span>}
                           </label>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => onDeleteSubItem(checklistId, item.id, subItem.id)} className="h-7 w-7 transition-opacity opacity-100 md:opacity-0 group-hover:opacity-100" aria-label="Delete sub-item">
+                        <Button variant="ghost" size="icon" onClick={() => onDeleteSubItem(checklistId, item.id, subItem.id)} className="h-7 w-7 transition-opacity opacity-100" aria-label="Delete sub-item">
                           <Trash2 className="h-4 w-4 text-muted-foreground" />
                         </Button>
                       </div>
