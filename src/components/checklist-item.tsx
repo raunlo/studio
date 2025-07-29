@@ -73,31 +73,33 @@ export function ChecklistItemComponent({
           {...provided.draggableProps}
         >
             <div className="flex items-start justify-between gap-3">
-               <Checkbox
-                id={item.id}
-                checked={item.checked}
-                onCheckedChange={handleToggleChecked}
-                className="h-5 w-5 mt-0.5"
-                aria-label={`Mark item ${item.text} as complete`}
-              />
+              <div className="flex items-start gap-3 flex-grow">
+                <Checkbox
+                  id={item.id}
+                  checked={item.checked}
+                  onCheckedChange={handleToggleChecked}
+                  className="h-5 w-5 mt-0.5"
+                  aria-label={`Mark item ${item.text} as complete`}
+                />
 
-              <CollapsibleTrigger asChild>
-                <div className="flex flex-col items-start gap-2 text-left flex-grow" {...provided.dragHandleProps}>
-                  <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
-                    {item.text}
-                    {item.quantity && <span className="text-xs text-muted-foreground ml-1.5"> (x{item.quantity})</span>}
-                  </span>
-                  {item.subItems.length > 0 && (
-                    <div className="flex flex-wrap gap-x-2 text-xs italic text-muted-foreground pointer-events-none">
-                      {item.subItems.map((sub, index) => (
-                        <span key={sub.id} className={cn(sub.checked && "line-through")}>
-                          {sub.text}{sub.quantity ? <span className="text-xs"> (x{sub.quantity})</span> : ''}{index < item.subItems.length - 1 ? ',' : ''}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </CollapsibleTrigger>
+                <CollapsibleTrigger asChild>
+                  <div className="flex flex-col items-start gap-2 text-left flex-grow" {...provided.dragHandleProps}>
+                    <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
+                      {item.text}
+                      {item.quantity && <span className="text-xs text-muted-foreground ml-1.5"> (x{item.quantity})</span>}
+                    </span>
+                    {item.subItems.length > 0 && (
+                      <div className="flex flex-wrap gap-x-2 text-xs italic text-muted-foreground pointer-events-none">
+                        {item.subItems.map((sub, index) => (
+                          <span key={sub.id} className={cn(sub.checked && "line-through")}>
+                            {sub.text}{sub.quantity ? <span className="text-xs"> (x{sub.quantity})</span> : ''}{index < item.subItems.length - 1 ? ',' : ''}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+              </div>
               
               <Button variant="ghost" size="icon" onClick={() => onDeleteItem(checklistId, item.id)} aria-label="Delete item" className="h-8 w-8">
                 <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
