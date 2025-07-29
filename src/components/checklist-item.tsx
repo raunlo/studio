@@ -124,7 +124,8 @@ export function ChecklistItemComponent({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         className={cn(
-            "rounded-md border p-2 space-y-2 bg-card transition-all cursor-pointer",
+            "rounded-md border p-2 space-y-2 bg-card transition-all",
+            !isDraggable && "cursor-pointer",
             isDraggingOver && "border-primary border-dashed ring-2 ring-primary",
             isDraggable && "opacity-50 shadow-lg cursor-grabbing"
         )}
@@ -163,7 +164,7 @@ export function ChecklistItemComponent({
                   </button>
               </CollapsibleTrigger>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => onDeleteItem(checklistId, item.id)} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} onPointerMove={(e) => e.stopPropagation()} aria-label="Delete item" className="cursor-pointer">
+            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onDeleteItem(checklistId, item.id); }} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} onPointerMove={(e) => e.stopPropagation()} aria-label="Delete item" className="cursor-pointer">
               <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
             </Button>
         </div>
