@@ -1,12 +1,12 @@
 "use client";
 
 import type { ChecklistItem, SubItem } from "@/lib/types";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, GripVertical, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ChecklistItemProps = {
@@ -32,6 +32,10 @@ export function ChecklistItemComponent({
 }: ChecklistItemProps) {
   const [newSubItemText, setNewSubItemText] = useState("");
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [isDraggable, setIsDraggable] = useState(false);
+  const pressTimer = useRef<NodeJS.Timeout>();
+  const collapsibleTriggerRef = useRef<HTMLButtonElement>(null);
+
 
   const handleToggleChecked = (checked: boolean) => {
     const updatedSubItems = item.subItems.map(sub => ({ ...sub, checked }));
@@ -56,6 +60,10 @@ export function ChecklistItemComponent({
   }
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!isDraggable) {
+      e.preventDefault();
+      return;
+    }
     e.dataTransfer.setData("text/plain", item.id);
     e.dataTransfer.effectAllowed = "move";
   };
@@ -77,43 +85,73 @@ export function ChecklistItemComponent({
   const handleDragLeave = () => {
     setIsDraggingOver(false);
   };
+  
+  const handlePointerDown = () => {
+    pressTimer.current = setTimeout(() => {
+        setIsDraggable(true);
+    }, 300); // 300ms for long press
+  };
+
+  const handlePointerUp = () => {
+    clearTimeout(pressTimer.current);
+    if (!isDraggable) {
+      // This was a click, not a long press for dragging
+      collapsibleTriggerRef.current?.click();
+    }
+    // Reset draggable state after any interaction ends
+    setTimeout(() => setIsDraggable(false), 0);
+  };
+
+  const handlePointerMove = () => {
+    // Cancel long press if mouse moves
+    clearTimeout(pressTimer.current);
+  };
+  
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      clearTimeout(pressTimer.current);
+    };
+  }, []);
+
 
   return (
     <div 
+        draggable={isDraggable}
+        onDragStart={handleDragStart}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         className={cn(
-            "rounded-md border p-2 space-y-2 bg-card transition-all",
-            isDraggingOver && "border-primary border-dashed ring-2 ring-primary"
+            "rounded-md border p-2 space-y-2 bg-card transition-all cursor-pointer",
+            isDraggingOver && "border-primary border-dashed ring-2 ring-primary",
+            isDraggable && "opacity-50 shadow-lg"
         )}
     >
         <Collapsible open={!item.isCollapsed} onOpenChange={handleToggleCollapse}>
-        <div className="flex items-center justify-between">
+        <div 
+            className="flex items-center justify-between"
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
+            onPointerMove={handlePointerMove}
+        >
             <div className="flex items-center gap-3 flex-grow">
-            <div 
-              draggable
-              onDragStart={handleDragStart}
-              className="cursor-grab" 
-              aria-label="Drag to reorder"
-            >
-              <GripVertical className="h-5 w-5 text-muted-foreground" />
-            </div>
             <Checkbox
                 id={item.id}
                 checked={item.checked}
                 onCheckedChange={handleToggleChecked}
+                onClick={(e) => e.stopPropagation()} // Prevent click from bubbling to the div
                 className={cn("h-5 w-5", item.checked && "data-[state=checked]:bg-accent data-[state=checked]:border-accent-foreground")}
                 aria-label={`Mark item ${item.text} as complete`}
             />
-            <CollapsibleTrigger asChild>
-                <button className="flex items-center gap-2 text-left flex-grow">
-                <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
-                    {item.text}
-                </span>
-                {item.subItems.length > 0 && (
-                    <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 data-[state=open]:rotate-180" />
-                )}
+            <CollapsibleTrigger asChild ref={collapsibleTriggerRef}>
+                <button className="flex items-center gap-2 text-left flex-grow" tabIndex={-1}>
+                  <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
+                      {item.text}
+                  </span>
+                  {item.subItems.length > 0 && (
+                      <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 data-[state=open]:rotate-180" />
+                  )}
                 </button>
             </CollapsibleTrigger>
             </div>
