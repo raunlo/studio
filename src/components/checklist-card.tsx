@@ -37,10 +37,6 @@ export function ChecklistCard({
     }
   };
 
-  const progress = checklist.items.length > 0
-    ? (checklist.items.filter(item => item.checked).length / checklist.items.length) * 100
-    : 0;
-
   return (
     <>
       <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
@@ -51,10 +47,6 @@ export function ChecklistCard({
           </Button>
         </CardHeader>
         <CardContent className="pb-4">
-          <div className="w-full bg-muted rounded-full h-1.5 mb-4">
-              <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
-          </div>
-
           <div className="space-y-2">
               {checklist.items.map((item) => (
                   <ChecklistItemComponent
