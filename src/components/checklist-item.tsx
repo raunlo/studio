@@ -94,7 +94,7 @@ export function ChecklistItemComponent({
                       {item.quantity && <span className="text-xs text-muted-foreground ml-1.5"> (x{item.quantity})</span>}
                     </span>
                     {item.subItems.length > 0 && (
-                      <div className={cn("flex flex-wrap gap-x-2 text-xs text-muted-foreground pointer-events-none", item.isCollapsed && "italic")}>
+                      <div className={cn("flex flex-wrap gap-x-2 text-xs text-muted-foreground pointer-events-none", item.isCollapsed ? "italic" : "")}>
                         {item.subItems.map((sub, index) => (
                           <span key={sub.id} className={cn(sub.checked && "line-through")}>
                             {sub.text}{sub.quantity ? <span className="text-xs"> (x{sub.quantity})</span> : ''}{index < item.subItems.length - 1 ? ',' : ''}
