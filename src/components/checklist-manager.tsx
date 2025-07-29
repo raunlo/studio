@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { ChecklistCard } from "@/components/checklist-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
+import { PredefinedSubItem } from "@/lib/knowledge-base";
 
 const LOCAL_STORAGE_KEY = "nestedChecklists";
 
@@ -51,16 +52,18 @@ export function ChecklistManager() {
      setChecklists(checklists.map((cl) => (cl.id === id ? { ...cl, title } : cl)));
   };
 
-  const addItem = (checklistId: string, text: string, subItemTexts: string[]) => {
-    const newSubItems: SubItem[] = subItemTexts.map(subText => ({
+  const addItem = (checklistId: string, text: string, quantity: number | undefined, subItemTemplates: PredefinedSubItem[]) => {
+    const newSubItems: SubItem[] = subItemTemplates.map(subTpl => ({
       id: crypto.randomUUID(),
-      text: subText,
+      text: subTpl.text,
+      quantity: subTpl.quantity,
       checked: false,
     }));
 
     const newItem: ChecklistItem = {
       id: crypto.randomUUID(),
       text,
+      quantity,
       checked: false,
       isCollapsed: true,
       subItems: newSubItems,
@@ -86,8 +89,8 @@ export function ChecklistManager() {
     }));
   };
   
-  const addSubItem = (checklistId: string, itemId: string, text: string) => {
-    const newSubItem: SubItem = { id: crypto.randomUUID(), text, checked: false };
+  const addSubItem = (checklistId: string, itemId: string, text: string, quantity: number | undefined) => {
+    const newSubItem: SubItem = { id: crypto.randomUUID(), text, quantity, checked: false };
     setChecklists(checklists.map(cl => {
         if (cl.id !== checklistId) return cl;
         const updatedItems = cl.items.map(item => {

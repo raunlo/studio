@@ -10,17 +10,17 @@ import { ChecklistItemComponent } from "@/components/checklist-item";
 import { AddItemModal } from "@/components/add-item-modal";
 import { Droppable } from "@hello-pangea/dnd";
 import { AddItemForm } from "@/components/add-item-form";
-import { PredefinedChecklistItem } from "@/lib/knowledge-base";
+import { PredefinedChecklistItem, PredefinedSubItem } from "@/lib/knowledge-base";
 
 
 type ChecklistCardProps = {
   checklist: Checklist;
   onDelete: (id: string) => void;
   onUpdateTitle: (id: string, title: string) => void;
-  onAddItem: (checklistId: string, text: string, subItems: string[]) => void;
+  onAddItem: (checklistId: string, text: string, quantity: number | undefined, subItems: PredefinedSubItem[]) => void;
   onDeleteItem: (checklistId: string, itemId: string) => void;
   onUpdateItem: (checklistId: string, item: ChecklistItem) => void;
-  onAddSubItem: (checklistId: string, itemId: string, text: string) => void;
+  onAddSubItem: (checklistId: string, itemId: string, text: string, quantity: number | undefined) => void;
   onDeleteSubItem: (checklistId: string, itemId: string, subItemId: string) => void;
   onUpdateSubItem: (checklistId: string, itemId: string, subItem: SubItem) => void;
 };
@@ -34,22 +34,25 @@ export function ChecklistCard({
 }: ChecklistCardProps) {
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [itemText, setItemText] = useState("");
-  const [subItems, setSubItems] = useState<string[]>([]);
+  const [itemQuantity, setItemQuantity] = useState<number | undefined>();
+  const [subItems, setSubItems] = useState<PredefinedSubItem[]>([]);
 
-  const handleAddItem = (itemText: string, subItems: string[]) => {
+  const handleAddItem = (itemText: string, quantity: number | undefined, subItems: PredefinedSubItem[]) => {
     if (itemText.trim()) {
-        onAddItem(checklist.id, itemText.trim(), subItems);
+        onAddItem(checklist.id, itemText.trim(), quantity, subItems);
     }
   };
 
   const handleFormSubmit = (text: string) => {
     setItemText(text);
+    setItemQuantity(undefined);
     setSubItems([]);
     setIsAddItemModalOpen(true);
   };
 
   const handleTemplateSelect = (item: PredefinedChecklistItem) => {
     setItemText(item.text);
+    setItemQuantity(item.quantity);
     setSubItems(item.subItems);
     setIsAddItemModalOpen(true);
   }
@@ -99,6 +102,7 @@ export function ChecklistCard({
         onClose={() => setIsAddItemModalOpen(false)}
         onAddItem={handleAddItem}
         initialText={itemText}
+        initialQuantity={itemQuantity}
         initialSubItems={subItems}
       />
     </>

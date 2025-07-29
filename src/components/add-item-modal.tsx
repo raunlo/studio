@@ -6,34 +6,54 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { X, Plus } from "lucide-react";
+import { PredefinedSubItem } from "@/lib/knowledge-base";
+
+type SubItemState = {
+    text: string;
+    quantity: string;
+}
 
 type AddItemModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onAddItem: (itemText: string, subItems: string[]) => void;
+  onAddItem: (itemText: string, quantity: number | undefined, subItems: PredefinedSubItem[]) => void;
   initialText?: string;
-  initialSubItems?: string[];
+  initialQuantity?: number;
+  initialSubItems?: PredefinedSubItem[];
 };
 
-export function AddItemModal({ isOpen, onClose, onAddItem, initialText = "", initialSubItems = [""] }: AddItemModalProps) {
+export function AddItemModal({ 
+    isOpen, 
+    onClose, 
+    onAddItem, 
+    initialText = "", 
+    initialQuantity, 
+    initialSubItems = [] 
+}: AddItemModalProps) {
   const [itemText, setItemText] = useState(initialText);
-  const [subItems, setSubItems] = useState<string[]>(initialSubItems);
+  const [quantity, setQuantity] = useState(initialQuantity?.toString() ?? "");
+  const [subItems, setSubItems] = useState<SubItemState[]>([]);
 
   useEffect(() => {
     if (isOpen) {
       setItemText(initialText);
-      setSubItems(initialSubItems.length > 0 ? initialSubItems : [""]);
+      setQuantity(initialQuantity?.toString() ?? "");
+      const formattedSubItems = initialSubItems.map(si => ({
+          text: si.text,
+          quantity: si.quantity?.toString() ?? ""
+      }));
+      setSubItems(formattedSubItems.length > 0 ? formattedSubItems : [{ text: "", quantity: "" }]);
     }
-  }, [isOpen, initialText, initialSubItems]);
+  }, [isOpen, initialText, initialQuantity, initialSubItems]);
 
-  const handleSubItemChange = (index: number, value: string) => {
+  const handleSubItemChange = (index: number, field: 'text' | 'quantity', value: string) => {
     const newSubItems = [...subItems];
-    newSubItems[index] = value;
+    newSubItems[index][field] = value;
     setSubItems(newSubItems);
   };
 
   const addSubItemInput = () => {
-    setSubItems([...subItems, ""]);
+    setSubItems([...subItems, { text: "", quantity: "" }]);
   };
 
   const removeSubItemInput = (index: number) => {
@@ -41,34 +61,37 @@ export function AddItemModal({ isOpen, onClose, onAddItem, initialText = "", ini
       const newSubItems = subItems.filter((_, i) => i !== index);
       setSubItems(newSubItems);
     } else {
-      setSubItems([""]);
+      setSubItems([{ text: "", quantity: "" }]);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (itemText.trim()) {
-      const finalSubItems = subItems.map(s => s.trim()).filter(s => s !== "");
-      onAddItem(itemText.trim(), finalSubItems);
+      const finalSubItems = subItems
+        .map(s => ({ text: s.text.trim(), quantity: s.quantity ? parseInt(s.quantity) : undefined }))
+        .filter(s => s.text !== "");
+      onAddItem(itemText.trim(), quantity ? parseInt(quantity) : undefined, finalSubItems);
       handleClose();
     }
   };
   
   const handleClose = () => {
     setItemText("");
-    setSubItems([""]);
+    setQuantity("");
+    setSubItems([{ text: "", quantity: "" }]);
     onClose();
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>Add New Item</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
+            <div className="grid grid-cols-6 items-center gap-4">
               <Input
                 id="name"
                 value={itemText}
@@ -77,22 +100,38 @@ export function AddItemModal({ isOpen, onClose, onAddItem, initialText = "", ini
                 className="col-span-4"
                 required
               />
+              <Input
+                id="quantity"
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="Qty."
+                className="col-span-2"
+              />
             </div>
-            <div className="col-span-4 space-y-2">
+            <div className="col-span-6 space-y-2">
               <label className="text-sm font-medium">Sub-items (optional)</label>
               {subItems.map((subItem, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <Input
-                    value={subItem}
-                    onChange={(e) => handleSubItemChange(index, e.target.value)}
+                    value={subItem.text}
+                    onChange={(e) => handleSubItemChange(index, 'text', e.target.value)}
                     placeholder={`Sub-item ${index + 1}`}
+                    className="flex-grow"
+                  />
+                  <Input
+                    type="number"
+                    value={subItem.quantity}
+                    onChange={(e) => handleSubItemChange(index, 'quantity', e.target.value)}
+                    placeholder="Qty."
+                    className="w-20"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => removeSubItemInput(index)}
-                    className="h-9 w-9"
+                    className="h-9 w-9 shrink-0"
                     aria-label="Remove sub-item"
                   >
                     <X className="h-4 w-4" />

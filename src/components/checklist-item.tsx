@@ -17,7 +17,7 @@ type ChecklistItemProps = {
   checklistId: string;
   onDeleteItem: (checklistId: string, itemId: string) => void;
   onUpdateItem: (checklistId: string, item: ChecklistItem) => void;
-  onAddSubItem: (checklistId: string, itemId: string, text: string) => void;
+  onAddSubItem: (checklistId: string, itemId: string, text: string, quantity: number | undefined) => void;
   onDeleteSubItem: (checklistId: string, itemId: string, subItemId: string) => void;
   onUpdateSubItem: (checklistId: string, itemId: string, subItem: SubItem) => void;
 };
@@ -33,6 +33,7 @@ export function ChecklistItemComponent({
   onUpdateSubItem,
 }: ChecklistItemProps) {
   const [newSubItemText, setNewSubItemText] = useState("");
+  const [newSubItemQuantity, setNewSubItemQuantity] = useState("");
 
   const handleToggleChecked = (checked: boolean) => {
     const updatedSubItems = item.subItems.map(sub => ({ ...sub, checked }));
@@ -46,8 +47,10 @@ export function ChecklistItemComponent({
   const handleAddSubItem = (e: React.FormEvent) => {
     e.preventDefault();
     if(newSubItemText.trim()) {
-        onAddSubItem(checklistId, item.id, newSubItemText.trim());
+        const quantity = newSubItemQuantity ? parseInt(newSubItemQuantity) : undefined;
+        onAddSubItem(checklistId, item.id, newSubItemText.trim(), quantity);
         setNewSubItemText("");
+        setNewSubItemQuantity("");
     }
   };
 
@@ -55,6 +58,8 @@ export function ChecklistItemComponent({
     const updatedSubItem = { ...subItem, checked };
     onUpdateSubItem(checklistId, item.id, updatedSubItem);
   }
+
+  const itemDisplay = item.quantity ? `${item.text} (x${item.quantity})` : item.text;
 
   return (
     <Draggable draggableId={item.id} index={index}>
@@ -81,13 +86,13 @@ export function ChecklistItemComponent({
               <CollapsibleTrigger asChild>
                 <div className="flex flex-col items-start gap-2 text-left flex-grow" {...provided.dragHandleProps}>
                   <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
-                    {item.text}
+                    {itemDisplay}
                   </span>
                   {item.subItems.length > 0 && (
                     <div className="flex flex-wrap gap-x-2 text-xs italic text-muted-foreground pointer-events-none">
                       {item.subItems.map((sub, index) => (
                         <span key={sub.id} className={cn(sub.checked && "line-through")}>
-                          {sub.text}{index < item.subItems.length - 1 ? ',' : ''}
+                          {sub.text}{sub.quantity ? ` (x${sub.quantity})` : ''}{index < item.subItems.length - 1 ? ',' : ''}
                         </span>
                       ))}
                     </div>
@@ -101,33 +106,43 @@ export function ChecklistItemComponent({
             </div>
             <CollapsibleContent>
               <div className="pl-8 pt-2 space-y-2">
-                {item.subItems.map((subItem) => (
-                  <div key={subItem.id} className="flex items-center justify-between group">
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        id={subItem.id}
-                        checked={subItem.checked}
-                        onCheckedChange={(checked) => handleToggleSubItemChecked(subItem, checked as boolean)}
-                        className="h-4 w-4"
-                        aria-label={`Mark sub-item ${subItem.text} as complete`}
-                      />
-                      <label htmlFor={subItem.id} className={cn("text-sm", subItem.checked && "line-through text-muted-foreground")}>
-                        {subItem.text}
-                      </label>
+                {item.subItems.map((subItem) => {
+                   const subItemDisplay = subItem.quantity ? `${subItem.text} (x${subItem.quantity})` : subItem.text;
+                   return (
+                    <div key={subItem.id} className="flex items-center justify-between group">
+                      <div className="flex items-center gap-3">
+                        <Checkbox
+                          id={subItem.id}
+                          checked={subItem.checked}
+                          onCheckedChange={(checked) => handleToggleSubItemChecked(subItem, checked as boolean)}
+                          className="h-4 w-4"
+                          aria-label={`Mark sub-item ${subItem.text} as complete`}
+                        />
+                        <label htmlFor={subItem.id} className={cn("text-sm", subItem.checked && "line-through text-muted-foreground")}>
+                          {subItemDisplay}
+                        </label>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => onDeleteSubItem(checklistId, item.id, subItem.id)} className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" aria-label="Delete sub-item">
+                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => onDeleteSubItem(checklistId, item.id, subItem.id)} className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" aria-label="Delete sub-item">
-                      <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                    </Button>
-                  </div>
-                ))}
+                   )
+                })}
                 <form onSubmit={handleAddSubItem} className="flex gap-2 pt-2">
                   <Input
                     value={newSubItemText}
                     onChange={(e) => setNewSubItemText(e.target.value)}
                     placeholder="Add a sub-item..."
-                    className="h-8 text-sm"
+                    className="h-8 text-sm flex-grow"
                   />
-                  <Button type="submit" variant="ghost" size="icon" className="h-8 w-8" aria-label="Add sub-item">
+                   <Input
+                    type="number"
+                    value={newSubItemQuantity}
+                    onChange={(e) => setNewSubItemQuantity(e.target.value)}
+                    placeholder="Qty."
+                    className="h-8 text-sm w-20"
+                  />
+                  <Button type="submit" variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Add sub-item">
                     <Plus className="h-4 w-4"/>
                   </Button>
                 </form>
