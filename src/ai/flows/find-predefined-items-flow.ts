@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow for finding predefined checklist items.
@@ -47,11 +48,10 @@ const systemPrompt = `You are an expert at searching and finding relevant items 
 You will be given a user's query and a list of available predefined checklist items.
 Your task is to find the most relevant items from the list that match the user's query.
 Return up to 3 relevant items. If no items are relevant, return an empty list.
+You must return objects with the 'key', 'text', and 'subItems' properties.
 
 Here are the available predefined checklist items:
-${getPredefinedItems()
-  .map((item) => `- ${item.text} (key: ${item.key})`)
-  .join('\n')}
+${JSON.stringify(getPredefinedItems(), null, 2)}
 `;
 
 const prompt = ai.definePrompt({
@@ -70,6 +70,7 @@ const findPredefinedItemsFlow = ai.defineFlow(
   },
   async (input) => {
     const {output} = await prompt(input);
-    return output!;
+    // If the model returns a null output, return an empty list of items.
+    return output || { items: [] };
   }
 );

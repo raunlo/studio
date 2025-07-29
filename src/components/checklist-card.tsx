@@ -55,8 +55,8 @@ export function ChecklistCard({
     setItemText(text);
     try {
       const result = await findPredefinedItems({ query: text });
-      if (result.items && result.items.length > 0) {
-        // We need to get the full predefined item from the key
+      if (result && result.items && result.items.length > 0) {
+        // We need to get the full predefined item from the key, as the AI might hallucinate sub-items
         const fullItems = result.items.map(item => getPredefinedItemByKey(item.key)).filter(Boolean) as PredefinedChecklistItem[];
         setFoundItems(fullItems);
         setIsSelectionModalOpen(true);
@@ -68,9 +68,9 @@ export function ChecklistCard({
     } catch (error) {
       console.error("Error finding predefined items:", error);
       toast({
-        title: "AI Error",
-        description: "Could not search for templates. Please try again.",
-        variant: "destructive",
+        title: "AI Search Failed",
+        description: "Could not search for templates. Opening a blank item instead.",
+        variant: "default",
       });
       // Fallback to regular add modal on error
       setSubItems([]);
@@ -141,14 +141,16 @@ export function ChecklistCard({
         initialSubItems={subItems}
       />
 
-      <AddItemSelectionModal
-        isOpen={isSelectionModalOpen}
-        onClose={() => setIsSelectionModalOpen(false)}
-        originalQuery={itemText}
-        foundItems={foundItems}
-        onSelect={handleTemplateSelect}
-        onSelectNone={handleSelectNone}
-      />
+      {foundItems.length > 0 && (
+        <AddItemSelectionModal
+          isOpen={isSelectionModalOpen}
+          onClose={() => setIsSelectionModalOpen(false)}
+          originalQuery={itemText}
+          foundItems={foundItems}
+          onSelect={handleTemplateSelect}
+          onSelectNone={handleSelectNone}
+        />
+      )}
     </>
   );
 }
