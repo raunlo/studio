@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ChecklistItemProps = {
@@ -130,27 +130,33 @@ export function ChecklistItemComponent({
     >
         <Collapsible open={!item.isCollapsed} onOpenChange={handleToggleCollapse}>
         <div 
-            className="flex items-center justify-between"
+            className="flex items-start justify-between"
             onPointerDown={handlePointerDown}
             onPointerUp={handlePointerUp}
             onPointerMove={handlePointerMove}
         >
-            <div className="flex items-center gap-3 flex-grow">
+            <div className="flex items-start gap-3 flex-grow">
             <Checkbox
                 id={item.id}
                 checked={item.checked}
                 onCheckedChange={handleToggleChecked}
-                onClick={(e) => e.stopPropagation()} // Prevent click from bubbling to the div
-                className={cn("h-5 w-5", item.checked && "data-[state=checked]:bg-accent data-[state=checked]:border-accent-foreground")}
+                onClick={(e) => e.stopPropagation()}
+                className={cn("h-5 w-5 mt-0.5", item.checked && "data-[state=checked]:bg-accent data-[state=checked]:border-accent-foreground")}
                 aria-label={`Mark item ${item.text} as complete`}
             />
             <CollapsibleTrigger asChild ref={collapsibleTriggerRef}>
-                <button className="flex items-center gap-2 text-left flex-grow" tabIndex={-1}>
+                <button className="flex flex-col items-start gap-2 text-left flex-grow" tabIndex={-1}>
                   <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
                       {item.text}
                   </span>
                   {item.subItems.length > 0 && (
-                      <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 data-[state=open]:rotate-180" />
+                    <div className="flex flex-wrap gap-x-2 text-xs italic text-muted-foreground">
+                      {item.subItems.map((sub, index) => (
+                        <span key={sub.id} className={cn(sub.checked && "line-through")}>
+                          {sub.text}{index < item.subItems.length - 1 ? ',' : ''}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </button>
             </CollapsibleTrigger>
