@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Draggable } from "@hello-pangea/dnd";
 
@@ -72,14 +72,7 @@ export function ChecklistItemComponent({
           ref={provided.innerRef}
           {...provided.draggableProps}
         >
-            <div className="flex items-start justify-between gap-2">
-                <div 
-                    {...provided.dragHandleProps} 
-                    className="flex items-center justify-center h-8 w-6 cursor-grab"
-                    aria-label="Drag to reorder"
-                >
-                    <GripVertical className="h-5 w-5 text-muted-foreground/50" />
-                </div>
+            <div className="flex items-start justify-between gap-3">
                 <Checkbox
                   id={item.id}
                   checked={item.checked}
@@ -88,7 +81,7 @@ export function ChecklistItemComponent({
                   aria-label={`Mark item ${item.text} as complete`}
                 />
               <CollapsibleTrigger asChild>
-                  <div className="flex flex-col items-start gap-2 text-left flex-grow cursor-pointer pt-0.5">
+                  <div className="flex flex-col items-start gap-2 text-left flex-grow cursor-pointer pt-0.5" {...provided.dragHandleProps}>
                     <span className={cn("flex-grow", item.checked && "line-through text-muted-foreground")}>
                       {item.text}
                       {item.quantity && <span className="text-xs text-muted-foreground ml-1.5"> (x{item.quantity})</span>}
