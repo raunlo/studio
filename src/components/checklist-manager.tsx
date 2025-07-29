@@ -12,37 +12,8 @@ const LOCAL_STORAGE_KEY = "nestedChecklists";
 const defaultChecklists: Checklist[] = [
   {
     id: 'cl-1',
-    title: "Project Phoenix Kick-off",
-    items: [
-      {
-        id: 'item-1-1',
-        text: "Finalize project scope",
-        checked: true,
-        isCollapsed: false,
-        subItems: [
-          { id: 'sub-1-1-1', text: "Review initial requirements", checked: true },
-          { id: 'sub-1-1-2', text: "Get stakeholder sign-off", checked: true },
-        ]
-      },
-      {
-        id: 'item-1-2',
-        text: "Assemble the project team",
-        checked: false,
-        isCollapsed: true,
-        subItems: [
-          { id: 'sub-1-2-1', text: "Identify key roles", checked: true },
-          { id: 'sub-1-2-2', text: "Interview candidates for backend dev", checked: false },
-          { id: 'sub-1-2-3', text: "Send out offer letters", checked: false },
-        ]
-      },
-       {
-        id: 'item-1-3',
-        text: "Setup development environment",
-        checked: false,
-        isCollapsed: true,
-        subItems: []
-      }
-    ]
+    title: "My Day",
+    items: []
   }
 ];
 
@@ -179,10 +150,8 @@ export function ChecklistManager() {
   if (isLoading) {
     return (
         <div className="space-y-8 max-w-2xl mx-auto">
-            <Skeleton className="h-10 w-full" />
             <div className="space-y-4">
                 <Skeleton className="h-48 w-full" />
-                <Skeleton className="h-32 w-full" />
             </div>
         </div>
     )
@@ -209,7 +178,7 @@ export function ChecklistManager() {
           {checklists.length === 0 && (
               <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg">
                   <h3 className="text-xl font-semibold text-muted-foreground">No checklists yet!</h3>
-                  <p className="text-muted-foreground mt-2">Create your first checklist above to get started.</p>
+                  <p className="text-muted-foreground mt-2">Create your first checklist to get started.</p>
               </div>
           )}
         </div>
