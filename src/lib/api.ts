@@ -5,7 +5,7 @@
  * API for managing checklists and their items.
  * OpenAPI spec version: 1.0.0
  */
-import { useSwr, SWRConfiguration, SWRResponse } from 'swr';
+import useSWR, { SWRConfiguration, SWRResponse } from 'swr';
 import useSWRMutation, {
   SWRMutationConfiguration,
   SWRMutationResponse,
@@ -35,7 +35,7 @@ type SecondParameter<T extends (...args: any) => any> = T extends (
  * @summary Get all checklists
  */
 export const getChecklists = (params?: GetChecklistsParams) => {
-  return customInstance<GetChecklists200>({
+  return customInstance<{checklists?: Checklist[]}>({
     url: `/checklists`,
     method: 'GET',
     params,
@@ -50,7 +50,7 @@ export const getGetChecklistsSWR = (
   const swrKey =
     `swr:/checklists` + (params ? JSON.stringify(params) : '');
   const swrFetcher = () => getChecklists(params);
-  const swrObj = useSwr(isEnabled ? swrKey : null, swrFetcher, options);
+  const swrObj = useSWR(isEnabled ? swrKey : null, swrFetcher, options);
   return swrObj;
 };
 
@@ -139,7 +139,7 @@ export const useCreateChecklist = <TError = unknown, TContext = unknown>(options
  */
 export const updateChecklistTitle = (
   checklistId: string,
-  updateChecklistTitleBody: UpdateChecklistTitleBody,
+  updateChecklistTitleBody: {title?: string},
 ) => {
   return customInstance<Checklist>({
     url: `/checklists/${checklistId}`,
@@ -151,7 +151,7 @@ export const updateChecklistTitle = (
 
 export const getUpdateChecklistTitleMutationFetcher = (
   checklistId: string,
-  updateChecklistTitleBody: UpdateChecklistTitleBody,
+  updateChecklistTitleBody: {title?: string},
 ) => {
   return () => updateChecklistTitle(checklistId, updateChecklistTitleBody);
 };
@@ -164,7 +164,7 @@ export const getUpdateChecklistTitleSWRMutation = <
     TError,
     {
       checklistId: string;
-      data: UpdateChecklistTitleBody;
+      data: {title?: string};
     },
     string,
     TContext
@@ -177,7 +177,7 @@ export const getUpdateChecklistTitleSWRMutation = <
     TError,
     {
       checklistId: string;
-      data: UpdateChecklistTitleBody;
+      data: {title?: string};
     },
     string,
     TContext
@@ -190,7 +190,7 @@ export const getUpdateChecklistTitleSWRMutation = <
       }: {
         arg: {
           checklistId: string;
-          data: UpdateChecklistTitleBody;
+          data: {title?: string};
         };
       },
     ) => {
@@ -212,7 +212,7 @@ export const useUpdateChecklistTitle = <
     TError,
     {
       checklistId: string;
-      data: UpdateChecklistTitleBody;
+      data: {title?: string};
     },
     string,
     TContext
@@ -550,7 +550,7 @@ export const useDeleteItem = <TError = unknown, TContext = unknown>(options?: {
 export const reorderItem = (
   checklistId: string,
   itemId: string,
-  reorderItemBody: ReorderItemBody,
+  reorderItemBody: {newPosition?: number},
 ) => {
   return customInstance<void>({
     url: `/checklists/${checklistId}/items/${itemId}/reorder`,
@@ -563,7 +563,7 @@ export const reorderItem = (
 export const getReorderItemMutationFetcher = (
   checklistId: string,
   itemId: string,
-  reorderItemBody: ReorderItemBody,
+  reorderItemBody: {newPosition?: number},
 ) => {
   return () => reorderItem(checklistId, itemId, reorderItemBody);
 };
@@ -577,7 +577,7 @@ export const getReorderItemSWRMutation = <
     {
       checklistId: string;
       itemId: string;
-      data: ReorderItemBody;
+      data: {newPosition?: number};
     },
     string,
     TContext
@@ -591,7 +591,7 @@ export const getReorderItemSWRMutation = <
     {
       checklistId: string;
       itemId: string;
-      data: ReorderItemBody;
+      data: {newPosition?: number};
     },
     string,
     TContext
@@ -605,7 +605,7 @@ export const getReorderItemSWRMutation = <
         arg: {
           checklistId: string;
           itemId: string;
-          data: ReorderItemBody;
+          data: {newPosition?: number};
         };
       },
     ) => {
@@ -625,7 +625,7 @@ export const useReorderItem = <TError = unknown, TContext = unknown>(options?: {
     {
       checklistId: string;
       itemId: string;
-      data: ReorderItemBody;
+      data: {newPosition?: number};
     },
     string,
     TContext
@@ -934,3 +934,6 @@ export type UpdateChecklistTitleBody = {
 export type ReorderItemBody = {
   newPosition?: number;
 };
+
+    
+    
