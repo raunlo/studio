@@ -74,7 +74,7 @@ export function ChecklistItemComponent({
                 id={item.id}
                 checked={item.checked}
                 onCheckedChange={handleToggleChecked}
-                className={cn("h-5 w-5 mt-0.5", item.checked && "data-[state=checked]:bg-accent data-[state=checked]:border-accent-foreground")}
+                className="h-5 w-5 mt-0.5"
                 aria-label={`Mark item ${item.text} as complete`}
               />
 
@@ -108,7 +108,7 @@ export function ChecklistItemComponent({
                         id={subItem.id}
                         checked={subItem.checked}
                         onCheckedChange={(checked) => handleToggleSubItemChecked(subItem, checked as boolean)}
-                        className={cn("h-4 w-4", subItem.checked && "data-[state=checked]:bg-accent data-[state=checked]:border-accent-foreground")}
+                        className="h-4 w-4"
                         aria-label={`Mark sub-item ${subItem.text} as complete`}
                       />
                       <label htmlFor={subItem.id} className={cn("text-sm", subItem.checked && "line-through text-muted-foreground")}>
