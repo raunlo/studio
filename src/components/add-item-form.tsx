@@ -23,20 +23,22 @@ export function AddItemForm({ onFormSubmit, isProcessing }: AddItemFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form onSubmit={handleSubmit} className="flex gap-2 w-full">
       <Input
         value={itemText}
         onChange={(e) => setItemText(e.target.value)}
-        placeholder="Add an item or search templates..."
-        className="h-9"
+        placeholder="Add item or search templates..."
+        className="h-9 flex-grow"
         disabled={isProcessing}
       />
       <Button 
         type="submit" 
         size="sm"
+        className="h-9"
         disabled={isProcessing || !itemText.trim()}
+        aria-label="Add item"
       >
-        <Plus className="mr-2 h-4 w-4" /> Add
+        <Plus className="h-4 w-4" />
       </Button>
     </form>
   );
