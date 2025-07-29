@@ -10,10 +10,7 @@ import { ChecklistItemComponent } from "@/components/checklist-item";
 import { AddItemModal } from "@/components/add-item-modal";
 import { Droppable } from "@hello-pangea/dnd";
 import { AddItemForm } from "@/components/add-item-form";
-import { findPredefinedItems } from "@/ai/flows/find-predefined-items-flow";
-import { PredefinedChecklistItem, getPredefinedItemByKey } from "@/lib/knowledge-base";
-import { AddItemSelectionModal } from "./add-item-selection-modal";
-import { useToast } from "@/hooks/use-toast";
+import { PredefinedChecklistItem } from "@/lib/knowledge-base";
 
 
 type ChecklistCardProps = {
@@ -36,13 +33,8 @@ export function ChecklistCard({
   ...itemHandlers
 }: ChecklistCardProps) {
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
-  const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [itemText, setItemText] = useState("");
   const [subItems, setSubItems] = useState<string[]>([]);
-  const [foundItems, setFoundItems] = useState<PredefinedChecklistItem[]>([]);
-  const { toast } = useToast();
-
 
   const handleAddItem = (itemText: string, subItems: string[]) => {
     if (itemText.trim()) {
@@ -50,49 +42,18 @@ export function ChecklistCard({
     }
   };
 
-  const handleFormSubmit = async (text: string) => {
-    setIsProcessing(true);
+  const handleFormSubmit = (text: string) => {
     setItemText(text);
-    try {
-      const result = await findPredefinedItems({ query: text });
-      if (result && result.items && result.items.length > 0) {
-        // We need to get the full predefined item from the key, as the AI might hallucinate sub-items
-        const fullItems = result.items.map(item => getPredefinedItemByKey(item.key)).filter(Boolean) as PredefinedChecklistItem[];
-        setFoundItems(fullItems);
-        setIsSelectionModalOpen(true);
-      } else {
-        // No matches, open regular add modal
-        setSubItems([]);
-        setIsAddItemModalOpen(true);
-      }
-    } catch (error) {
-      console.error("Error finding predefined items:", error);
-      toast({
-        title: "AI Search Failed",
-        description: "Could not search for templates. Opening a blank item instead.",
-        variant: "default",
-      });
-      // Fallback to regular add modal on error
-      setSubItems([]);
-      setIsAddItemModalOpen(true);
-    } finally {
-      setIsProcessing(false);
-    }
+    setSubItems([]);
+    setIsAddItemModalOpen(true);
   };
 
   const handleTemplateSelect = (item: PredefinedChecklistItem) => {
     setItemText(item.text);
     setSubItems(item.subItems);
-    setIsSelectionModalOpen(false);
     setIsAddItemModalOpen(true);
   }
 
-  const handleSelectNone = () => {
-     // ItemText is already set from the form
-    setSubItems([]);
-    setIsSelectionModalOpen(false);
-    setIsAddItemModalOpen(true);
-  }
 
   return (
     <>
@@ -129,7 +90,7 @@ export function ChecklistCard({
           </Droppable>
         </CardContent>
         <CardFooter className="pt-4 border-t">
-           <AddItemForm onFormSubmit={handleFormSubmit} isProcessing={isProcessing} />
+           <AddItemForm onFormSubmit={handleFormSubmit} onTemplateSelect={handleTemplateSelect} />
         </CardFooter>
       </Card>
 
@@ -140,17 +101,6 @@ export function ChecklistCard({
         initialText={itemText}
         initialSubItems={subItems}
       />
-
-      {foundItems.length > 0 && (
-        <AddItemSelectionModal
-          isOpen={isSelectionModalOpen}
-          onClose={() => setIsSelectionModalOpen(false)}
-          originalQuery={itemText}
-          foundItems={foundItems}
-          onSelect={handleTemplateSelect}
-          onSelectNone={handleSelectNone}
-        />
-      )}
     </>
   );
 }
