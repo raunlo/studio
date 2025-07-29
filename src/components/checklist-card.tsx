@@ -18,6 +18,7 @@ type ChecklistCardProps = {
   onAddSubItem: (checklistId: string, itemId: string, text: string) => void;
   onDeleteSubItem: (checklistId: string, itemId: string, subItemId: string) => void;
   onUpdateSubItem: (checklistId: string, itemId: string, subItem: SubItem) => void;
+  onReorderItems: (checklistId: string, draggedItemId: string, targetItemId: string) => void;
 };
 
 export function ChecklistCard({
@@ -25,6 +26,7 @@ export function ChecklistCard({
   onDelete,
   onUpdateTitle,
   onAddItem,
+  onReorderItems,
   ...itemHandlers
 }: ChecklistCardProps) {
   const [newItemText, setNewItemText] = useState("");
@@ -60,6 +62,7 @@ export function ChecklistCard({
                     key={item.id}
                     item={item}
                     checklistId={checklist.id}
+                    onReorder={(draggedId, targetId) => onReorderItems(checklist.id, draggedId, targetId)}
                     {...itemHandlers}
                 />
             ))}

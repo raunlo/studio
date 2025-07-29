@@ -196,6 +196,23 @@ export function ChecklistManager() {
         return { ...cl, items: updatedItems };
     }));
   };
+  
+  const reorderItems = (checklistId: string, draggedItemId: string, targetItemId: string) => {
+    setChecklists(checklists.map(cl => {
+      if (cl.id !== checklistId) return cl;
+  
+      const items = [...cl.items];
+      const draggedIndex = items.findIndex(item => item.id === draggedItemId);
+      const targetIndex = items.findIndex(item => item.id === targetItemId);
+  
+      if (draggedIndex === -1 || targetIndex === -1) return cl;
+  
+      const [draggedItem] = items.splice(draggedIndex, 1);
+      items.splice(targetIndex, 0, draggedItem);
+  
+      return { ...cl, items };
+    }));
+  };
 
 
   if (isLoading) {
@@ -254,6 +271,7 @@ export function ChecklistManager() {
             onAddSubItem={addSubItem}
             onDeleteSubItem={deleteSubItem}
             onUpdateSubItem={updateSubItem}
+            onReorderItems={reorderItems}
           />
         ))}
         {checklists.length === 0 && !isSuggesting && (
