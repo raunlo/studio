@@ -38,7 +38,7 @@ export function ChecklistManager() {
   const { toast } = useToast();
 
   const checklists: Checklist[] = (data as any)?.map((cl: any) => ({
-    checklistId: cl.id,
+    checklistId: cl.id.toString(),
     title: cl.name,
     items: (cl.items?.sort((a: Item, b: Item) => (a.position || 0) - (b.position || 0)) || []) as Item[]
   })) || [];
@@ -65,7 +65,7 @@ export function ChecklistManager() {
 
   const deleteChecklist = async (id: string) => {
     const originalChecklists = data;
-    const updatedChecklistsData = (data as any)?.filter((cl: any) => cl.id !== id);
+    const updatedChecklistsData = (data as any)?.filter((cl: any) => cl.id.toString() !== id);
     mutate(updatedChecklistsData, { revalidate: false });
 
     try {
@@ -80,7 +80,7 @@ export function ChecklistManager() {
     try {
       await updateChecklistTitleTrigger({ checklistId: id, data: { title } }, {
         optimisticData: (currentData: any) => {
-          const updatedChecklists = currentData.map((cl: any) => (cl.id === id ? { ...cl, name: title } : cl));
+          const updatedChecklists = currentData.map((cl: any) => (cl.id.toString() === id ? { ...cl, name: title } : cl));
           return updatedChecklists;
         },
         revalidate: false,
@@ -105,7 +105,7 @@ export function ChecklistManager() {
       await deleteItemTrigger({ checklistId, itemId }, {
         optimisticData: (currentData: any) => {
           const updatedChecklists = currentData.map((cl: any) => {
-              if (cl.id !== checklistId) return cl;
+              if (cl.id.toString() !== checklistId) return cl;
               return { ...cl, items: cl.items.filter((item: any) => item.itemId !== itemId) };
           });
           return updatedChecklists;
@@ -123,7 +123,7 @@ export function ChecklistManager() {
         await updateItemTrigger({ checklistId, itemId: itemId!, data: updateData as UpdateItem }, {
           optimisticData: (currentData: any) => {
             const updatedChecklists = currentData.map((cl: any) => {
-              if (cl.id !== checklistId) return cl;
+              if (cl.id.toString() !== checklistId) return cl;
               const newItems = cl.items.map((item: any) => item.itemId === updatedItem.itemId ? updatedItem : item)
               return { ...cl, items: newItems };
             });
@@ -150,7 +150,7 @@ export function ChecklistManager() {
         await deleteSubItemTrigger({ checklistId, itemId, subItemId }, {
           optimisticData: (currentData: any) => {
             const updatedChecklists = currentData.map((cl: any) => {
-              if (cl.id !== checklistId) return cl;
+              if (cl.id.toString() !== checklistId) return cl;
               const updatedItems = cl.items.map((item: any) => {
                   if (item.itemId !== itemId) return item;
                   const updatedSubItems = item.subItems.filter((sub: any) => sub.subItemId !== subItemId);
@@ -174,7 +174,7 @@ export function ChecklistManager() {
         await updateSubItemTrigger({ checklistId, itemId, subItemId: subItemId!, data: updateData }, {
           optimisticData: (currentData: any) => {
             const updatedChecklists = currentData.map((cl: any) => {
-              if (cl.id !== checklistId) return cl;
+              if (cl.id.toString() !== checklistId) return cl;
               const updatedItems = cl.items.map((item: any) => {
                   if (item.itemId !== itemId) return item;
                   const updatedSubItems = item.subItems.map((sub: any) => sub.subItemId === updatedSubItem.subItemId ? updatedSubItem : sub);
@@ -290,3 +290,5 @@ export function ChecklistManager() {
     </div>
   );
 }
+
+  
