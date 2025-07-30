@@ -43,23 +43,31 @@ async function handler(req: NextRequest) {
       const token = headers['Authorization']?.split(' ')[1];
       if (token) {
         const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-        console.log('Decoded Token Payload:', JSON.stringify(payload, null, 2));
+        // console.log('Decoded Token Payload:', JSON.stringify(payload, null, 2));
       } else {
-        console.log('No Authorization token found in generated headers.');
+        // console.log('No Authorization token found in generated headers.');
       }
     } catch (e: any) {
-        console.error('Failed to decode token for logging:', e.message);
+        // console.error('Failed to decode token for logging:', e.message);
     }
     
     // We explicitly buffer the body to handle different request types (e.g., streaming)
     // and to avoid issues with the underlying http libraries.
     const bodyBuffer = await req.arrayBuffer();
 
+    const requestHeaders = new Headers(req.headers);
+    // Ensure Content-Type is set for methods that have a body, as it can get lost.
+    if (['POST', 'PUT', 'PATCH'].includes(req.method) && bodyBuffer.byteLength > 0) {
+      if (!requestHeaders.has('Content-Type')) {
+        requestHeaders.set('Content-Type', 'application/json');
+      }
+    }
+
     const res = await authedClient.request({
       url: targetUrl,
       method: req.method,
       headers: {
-        ...req.headers,
+        ...Object.fromEntries(requestHeaders.entries()),
         // The host header must match the target service's URL for routing.
         host: new URL(targetUrl).host,
       },
