@@ -36,7 +36,7 @@ export function ChecklistManager() {
     revalidateIfStale: false,
   });
   const { toast } = useToast();
-
+  
   const checklists: Checklist[] = (data as any)?.map((cl: any) => ({
     checklistId: cl.id.toString(),
     title: cl.name,
@@ -78,7 +78,7 @@ export function ChecklistManager() {
   
   const updateChecklistTitle = async (id: string, title: string) => {
     try {
-      await updateChecklistTitleTrigger({ checklistId: id, data: { name: title } }, {
+      await updateChecklistTitleTrigger({ checklistId: id, data: { title: title } }, {
         optimisticData: (currentData: any) => {
           const updatedChecklists = currentData.map((cl: any) => (cl.id.toString() === id ? { ...cl, name: title } : cl));
           return updatedChecklists;
@@ -290,3 +290,5 @@ export function ChecklistManager() {
     </div>
   );
 }
+
+    
