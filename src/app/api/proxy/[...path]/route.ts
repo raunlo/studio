@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleAuth } from 'google-auth-library';
 import type { IdTokenClient } from 'google-auth-library/build/src/auth/idtokenclient';
-import https from 'https';
 
 const privateApiBaseUrl = process.env.PRIVATE_API_BASE_URL;
 
@@ -12,13 +11,6 @@ if (!privateApiBaseUrl) {
 
 const auth = new GoogleAuth();
 let client: IdTokenClient | null = null;
-
-// This agent is configured to trust the default CAs, but can be configured to
-// ignore self-signed certs for debugging. In a real production environment, you
-// would not want to set rejectUnauthorized to false.
-const agent = new https.Agent({
-  rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== '0',
-});
 
 async function getAuthenticatedClient() {
   if (client) {
@@ -44,6 +36,20 @@ async function handler(req: NextRequest) {
     const targetUrl = `${privateApiBaseUrl}${requestPath}${incomingUrl.search}`;
 
     console.log(`Proxying request to: ${targetUrl}`);
+
+    // Log the token for debugging
+    try {
+      const headers = await authedClient.getRequestHeaders(targetUrl);
+      const token = headers['Authorization']?.split(' ')[1];
+      if (token) {
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        console.log('Decoded Token Payload:', JSON.stringify(payload, null, 2));
+      } else {
+        console.log('No Authorization token found in generated headers.');
+      }
+    } catch (e: any) {
+        console.error('Failed to decode token for logging:', e.message);
+    }
     
     // We explicitly buffer the body to handle different request types (e.g., streaming)
     // and to avoid issues with the underlying http libraries.
@@ -59,7 +65,6 @@ async function handler(req: NextRequest) {
       },
       body: bodyBuffer.byteLength > 0 ? Buffer.from(bodyBuffer) : undefined,
       responseType: 'stream', // Important for handling different content types
-      httpsAgent: agent, // Use our configured agent
     });
     
     // Type assertion to access properties on the response
