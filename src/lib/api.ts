@@ -36,7 +36,7 @@ type SecondParameter<T extends (...args: any) => any> = T extends (
  */
 export const getChecklists = (params?: GetChecklistsParams) => {
   return customInstance<{checklists?: Checklist[]}>({
-    url: `/checklists`,
+    url: `/api/v1/checklists`,
     method: 'GET',
     params,
   });
@@ -48,7 +48,7 @@ export const getGetChecklistsSWR = (
 ) => {
   const isEnabled = options?.isEnabled !== false;
   const swrKey =
-    `swr:/checklists` + (params ? JSON.stringify(params) : '');
+    `swr:/api/v1/checklists` + (params ? JSON.stringify(params) : '');
   const swrFetcher = () => getChecklists(params);
   const swrObj = useSWR(isEnabled ? swrKey : null, swrFetcher, options);
   return swrObj;
@@ -70,7 +70,7 @@ export const useGetChecklists = (
  */
 export const createChecklist = (createChecklist: CreateChecklist) => {
   return customInstance<Checklist>({
-    url: `/checklists`,
+    url: `/api/v1/checklists`,
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     data: createChecklist,
@@ -103,7 +103,7 @@ export const getCreateChecklistSWRMutation = <
     CreateChecklist,
     TContext
   >(
-    'swr:/checklists',
+    'swr:/api/v1/checklists',
     (
       _key: string,
       {
@@ -142,7 +142,7 @@ export const updateChecklistTitle = (
   updateChecklistTitleBody: {title?: string},
 ) => {
   return customInstance<Checklist>({
-    url: `/checklists/${checklistId}`,
+    url: `/api/v1/checklists/${checklistId}`,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     data: updateChecklistTitleBody,
@@ -182,7 +182,7 @@ export const getUpdateChecklistTitleSWRMutation = <
     string,
     TContext
   >(
-    (key) => `swr:/checklists/${key.checklistId}`,
+    (key) => `swr:/api/v1/checklists/${key.checklistId}`,
     (
       _key: string,
       {
@@ -228,7 +228,7 @@ export const useUpdateChecklistTitle = <
  */
 export const deleteChecklist = (checklistId: string) => {
   return customInstance<void>({
-    url: `/checklists/${checklistId}`,
+    url: `/api/v1/checklists/${checklistId}`,
     method: 'DELETE',
   });
 };
@@ -261,7 +261,7 @@ export const getDeleteChecklistSWRMutation = <
     string,
     TContext
   >(
-    (key) => `swr:/checklists/${key.checklistId}`,
+    (key) => `swr:/api/v1/checklists/${key.checklistId}`,
     (
       _key: string,
       {
@@ -302,7 +302,7 @@ export const useDeleteChecklist = <TError = unknown, TContext = unknown>(options
  */
 export const addItem = (checklistId: string, createItem: CreateItem) => {
   return customInstance<Item>({
-    url: `/checklists/${checklistId}/items`,
+    url: `/api/v1/checklists/${checklistId}/items`,
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     data: createItem,
@@ -339,7 +339,7 @@ export const getAddItemSWRMutation = <TError = unknown, TContext = unknown>(opti
     string,
     TContext
   >(
-    (key) => `swr:/checklists/${key.checklistId}/items`,
+    (key) => `swr:/api/v1/checklists/${key.checklistId}/items`,
     (
       _key: string,
       {
@@ -386,7 +386,7 @@ export const updateItem = (
   updateItem: UpdateItem,
 ) => {
   return customInstance<Item>({
-    url: `/checklists/${checklistId}/items/${itemId}`,
+    url: `/api/v1/checklists/${checklistId}/items/${itemId}`,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     data: updateItem,
@@ -426,7 +426,7 @@ export const getUpdateItemSWRMutation = <TError = unknown, TContext = unknown>(o
     string,
     TContext
   >(
-    (key) => `swr:/checklists/${key.checklistId}/items/${key.itemId}`,
+    (key) => `swr:/api/v1/checklists/${key.checklistId}/items/${key.itemId}`,
     (
       _key: string,
       {
@@ -471,7 +471,7 @@ export const useUpdateItem = <TError = unknown, TContext = unknown>(options?: {
  */
 export const deleteItem = (checklistId: string, itemId: string) => {
   return customInstance<void>({
-    url: `/checklists/${checklistId}/items/${itemId}`,
+    url: `/api/v1/checklists/${checklistId}/items/${itemId}`,
     method: 'DELETE',
   });
 };
@@ -506,7 +506,7 @@ export const getDeleteItemSWRMutation = <TError = unknown, TContext = unknown>(o
     string,
     TContext
   >(
-    (key) => `swr:/checklists/${key.checklistId}/items/${key.itemId}`,
+    (key) => `swr:/api/v1/checklists/${key.checklistId}/items/${key.itemId}`,
     (
       _key: string,
       {
@@ -553,7 +553,7 @@ export const reorderItem = (
   reorderItemBody: {newPosition?: number},
 ) => {
   return customInstance<void>({
-    url: `/checklists/${checklistId}/items/${itemId}/reorder`,
+    url: `/api/v1/checklists/${checklistId}/items/${itemId}/reorder`,
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     data: reorderItemBody,
@@ -596,7 +596,8 @@ export const getReorderItemSWRMutation = <
     string,
     TContext
   >(
-    (key) => `swr:/checklists/${key.checklistId}/items/${key.itemId}/reorder`,
+    (key) =>
+      `swr:/api/v1/checklists/${key.checklistId}/items/${key.itemId}/reorder`,
     (
       _key: string,
       {
@@ -645,7 +646,7 @@ export const addSubItem = (
   createSubItem: CreateSubItem,
 ) => {
   return customInstance<SubItem>({
-    url: `/checklists/${checklistId}/items/${itemId}/subitems`,
+    url: `/api/v1/checklists/${checklistId}/items/${itemId}/subitems`,
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     data: createSubItem,
@@ -685,7 +686,8 @@ export const getAddSubItemSWRMutation = <TError = unknown, TContext = unknown>(o
     string,
     TContext
   >(
-    (key) => `swr:/checklists/${key.checklistId}/items/${key.itemId}/subitems`,
+    (key) =>
+      `swr:/api/v1/checklists/${key.checklistId}/items/${key.itemId}/subitems`,
     (
       _key: string,
       {
@@ -735,7 +737,7 @@ export const updateSubItem = (
   updateSubItem: UpdateSubItem,
 ) => {
   return customInstance<SubItem>({
-    url: `/checklists/${checklistId}/items/${itemId}/subitems/${subItemId}`,
+    url: `/api/v1/checklists/${checklistId}/items/${itemId}/subitems/${subItemId}`,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     data: updateSubItem,
@@ -782,7 +784,7 @@ export const getUpdateSubItemSWRMutation = <
     TContext
   >(
     (key) =>
-      `swr:/checklists/${key.checklistId}/items/${key.itemId}/subitems/${key.subItemId}`,
+      `swr:/api/v1/checklists/${key.checklistId}/items/${key.itemId}/subitems/${key.subItemId}`,
     (
       _key: string,
       {
@@ -838,7 +840,7 @@ export const deleteSubItem = (
   subItemId: string,
 ) => {
   return customInstance<void>({
-    url: `/checklists/${checklistId}/items/${itemId}/subitems/${subItemId}`,
+    url: `/api/v1/checklists/${checklistId}/items/${itemId}/subitems/${subItemId}`,
     method: 'DELETE',
   });
 };
@@ -880,7 +882,7 @@ export const getDeleteSubItemSWRMutation = <
     TContext
   >(
     (key) =>
-      `swr:/checklists/${key.checklistId}/items/${key.itemId}/subitems/${key.subItemId}`,
+      `swr:/api/v1/checklists/${key.checklistId}/items/${key.itemId}/subitems/${key.subItemId}`,
     (
       _key: string,
       {
@@ -934,6 +936,3 @@ export type UpdateChecklistTitleBody = {
 export type ReorderItemBody = {
   newPosition?: number;
 };
-
-    
-    

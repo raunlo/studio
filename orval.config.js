@@ -13,6 +13,7 @@ module.exports = {
           name: 'customInstance',
         },
       },
+      prependServices: true,
     },
     hooks: {
       afterAllFilesWrite: 'prettier --write',
