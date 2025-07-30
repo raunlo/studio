@@ -13,8 +13,9 @@ if (!privateApiBaseUrl) {
 const auth = new GoogleAuth();
 let client: IdTokenClient | null = null;
 
-// Create an agent that can be configured to ignore self-signed certs for debugging.
-// In a real production environment, you would not want to set rejectUnauthorized to false.
+// This agent is configured to trust the default CAs, but can be configured to
+// ignore self-signed certs for debugging. In a real production environment, you
+// would not want to set rejectUnauthorized to false.
 const agent = new https.Agent({
   rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== '0',
 });
@@ -45,17 +46,19 @@ async function handler(req: NextRequest) {
     console.log(`Proxying request to: ${targetUrl}`);
     
     // We explicitly buffer the body to handle different request types (e.g., streaming)
-    const bodyBuffer = await req.text();
+    // and to avoid issues with the underlying http libraries.
+    const bodyBuffer = await req.arrayBuffer();
 
     const res = await authedClient.request({
       url: targetUrl,
       method: req.method,
       headers: {
         ...req.headers,
-        // The host header must match the target service's URL
+        // The host header must match the target service's URL for routing.
         host: new URL(targetUrl).host,
       },
-      body: bodyBuffer || undefined,
+      body: bodyBuffer.byteLength > 0 ? Buffer.from(bodyBuffer) : undefined,
+      responseType: 'stream', // Important for handling different content types
       httpsAgent: agent, // Use our configured agent
     });
     
