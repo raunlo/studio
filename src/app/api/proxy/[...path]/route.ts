@@ -18,7 +18,6 @@ async function getAuthenticatedClient() {
   }
   try {
     console.log(`Authenticating for audience: ${privateApiBaseUrl}`);
-    // Create an authenticated client with the target audience
     client = await auth.getIdTokenClient(privateApiBaseUrl);
     console.log('Successfully created authenticated client.');
     return client;
@@ -31,72 +30,48 @@ async function getAuthenticatedClient() {
 async function handler(req: NextRequest) {
   try {
     const authedClient = await getAuthenticatedClient();
-    
+
     const incomingUrl = new URL(req.nextUrl);
     const requestPath = incomingUrl.pathname.replace('/api/proxy', '');
-    const targetUrl = `${privateApiBaseUrl}/api/v1${requestPath}${incomingUrl.search}`;
+    const targetUrl = `${privateApiBaseUrl}${requestPath}${incomingUrl.search}`;
 
     console.log(`Proxying request to: ${targetUrl}`);
+    
+    // Explicitly get the Authorization header
+    const headers = await authedClient.getRequestHeaders(targetUrl);
 
-    const requestHeaders: Record<string, string> = {
-      // The host header must match the target service's host.
-      host: new URL(privateApiBaseUrl).host,
-    };
+    // Copy original headers, but let the auth library override the important ones.
+    const requestHeaders: Record<string, string> = {};
     req.headers.forEach((value, key) => {
-      // Exclude the original host header
+      // Don't copy the original host header.
       if (key.toLowerCase() !== 'host') {
         requestHeaders[key] = value;
       }
     });
 
+    // Add the auth headers. This will include 'Authorization: Bearer ...'
+    Object.assign(requestHeaders, headers);
+
     const bodyBuffer = await req.arrayBuffer();
 
-    const response = await authedClient.request({
-      url: targetUrl,
+    const response = await fetch(targetUrl, {
       method: req.method,
       headers: requestHeaders,
       body: bodyBuffer.byteLength > 0 ? Buffer.from(bodyBuffer) : undefined,
-      responseType: 'stream',
     });
-
-    const responseHeaders = new Headers();
-    if (response.headers && typeof response.headers === 'object') {
-        Object.entries(response.headers).forEach(([key, value]) => {
-            if (value !== undefined && value !== null) {
-              const headerValue = Array.isArray(value) ? value.join(', ') : `${value}`;
-              responseHeaders.set(key, headerValue);
-            }
-        });
-    }
-
-    return new NextResponse(response.data as any, {
+    
+    return new NextResponse(response.body, {
       status: response.status,
       statusText: response.statusText,
-      headers: responseHeaders,
+      headers: response.headers,
     });
 
   } catch (error: any) {
-    // Attempt to read the error response stream for better debugging
-    let errorMessage = error.message || 'An error occurred during proxying.';
-    if (error.response?.data?.readable) {
-        try {
-            const chunks = [];
-            for await (const chunk of error.response.data) {
-                chunks.push(chunk);
-            }
-            errorMessage = Buffer.concat(chunks).toString('utf8');
-        } catch (streamError) {
-            console.error('Error reading error stream:', streamError);
-        }
-    } else if (error.response?.data){
-        errorMessage = JSON.stringify(error.response.data);
-    }
+    console.error(`Error proxying request:`, error.message || error);
     
-    console.error(`Error proxying request:`, errorMessage);
-
     return new NextResponse(
-      JSON.stringify({ message: 'Error proxying request', details: errorMessage }),
-      { status: error.response?.status || 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ message: 'Error proxying request', details: error.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
