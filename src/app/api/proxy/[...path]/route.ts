@@ -40,6 +40,21 @@ async function handler(req: NextRequest) {
     // Explicitly get the Authorization header
     const headers = await authedClient.getRequestHeaders(targetUrl);
 
+    // ---- START: Token Inspection Logic ----
+    if (headers['Authorization']) {
+      try {
+        const token = headers['Authorization'].split(' ')[1];
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        console.log('Decoded ID Token Payload:', JSON.stringify(payload, null, 2));
+      } catch (e: any) {
+        console.error('Could not decode or log token payload:', e.message);
+      }
+    } else {
+      console.warn('Authorization header was not present in the generated request headers.');
+    }
+    // ---- END: Token Inspection Logic ----
+
+
     // Copy original headers, but let the auth library override the important ones.
     const requestHeaders: Record<string, string> = {};
     req.headers.forEach((value, key) => {
