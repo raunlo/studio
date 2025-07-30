@@ -37,11 +37,9 @@ export function ChecklistManager() {
   });
   const { toast } = useToast();
 
-  // The API returns an object like `[{ "id": 1, "name": "..." }]`.
-  // We need to map them to `checklistId` and `title` for our UI components.
   const checklists: Checklist[] = (data as any)?.map((cl: any) => ({
-    checklistId: cl.id, // Map id to checklistId
-    title: cl.name,     // Map name to title
+    checklistId: cl.id,
+    title: cl.name,
     items: (cl.items?.sort((a: Item, b: Item) => (a.position || 0) - (b.position || 0)) || []) as Item[]
   })) || [];
 
@@ -95,11 +93,8 @@ export function ChecklistManager() {
   const addItem = async (checklistId: string, text: string, quantity: number | undefined, subItemTemplates: PredefinedSubItem[]) => {
     try {
       const subItems = subItemTemplates.map(s => ({ text: s.text, quantity: s.quantity }));
-      await addItemTrigger({ checklistId, data: { text, quantity, subItems } }, {
-        onSuccess: () => {
-          mutate();
-        }
-      });
+      await addItemTrigger({ checklistId, data: { text, quantity, subItems } });
+      mutate();
     } catch (e) {
       handleError("Failed to add item", e);
     }
@@ -144,6 +139,7 @@ export function ChecklistManager() {
   const addSubItem = async (checklistId: string, itemId: string, text: string, quantity: number | undefined) => {
     try {
         await addSubItemTrigger({ checklistId, itemId, data: { text, quantity }});
+        mutate();
     } catch (e) {
       handleError("Failed to add sub-item", e);
     }
