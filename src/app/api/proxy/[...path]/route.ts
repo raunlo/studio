@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleAuth } from 'google-auth-library';
 import type { IdTokenClient } from 'google-auth-library/build/src/auth/idtokenclient';
+import https from 'https';
 
 const privateApiBaseUrl = process.env.PRIVATE_API_BASE_URL;
 
@@ -11,6 +12,12 @@ if (!privateApiBaseUrl) {
 
 const auth = new GoogleAuth();
 let client: IdTokenClient | null = null;
+
+// Create an agent that can be configured to ignore self-signed certs for debugging.
+// In a real production environment, you would not want to set rejectUnauthorized to false.
+const agent = new https.Agent({
+  rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== '0',
+});
 
 async function getAuthenticatedClient() {
   if (client) {
@@ -37,11 +44,19 @@ async function handler(req: NextRequest) {
 
     console.log(`Proxying request to: ${targetUrl}`);
     
+    // We explicitly buffer the body to handle different request types (e.g., streaming)
+    const bodyBuffer = await req.text();
+
     const res = await authedClient.request({
       url: targetUrl,
       method: req.method,
-      headers: req.headers,
-      body: req.body,
+      headers: {
+        ...req.headers,
+        // The host header must match the target service's URL
+        host: new URL(targetUrl).host,
+      },
+      body: bodyBuffer || undefined,
+      httpsAgent: agent, // Use our configured agent
     });
     
     // Type assertion to access properties on the response
@@ -56,7 +71,6 @@ async function handler(req: NextRequest) {
   } catch (error: any) {
     console.error(`Error proxying request:`, error.message || error);
     
-    // The google-auth-library wraps the actual error in a 'data' property
     const errorData = error.response?.data?.error || error.response?.data || error.message;
 
     return new NextResponse(
