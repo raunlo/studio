@@ -24,8 +24,11 @@ async function handler(req: NextRequest) {
   
   const incomingUrl = new URL(req.nextUrl);
   const requestPath = incomingUrl.pathname.replace('/api/proxy', '');
-  // Prepend the /api/v1 path here
   const targetUrl = `${privateApiBaseUrl}/api/v1${requestPath}${incomingUrl.search}`;
+
+  // Explicitly read the body to handle different content types
+  const bodyBuffer = await req.text();
+  const data = bodyBuffer.length > 0 ? JSON.parse(bodyBuffer) : undefined;
 
   try {
     const response = await client.request({
@@ -36,19 +39,32 @@ async function handler(req: NextRequest) {
         // The host header must match the target service's host.
         host: new URL(privateApiBaseUrl).host,
       },
-      data: req.body,
-      responseType: 'stream', 
+      data: data,
+      responseType: 'arraybuffer', // Get response as a buffer to handle any content type
     });
+
+    // Create a new NextResponse with the response data and headers
+    const headers = new Headers();
+    if (response.headers && typeof response.headers === 'object') {
+        Object.entries(response.headers).forEach(([key, value]) => {
+            if (typeof value === 'string') {
+                headers.set(key, value);
+            } else if (Array.isArray(value)) {
+                value.forEach(v => headers.append(key, v));
+            }
+        });
+    }
 
     return new NextResponse(response.data, {
       status: response.status,
       statusText: response.statusText,
-      headers: response.headers,
+      headers: headers,
     });
   } catch (error: any) {
-    console.error(`Error proxying request to ${targetUrl}:`, error.response?.data || error.message);
+    const errorResponse = error.response?.data ? Buffer.from(error.response.data).toString() : 'An error occurred during proxying.';
+    console.error(`Error proxying request to ${targetUrl}:`, errorResponse);
     return new NextResponse(
-      error.response?.data || 'An error occurred during proxying.',
+      errorResponse,
       { status: error.response?.status || 500 }
     );
   }
