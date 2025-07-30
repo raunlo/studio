@@ -24,7 +24,8 @@ async function handler(req: NextRequest) {
   
   const incomingUrl = new URL(req.nextUrl);
   const requestPath = incomingUrl.pathname.replace('/api/proxy', '');
-  const targetUrl = `${privateApiBaseUrl}${requestPath}${incomingUrl.search}`;
+  // Prepend the /api/v1 path here
+  const targetUrl = `${privateApiBaseUrl}/api/v1${requestPath}${incomingUrl.search}`;
 
   try {
     const response = await client.request({
