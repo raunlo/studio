@@ -78,7 +78,7 @@ export function ChecklistManager() {
   
   const updateChecklistTitle = async (id: string, title: string) => {
     try {
-      await updateChecklistTitleTrigger({ checklistId: id, data: { title } }, {
+      await updateChecklistTitleTrigger({ checklistId: id, data: { name: title } }, {
         optimisticData: (currentData: any) => {
           const updatedChecklists = currentData.map((cl: any) => (cl.id.toString() === id ? { ...cl, name: title } : cl));
           return updatedChecklists;
@@ -290,5 +290,3 @@ export function ChecklistManager() {
     </div>
   );
 }
-
-  
