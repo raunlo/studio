@@ -25,7 +25,6 @@ import {
   useUpdateSubItem,
   useReorderItem
 } from "@/lib/api";
-import { SWRConfig } from "swr";
 
 
 export function ChecklistManager() {
@@ -38,8 +37,8 @@ export function ChecklistManager() {
   });
   const { toast } = useToast();
 
-  // The API returns { checklists: [...] }, but the objects inside have id/name instead of checklistId/title.
-  // We need to map the data to the format the UI components expect.
+  // The API returns an object like `{ checklists: [...] }`, but the objects inside the array
+  // have `id` and `name`. We need to map them to `checklistId` and `title` for our UI components.
   const checklists: Checklist[] = (data as any)?.checklists?.map((cl: any) => ({
     checklistId: cl.id, // Map id to checklistId
     title: cl.name,     // Map name to title
@@ -68,8 +67,11 @@ export function ChecklistManager() {
 
   const deleteChecklist = async (id: string) => {
     const originalChecklists = data;
-    const updatedChecklists = checklists.filter((cl) => cl.checklistId !== id);
-    mutate({ checklists: updatedChecklists } as any, { revalidate: false });
+    const updatedChecklistsData = {
+        checklists: (data as any)?.checklists.filter((cl: any) => cl.id !== id)
+    };
+    mutate(updatedChecklistsData, { revalidate: false });
+
     try {
       await deleteChecklistTrigger({ checklistId: id });
     } catch (e) {
@@ -125,7 +127,8 @@ export function ChecklistManager() {
           optimisticData: (currentData: any) => {
             const updatedChecklists = currentData.checklists.map((cl: any) => {
               if (cl.id !== checklistId) return cl;
-              return { ...cl, items: cl.items.map((item: any) => item.itemId === updatedItem.itemId ? updatedItem : item) };
+              const newItems = cl.items.map((item: any) => item.itemId === updatedItem.itemId ? updatedItem : item)
+              return { ...cl, items: newItems };
             });
             return { checklists: updatedChecklists };
           },
@@ -198,25 +201,44 @@ export function ChecklistManager() {
       return;
     }
 
-    const checklistId = source.droppableId;
+    const sourceChecklistId = source.droppableId;
+    const destinationChecklistId = destination.droppableId;
+    
+    // For now, we only support reordering within the same list.
+    if (sourceChecklistId !== destinationChecklistId) {
+        return;
+    }
     
     const originalChecklists = data;
     
     let reorderedItems: Item[] = [];
-    const updatedChecklists = checklists.map(cl => {
-      if (cl.checklistId !== checklistId) return cl;
-  
-      const items = Array.from(cl.items);
-      const [reorderedItem] = items.splice(source.index, 1);
-      items.splice(destination.index, 0, reorderedItem);
-      reorderedItems = items.map((item, index) => ({...item, position: index}));
-  
-      return { ...cl, items: reorderedItems };
-    });
-    mutate({ checklists: updatedChecklists } as any, { revalidate: false });
+    const checklistToUpdate = checklists.find(cl => cl.checklistId === sourceChecklistId);
+    
+    if (checklistToUpdate) {
+        const items = Array.from(checklistToUpdate.items);
+        const [reorderedItem] = items.splice(source.index, 1);
+        items.splice(destination.index, 0, reorderedItem);
+        reorderedItems = items.map((item, index) => ({...item, position: index}));
+
+        const updatedChecklistsData = {
+            checklists: (data as any).checklists.map((cl: any) => {
+                if (cl.id !== sourceChecklistId) return cl;
+                const reorderedRawItems = reorderedItems.map(item => {
+                    // This is complex because we need to find the original raw item
+                    // It's better to just re-sort based on new positions if the full item is not in scope
+                    // A simpler optimistic update might just update the UI and wait for revalidation
+                    return { ...item, itemId: item.itemId }; // simplified for optimistic update
+                });
+                return { ...cl, items: reorderedItems };
+            })
+        };
+        mutate(updatedChecklistsData, { revalidate: false });
+    }
 
     try {
-      await reorderItemTrigger({ checklistId, itemId: draggableId, data: { newPosition: destination.index } });
+      await reorderItemTrigger({ checklistId: sourceChecklistId, itemId: draggableId, data: { newPosition: destination.index } });
+      // Revalidate data from server to get the canonical state
+      mutate();
     } catch(e) {
       handleError("Failed to reorder item", e);
       mutate(originalChecklists);
@@ -272,3 +294,5 @@ export function ChecklistManager() {
     </div>
   );
 }
+
+    
