@@ -2,6 +2,20 @@
 # https://firebase.google.com/docs/app-hosting/configure
 
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
+  # This setting is the most important for cost control.
+  # By setting maxInstances to 1, you prevent the system
+  # from automatically scaling up to handle more traffic.
   maxInstances: 1
+  # Explicitly set the CPU and memory to low values.
+  cpu: 1
+  memoryMiB: 512
+
+# Managed an automated, zero-config CI/CD pipeline.
+# https://firebase.google.com/docs/app-hosting/configure-ci-cd
+# automatedCi:
+#   # The repo to connect to.
+#   repository: /<owner>/<repo>
+#   # The name of the branch to track.
+#   branch: main
+#   # The root of the app in the repository.
+#   root: /
