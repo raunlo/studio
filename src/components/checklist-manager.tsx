@@ -1,6 +1,11 @@
 
 "use client";
 
+// This is a Client Component.
+// The "use client" directive tells Next.js to send the JavaScript for this component
+// to the user's browser. This is necessary because it uses hooks like `useState` and `useSWR`
+// to manage state and fetch data, which can only be done on the client.
+
 import type { Checklist, Item, SubItem, UpdateItem } from "@/lib/api";
 import { useState } from "react";
 import { ChecklistCard } from "@/components/checklist-card";
@@ -24,6 +29,8 @@ import { SWRConfig } from "swr";
 
 
 export function ChecklistManager() {
+  // This hook fetches data on the CLIENT side. The component will initially render
+  // with a loading state, and then update once the data is fetched from the /api/proxy endpoint.
   const { data, error, isLoading, mutate } = useGetChecklists();
   const { toast } = useToast();
 

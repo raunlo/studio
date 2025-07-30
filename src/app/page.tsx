@@ -1,4 +1,7 @@
 
+// This is a Server Component.
+// It runs on the server to generate the initial HTML for the page.
+// This makes the initial page load very fast.
 import { ChecklistManager } from "@/components/checklist-manager";
 
 export default function Home() {
@@ -13,6 +16,7 @@ export default function Home() {
             Organize your tasks with AI-powered suggestions.
           </p>
         </header>
+        {/* ChecklistManager is a Client Component, but the server will render its initial HTML shell. */}
         <ChecklistManager />
       </div>
     </main>
