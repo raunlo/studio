@@ -31,7 +31,11 @@ import { SWRConfig } from "swr";
 export function ChecklistManager() {
   // This hook fetches data on the CLIENT side. The component will initially render
   // with a loading state, and then update once the data is fetched from the /api/proxy endpoint.
-  const { data, error, isLoading, mutate } = useGetChecklists();
+  const { data, error, isLoading, mutate } = useGetChecklists(undefined, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    revalidateIfStale: false,
+  });
   const { toast } = useToast();
 
   const checklists = data?.checklists?.map(cl => ({
