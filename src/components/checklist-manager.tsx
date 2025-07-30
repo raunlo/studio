@@ -95,7 +95,11 @@ export function ChecklistManager() {
   const addItem = async (checklistId: string, text: string, quantity: number | undefined, subItemTemplates: PredefinedSubItem[]) => {
     try {
       const subItems = subItemTemplates.map(s => ({ text: s.text, quantity: s.quantity }));
-      await addItemTrigger({ checklistId, data: { text, quantity, subItems }});
+      await addItemTrigger({ checklistId, data: { text, quantity, subItems } }, {
+        onSuccess: () => {
+          mutate();
+        }
+      });
     } catch (e) {
       handleError("Failed to add item", e);
     }
