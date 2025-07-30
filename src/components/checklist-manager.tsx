@@ -37,9 +37,9 @@ export function ChecklistManager() {
   });
   const { toast } = useToast();
 
-  // The API returns an object like `{ checklists: [...] }`, but the objects inside the array
-  // have `id` and `name`. We need to map them to `checklistId` and `title` for our UI components.
-  const checklists: Checklist[] = (data as any)?.checklists?.map((cl: any) => ({
+  // The API returns an object like `[{ "id": 1, "name": "..." }]`.
+  // We need to map them to `checklistId` and `title` for our UI components.
+  const checklists: Checklist[] = (data as any)?.map((cl: any) => ({
     checklistId: cl.id, // Map id to checklistId
     title: cl.name,     // Map name to title
     items: (cl.items?.sort((a: Item, b: Item) => (a.position || 0) - (b.position || 0)) || []) as Item[]
@@ -67,9 +67,7 @@ export function ChecklistManager() {
 
   const deleteChecklist = async (id: string) => {
     const originalChecklists = data;
-    const updatedChecklistsData = {
-        checklists: (data as any)?.checklists.filter((cl: any) => cl.id !== id)
-    };
+    const updatedChecklistsData = (data as any)?.filter((cl: any) => cl.id !== id);
     mutate(updatedChecklistsData, { revalidate: false });
 
     try {
@@ -84,8 +82,8 @@ export function ChecklistManager() {
     try {
       await updateChecklistTitleTrigger({ checklistId: id, data: { title } }, {
         optimisticData: (currentData: any) => {
-          const updatedChecklists = currentData.checklists.map((cl: any) => (cl.id === id ? { ...cl, name: title } : cl));
-          return { checklists: updatedChecklists };
+          const updatedChecklists = currentData.map((cl: any) => (cl.id === id ? { ...cl, name: title } : cl));
+          return updatedChecklists;
         },
         revalidate: false,
       });
@@ -107,11 +105,11 @@ export function ChecklistManager() {
     try {
       await deleteItemTrigger({ checklistId, itemId }, {
         optimisticData: (currentData: any) => {
-          const updatedChecklists = currentData.checklists.map((cl: any) => {
+          const updatedChecklists = currentData.map((cl: any) => {
               if (cl.id !== checklistId) return cl;
               return { ...cl, items: cl.items.filter((item: any) => item.itemId !== itemId) };
           });
-          return { checklists: updatedChecklists };
+          return updatedChecklists;
         },
         revalidate: false,
       });
@@ -125,12 +123,12 @@ export function ChecklistManager() {
         const { itemId, ...updateData } = updatedItem;
         await updateItemTrigger({ checklistId, itemId: itemId!, data: updateData as UpdateItem }, {
           optimisticData: (currentData: any) => {
-            const updatedChecklists = currentData.checklists.map((cl: any) => {
+            const updatedChecklists = currentData.map((cl: any) => {
               if (cl.id !== checklistId) return cl;
               const newItems = cl.items.map((item: any) => item.itemId === updatedItem.itemId ? updatedItem : item)
               return { ...cl, items: newItems };
             });
-            return { checklists: updatedChecklists };
+            return updatedChecklists;
           },
           revalidate: false
         });
@@ -151,7 +149,7 @@ export function ChecklistManager() {
     try {
         await deleteSubItemTrigger({ checklistId, itemId, subItemId }, {
           optimisticData: (currentData: any) => {
-            const updatedChecklists = currentData.checklists.map((cl: any) => {
+            const updatedChecklists = currentData.map((cl: any) => {
               if (cl.id !== checklistId) return cl;
               const updatedItems = cl.items.map((item: any) => {
                   if (item.itemId !== itemId) return item;
@@ -161,7 +159,7 @@ export function ChecklistManager() {
               });
               return { ...cl, items: updatedItems };
             });
-            return { checklists: updatedChecklists };
+            return updatedChecklists;
           },
           revalidate: false,
         });
@@ -175,7 +173,7 @@ export function ChecklistManager() {
         const { subItemId, ...updateData } = updatedSubItem;
         await updateSubItemTrigger({ checklistId, itemId, subItemId: subItemId!, data: updateData }, {
           optimisticData: (currentData: any) => {
-            const updatedChecklists = currentData.checklists.map((cl: any) => {
+            const updatedChecklists = currentData.map((cl: any) => {
               if (cl.id !== checklistId) return cl;
               const updatedItems = cl.items.map((item: any) => {
                   if (item.itemId !== itemId) return item;
@@ -185,7 +183,7 @@ export function ChecklistManager() {
               });
               return { ...cl, items: updatedItems };
             });
-            return { checklists: updatedChecklists };
+            return updatedChecklists;
           },
           revalidate: false
         });
@@ -220,18 +218,16 @@ export function ChecklistManager() {
         items.splice(destination.index, 0, reorderedItem);
         reorderedItems = items.map((item, index) => ({...item, position: index}));
 
-        const updatedChecklistsData = {
-            checklists: (data as any).checklists.map((cl: any) => {
-                if (cl.id !== sourceChecklistId) return cl;
-                const reorderedRawItems = reorderedItems.map(item => {
-                    // This is complex because we need to find the original raw item
-                    // It's better to just re-sort based on new positions if the full item is not in scope
-                    // A simpler optimistic update might just update the UI and wait for revalidation
-                    return { ...item, itemId: item.itemId }; // simplified for optimistic update
-                });
-                return { ...cl, items: reorderedItems };
-            })
-        };
+        const updatedChecklistsData = (data as any).map((cl: any) => {
+            if (cl.id.toString() !== sourceChecklistId) return cl;
+            // This is complex because we need to find the original raw item
+            // It's better to just re-sort based on new positions if the full item is not in scope
+            // A simpler optimistic update might just update the UI and wait for revalidation
+            const reorderedRawItems = reorderedItems.map(item => {
+                return { ...item, itemId: item.itemId }; // simplified for optimistic update
+            });
+            return { ...cl, items: reorderedItems };
+        });
         mutate(updatedChecklistsData, { revalidate: false });
     }
 
@@ -294,5 +290,3 @@ export function ChecklistManager() {
     </div>
   );
 }
-
-    
