@@ -37,45 +37,17 @@ async function handler(req: NextRequest) {
 
     console.log(`Proxying request to: ${targetUrl}`);
     
-    // Explicitly get the Authorization header
-    const headers = await authedClient.getRequestHeaders(targetUrl);
-
-    // ---- START: Token Inspection Logic ----
-    if (headers['Authorization']) {
-      try {
-        const token = headers['Authorization'].split(' ')[1];
-        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-        console.log('Decoded ID Token Payload:', JSON.stringify(payload, null, 2));
-      } catch (e: any) {
-        console.error('Could not decode or log token payload:', e.message);
-      }
-    } else {
-      console.warn('Authorization header was not present in the generated request headers.');
-    }
-    // ---- END: Token Inspection Logic ----
-
-
-    // Copy original headers, but let the auth library override the important ones.
-    const requestHeaders: Record<string, string> = {};
-    req.headers.forEach((value, key) => {
-      // Don't copy the original host header.
-      if (key.toLowerCase() !== 'host') {
-        requestHeaders[key] = value;
-      }
-    });
-
-    // Add the auth headers. This will include 'Authorization: Bearer ...'
-    Object.assign(requestHeaders, headers);
-
-    const bodyBuffer = await req.arrayBuffer();
-
-    const response = await fetch(targetUrl, {
+    const res = await authedClient.request({
+      url: targetUrl,
       method: req.method,
-      headers: requestHeaders,
-      body: bodyBuffer.byteLength > 0 ? Buffer.from(bodyBuffer) : undefined,
+      headers: req.headers,
+      body: req.body,
     });
     
-    return new NextResponse(response.body, {
+    // Type assertion to access properties on the response
+    const response = res as any;
+    
+    return new NextResponse(response.data, {
       status: response.status,
       statusText: response.statusText,
       headers: response.headers,
@@ -84,9 +56,12 @@ async function handler(req: NextRequest) {
   } catch (error: any) {
     console.error(`Error proxying request:`, error.message || error);
     
+    // The google-auth-library wraps the actual error in a 'data' property
+    const errorData = error.response?.data?.error || error.response?.data || error.message;
+
     return new NextResponse(
-      JSON.stringify({ message: 'Error proxying request', details: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ message: 'Error proxying request', details: errorData }),
+      { status: error.response?.status || 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
