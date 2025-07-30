@@ -1,7 +1,8 @@
 import Axios, { AxiosError, AxiosRequestConfig } from 'axios';
 
+// The base URL is now the local proxy endpoint.
 const axiosInstance = Axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  baseURL: '/api/proxy',
 });
 
 export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> => {
