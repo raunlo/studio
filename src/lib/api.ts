@@ -339,7 +339,7 @@ export const getAddItemSWRMutation = <TError = unknown, TContext = unknown>(opti
     string,
     TContext
   >(
-    'swr:/api/v1/checklists',
+    (key) => `swr:/api/v1/checklists/${key.checklistId}/items`,
     (
       _key: string,
       {
