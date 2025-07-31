@@ -18,8 +18,8 @@ export type CreateSubItem = {
 
 export type SubItem = {
   checked?: boolean;
+  id?: string;
   quantity?: number | null;
-  subItemId?: string;
   text?: string;
 };
 
@@ -43,8 +43,8 @@ export type CreateItem = {
 
 export type Item = {
   checked?: boolean;
+  id?: string;
   isCollapsed?: boolean;
-  itemId?: string;
   position?: number;
   quantity?: number | null;
   subItems?: SubItem[];
@@ -52,13 +52,13 @@ export type Item = {
 };
 
 export type CreateChecklist = {
-  title?: string;
+  name?: string;
 };
 
 export type Checklist = {
-  checklistId?: string;
+  id?: number;
   items?: Item[];
-  title?: string;
+  name?: string;
 };
 
 export type GetChecklistsParams = {

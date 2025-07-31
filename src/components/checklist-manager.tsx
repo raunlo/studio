@@ -6,7 +6,7 @@
 // to the user's browser. This is necessary because it uses hooks like `useState` and `useSWR`
 // to manage state and fetch data, which can only be done on the client.
 
-import type { Checklist, Item, SubItem, UpdateItem } from "@/lib/api";
+import type { Item as ApiItem, SubItem as ApiSubItem, Checklist as ApiChecklist } from "@/lib/api.schemas";
 import { useMemo } from "react";
 import { ChecklistCard } from "@/components/checklist-card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,6 +26,34 @@ import {
   useReorderItem
 } from "@/lib/api";
 
+// --- START: Frontend-specific types ---
+// We create local types to match what the UI components expect (e.g., checklistId, title).
+// This decouples the UI from the exact API schema.
+
+export type SubItem = {
+  subItemId: string;
+  text: string;
+  quantity?: number;
+  checked: boolean;
+};
+
+export type Item = {
+  itemId: string;
+  text: string;
+  quantity?: number;
+  checked: boolean;
+  isCollapsed: boolean;
+  position: number;
+  subItems: SubItem[];
+};
+
+export type Checklist = {
+  checklistId: string;
+  title: string;
+  items: Item[];
+};
+// --- END: Frontend-specific types ---
+
 
 export function ChecklistManager() {
   // This hook fetches data on the CLIENT side. The component will initially render
@@ -37,21 +65,41 @@ export function ChecklistManager() {
   });
   const { toast } = useToast();
   
-  // The Orval transformer now handles renaming `id` and `name`.
-  // We just need to handle the case where the API returns a different shape and sort the items.
+  // --- START: Data Mapping ---
+  // This `useMemo` block is the key to decoupling the frontend from the backend.
+  // It transforms the data from the API format (e.g., id, name) to the format
+  // expected by the UI components (e.g., checklistId, title).
   const checklists: Checklist[] = useMemo(() => {
-    const rawChecklists = (data as any)?.checklists || data;
+    // The raw data from the API, we cast to `any` to handle the array directly.
+    const rawChecklists = data as any; 
 
     if (!Array.isArray(rawChecklists)) {
       return [];
     }
 
-    return (rawChecklists.map((cl: Checklist) => ({
-      ...cl,
-      checklistId: cl.checklistId?.toString(), // Ensure checklistId is a string for dnd
-      items: cl.items?.sort((a, b) => (a.position || 0) - (b.position || 0)) || []
-    })) || []);
+    // Map over the raw API data and transform it into the local `Checklist` type.
+    return rawChecklists.map((cl: ApiChecklist): Checklist => ({
+      checklistId: cl.id!.toString(), // Convert number `id` to string `checklistId`
+      title: cl.name!, // Map `name` to `title`
+      items: (cl.items || [])
+        .map((item: ApiItem): Item => ({
+          itemId: item.id!,
+          text: item.text!,
+          quantity: item.quantity ?? undefined,
+          checked: item.checked ?? false,
+          isCollapsed: item.isCollapsed ?? true,
+          position: item.position ?? 0,
+          subItems: (item.subItems || []).map((sub: ApiSubItem): SubItem => ({
+            subItemId: sub.id!,
+            text: sub.text!,
+            quantity: sub.quantity ?? undefined,
+            checked: sub.checked ?? false,
+          })),
+        }))
+        .sort((a, b) => a.position - b.position), // Sort items by position
+    }));
   }, [data]);
+  // --- END: Data Mapping ---
 
 
   const { trigger: deleteChecklistTrigger } = useDeleteChecklist();
@@ -73,25 +121,26 @@ export function ChecklistManager() {
     });
   };
 
-  const deleteChecklist = async (id: string) => {
+  const deleteChecklist = async (checklistId: string) => {
     const originalChecklists = data;
-    const updatedChecklists = checklists.filter((cl) => cl.checklistId !== id);
+    const updatedChecklists = checklists.filter((cl) => cl.checklistId !== checklistId);
     mutate(updatedChecklists as any, { revalidate: false });
 
     try {
-      await deleteChecklistTrigger({ checklistId: id });
+      await deleteChecklistTrigger({ id: checklistId });
     } catch (e) {
       handleError("Failed to delete checklist", e);
       mutate(originalChecklists);
     }
   };
   
-  const updateChecklistTitle = async (id: string, title: string) => {
+  const updateChecklistTitle = async (checklistId: string, title: string) => {
     try {
-      await updateChecklistTitleTrigger({ checklistId: id, data: { title: title } }, {
+      // Map frontend `title` back to API's `name`
+      await updateChecklistTitleTrigger({ id: checklistId, data: { name: title } }, {
         optimisticData: (currentData: any) => {
             const updatedChecklists = currentData.map((cl: any) =>
-                cl.checklistId === id ? { ...cl, title: title } : cl
+                cl.id.toString() === checklistId ? { ...cl, name: title } : cl
             );
             return updatedChecklists;
         },
@@ -105,7 +154,8 @@ export function ChecklistManager() {
   const addItem = async (checklistId: string, text: string, quantity: number | undefined, subItemTemplates: PredefinedSubItem[]) => {
     try {
       const subItems = subItemTemplates.map(s => ({ text: s.text, quantity: s.quantity }));
-      await addItemTrigger({ checklistId, data: { text, quantity, subItems } });
+      // Pass checklistId as `id` to the API
+      await addItemTrigger({ id: checklistId, data: { text, quantity, subItems } });
       mutate();
     } catch (e) {
       handleError("Failed to add item", e);
@@ -124,15 +174,18 @@ export function ChecklistManager() {
   const updateItem = async (checklistId: string, updatedItem: Item) => {
     try {
         const { itemId, ...updateData } = updatedItem;
-        await updateItemTrigger({ checklistId, itemId: itemId!, data: updateData as UpdateItem }, {
+        await updateItemTrigger({ checklistId, itemId: itemId!, data: updateData }, {
           optimisticData: (currentData: any) => {
-            const currentChecklists = (currentData as any)?.checklists || currentData;
-            const updatedChecklists = currentChecklists.map((cl: any) => {
-              if (cl.checklistId !== checklistId) return cl;
-              const newItems = cl.items.map((item: any) => item.itemId === updatedItem.itemId ? updatedItem : item)
+            const updatedApiChecklists = (currentData as ApiChecklist[]).map((cl) => {
+              if (cl.id!.toString() !== checklistId) return cl;
+              const newItems = cl.items!.map((item) => {
+                if (item.id !== updatedItem.itemId) return item;
+                // This is a shallow merge, you might need a deep merge if items have nested objects
+                return { ...item, ...updateData };
+              });
               return { ...cl, items: newItems };
             });
-            return { checklists: updatedChecklists };
+            return updatedApiChecklists;
           },
           revalidate: false
         });
@@ -164,18 +217,21 @@ export function ChecklistManager() {
         const { subItemId, ...updateData } = updatedSubItem;
         await updateSubItemTrigger({ checklistId, itemId, subItemId: subItemId!, data: updateData }, {
           optimisticData: (currentData: any) => {
-            const currentChecklists = (currentData as any)?.checklists || currentData;
-            const updatedChecklists = currentChecklists.map((cl: any) => {
-              if (cl.checklistId !== checklistId) return cl;
-              const updatedItems = cl.items.map((item: any) => {
-                  if (item.itemId !== itemId) return item;
-                  const updatedSubItems = item.subItems.map((sub: any) => sub.subItemId === updatedSubItem.subItemId ? updatedSubItem : sub);
-                  const parentChecked = updatedSubItems.length > 0 && updatedSubItems.every((sub: any) => sub.checked);
-                  return { ...item, checked: parentChecked, subItems: updatedSubItems };
+            const currentApiChecklists = currentData as ApiChecklist[];
+            const updatedChecklists = currentApiChecklists.map((cl) => {
+              if (cl.id!.toString() !== checklistId) return cl;
+              const updatedItems = cl.items!.map((item) => {
+                if (item.id !== itemId) return item;
+                const updatedSubItems = item.subItems!.map((sub) => {
+                  if (sub.id !== updatedSubItem.subItemId) return sub;
+                  return { ...sub, ...updatedSubItem };
+                });
+                const parentChecked = updatedSubItems.length > 0 && updatedSubItems.every((sub) => sub.checked);
+                return { ...item, checked: parentChecked, subItems: updatedSubItems };
               });
               return { ...cl, items: updatedItems };
             });
-            return { checklists: updatedChecklists };
+            return updatedChecklists;
           },
           revalidate: false
         });
@@ -194,7 +250,6 @@ export function ChecklistManager() {
     const sourceChecklistId = source.droppableId;
     const destinationChecklistId = destination.droppableId;
     
-    // For now, we only support reordering within the same list.
     if (sourceChecklistId !== destinationChecklistId) {
         return;
     }
@@ -219,7 +274,6 @@ export function ChecklistManager() {
 
     try {
       await reorderItemTrigger({ checklistId: sourceChecklistId, itemId: draggableId, data: { newPosition: destination.index } });
-      // Revalidate data from server to get the canonical state
       mutate();
     } catch(e) {
       handleError("Failed to reorder item", e);
@@ -276,5 +330,3 @@ export function ChecklistManager() {
     </div>
   );
 }
-
-    
