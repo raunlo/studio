@@ -18,7 +18,7 @@ async function getAuthenticatedClient() {
   }
   try {
     console.log(`Authenticating for audience: ${privateApiBaseUrl}`);
-    client = await auth.getIdTokenClient(privateApiBaseUrl);
+    client = await auth.getIdTokenClient(privateApiBaseUrl!!);
     console.log('Successfully created authenticated client.');
     return client;
   } catch (error) {
