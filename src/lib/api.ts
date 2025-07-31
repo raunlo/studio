@@ -35,7 +35,7 @@ type SecondParameter<T extends (...args: any) => any> = T extends (
  * @summary Get all checklists
  */
 export const getChecklists = (params?: GetChecklistsParams) => {
-  return customInstance<{checklists?: Checklist[]}>({
+  return customInstance<Checklist[]>({
     url: `/api/v1/checklists`,
     method: 'GET',
     params,

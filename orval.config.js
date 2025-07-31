@@ -42,7 +42,7 @@ module.exports = {
             };
 
             // This map defines the renames: 'id' -> 'checklistId', 'name' -> 'title'
-            const keyMap = { 'name': 'title' };
+            const keyMap = { 'name': 'title', 'id': 'checklistId' };
             renameKeys(schema, keyMap);
             
             return schema;

@@ -7,7 +7,7 @@
 // to manage state and fetch data, which can only be done on the client.
 
 import type { Checklist, Item, SubItem, UpdateItem } from "@/lib/api";
-import { useState } from "react";
+import { useMemo } from "react";
 import { ChecklistCard } from "@/components/checklist-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
@@ -37,10 +37,21 @@ export function ChecklistManager() {
   });
   const { toast } = useToast();
   
-  const checklists: Checklist[] = (data?.checklists?.map(cl => ({
-    ...cl,
-    items: cl.items?.sort((a, b) => (a.position || 0) - (b.position || 0)) || []
-  })) || []);
+  // The Orval transformer now handles renaming `id` and `name`.
+  // We just need to handle the case where the API returns a different shape and sort the items.
+  const checklists: Checklist[] = useMemo(() => {
+    const rawChecklists = (data as any)?.checklists || data;
+
+    if (!Array.isArray(rawChecklists)) {
+      return [];
+    }
+
+    return (rawChecklists.map((cl: Checklist) => ({
+      ...cl,
+      checklistId: cl.checklistId?.toString(), // Ensure checklistId is a string for dnd
+      items: cl.items?.sort((a, b) => (a.position || 0) - (b.position || 0)) || []
+    })) || []);
+  }, [data]);
 
 
   const { trigger: deleteChecklistTrigger } = useDeleteChecklist();
@@ -64,11 +75,8 @@ export function ChecklistManager() {
 
   const deleteChecklist = async (id: string) => {
     const originalChecklists = data;
-    const updatedChecklistsData = {
-        ...data,
-        checklists: data?.checklists?.filter((cl) => cl.checklistId !== id),
-    };
-    mutate(updatedChecklistsData as any, { revalidate: false });
+    const updatedChecklists = checklists.filter((cl) => cl.checklistId !== id);
+    mutate(updatedChecklists as any, { revalidate: false });
 
     try {
       await deleteChecklistTrigger({ checklistId: id });
@@ -82,10 +90,10 @@ export function ChecklistManager() {
     try {
       await updateChecklistTitleTrigger({ checklistId: id, data: { title: title } }, {
         optimisticData: (currentData: any) => {
-            const updatedChecklists = currentData.checklists.map((cl: any) =>
+            const updatedChecklists = currentData.map((cl: any) =>
                 cl.checklistId === id ? { ...cl, title: title } : cl
             );
-            return { ...currentData, checklists: updatedChecklists };
+            return updatedChecklists;
         },
         revalidate: false,
       });
@@ -106,16 +114,7 @@ export function ChecklistManager() {
   
   const deleteItem = async (checklistId: string, itemId: string) => {
     try {
-      await deleteItemTrigger({ checklistId, itemId }, {
-        optimisticData: (currentData: any) => {
-          const updatedChecklists = currentData.checklists.map((cl: any) => {
-              if (cl.checklistId !== checklistId) return cl;
-              return { ...cl, items: cl.items.filter((item: any) => item.itemId !== itemId) };
-          });
-          return { ...currentData, checklists: updatedChecklists };
-        },
-        revalidate: false,
-      });
+      await deleteItemTrigger({ checklistId, itemId });
       mutate();
     } catch (e) {
       handleError("Failed to delete item", e);
@@ -127,12 +126,13 @@ export function ChecklistManager() {
         const { itemId, ...updateData } = updatedItem;
         await updateItemTrigger({ checklistId, itemId: itemId!, data: updateData as UpdateItem }, {
           optimisticData: (currentData: any) => {
-            const updatedChecklists = currentData.checklists.map((cl: any) => {
+            const currentChecklists = (currentData as any)?.checklists || currentData;
+            const updatedChecklists = currentChecklists.map((cl: any) => {
               if (cl.checklistId !== checklistId) return cl;
               const newItems = cl.items.map((item: any) => item.itemId === updatedItem.itemId ? updatedItem : item)
               return { ...cl, items: newItems };
             });
-            return { ...currentData, checklists: updatedChecklists };
+            return { checklists: updatedChecklists };
           },
           revalidate: false
         });
@@ -152,22 +152,7 @@ export function ChecklistManager() {
 
   const deleteSubItem = async (checklistId: string, itemId: string, subItemId: string) => {
     try {
-        await deleteSubItemTrigger({ checklistId, itemId, subItemId }, {
-          optimisticData: (currentData: any) => {
-            const updatedChecklists = currentData.checklists.map((cl: any) => {
-              if (cl.checklistId !== checklistId) return cl;
-              const updatedItems = cl.items.map((item: any) => {
-                  if (item.itemId !== itemId) return item;
-                  const updatedSubItems = item.subItems.filter((sub: any) => sub.subItemId !== subItemId);
-                  const parentChecked = updatedSubItems.length > 0 && updatedSubItems.every((sub: any) => sub.checked);
-                  return { ...item, checked: parentChecked, subItems: updatedSubItems };
-              });
-              return { ...cl, items: updatedItems };
-            });
-            return { ...currentData, checklists: updatedChecklists };
-          },
-          revalidate: false,
-        });
+        await deleteSubItemTrigger({ checklistId, itemId, subItemId });
         mutate();
     } catch(e) {
       handleError("Failed to delete sub-item", e);
@@ -179,7 +164,8 @@ export function ChecklistManager() {
         const { subItemId, ...updateData } = updatedSubItem;
         await updateSubItemTrigger({ checklistId, itemId, subItemId: subItemId!, data: updateData }, {
           optimisticData: (currentData: any) => {
-            const updatedChecklists = currentData.checklists.map((cl: any) => {
+            const currentChecklists = (currentData as any)?.checklists || currentData;
+            const updatedChecklists = currentChecklists.map((cl: any) => {
               if (cl.checklistId !== checklistId) return cl;
               const updatedItems = cl.items.map((item: any) => {
                   if (item.itemId !== itemId) return item;
@@ -189,7 +175,7 @@ export function ChecklistManager() {
               });
               return { ...cl, items: updatedItems };
             });
-            return { ...currentData, checklists: updatedChecklists };
+            return { checklists: updatedChecklists };
           },
           revalidate: false
         });
@@ -224,13 +210,10 @@ export function ChecklistManager() {
         items.splice(destination.index, 0, reorderedItem);
         reorderedItems = items.map((item, index) => ({...item, position: index}));
 
-        const updatedChecklistsData = {
-            ...data,
-            checklists: data?.checklists?.map((cl) => {
-                if (cl.checklistId !== sourceChecklistId) return cl;
-                return { ...cl, items: reorderedItems };
-            }),
-        };
+        const updatedChecklistsData = checklists.map((cl) => {
+            if (cl.checklistId !== sourceChecklistId) return cl;
+            return { ...cl, items: reorderedItems };
+        });
         mutate(updatedChecklistsData as any, { revalidate: false });
     }
 
