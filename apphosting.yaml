@@ -1,6 +1,10 @@
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
+# The region to deploy the backend to.
+# https://firebase.google.com/docs/app-hosting/locations
+location: europe-central2
+
 runConfig:
   # This setting is the most important for cost control.
   # By setting maxInstances to 1, you prevent the system
