@@ -29,7 +29,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
     completed: undefined
   }, {
     swr: {
-      refreshInterval: 50
+      refreshInterval: 10000
     }, axios: axiousProps
   })
 
