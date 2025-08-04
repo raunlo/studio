@@ -1,8 +1,12 @@
 import Axios, { AxiosError, AxiosRequestConfig, CreateAxiosDefaults } from 'axios';
-import exp from 'constants';
+import getConfig from 'next/config';
+
+// Get the runtime config
+const { publicRuntimeConfig } = getConfig() || {};
+const NEXT_PUBLIC_API_BASE_URL = publicRuntimeConfig?.NEXT_PUBLIC_API_BASE_URL || '/api/proxy';
 
 const axiousProps = {
-  baseURL: '/api/proxy'
+  baseURL: NEXT_PUBLIC_API_BASE_URL
 }
 // The base URL is now the local proxy endpoint.
 const axiosInstance = Axios.create(axiousProps as CreateAxiosDefaults);
