@@ -6,86 +6,81 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { X, Plus } from "lucide-react";
-import { PredefinedSubItem } from "@/lib/knowledge-base";
+import { ChecklistItemResponse, ChecklistItemRowResponse } from "@/api/checklistServiceV1.schemas";
 
-type SubItemState = {
-    text: string;
+type ChecklistITemRowModel = {
+    name: string;
     quantity: string;
 }
 
 type AddItemModalProps = {
   isOpen: boolean;
+  initialChecklistItemName: string;
   onClose: () => void;
-  onAddItem: (itemText: string, quantity: number | undefined, subItems: PredefinedSubItem[]) => void;
-  initialText?: string;
-  initialQuantity?: number;
-  initialSubItems?: PredefinedSubItem[];
+  onAddItem: (newItem: ChecklistItemResponse) => void;
 };
 
 export function AddItemModal({ 
     isOpen, 
-    onClose, 
-    onAddItem, 
-    initialText = "", 
-    initialQuantity, 
-    initialSubItems = [] 
+    initialChecklistItemName,
+    onClose,
+    onAddItem
 }: AddItemModalProps) {
-  const [itemText, setItemText] = useState(initialText);
-  const [quantity, setQuantity] = useState(initialQuantity?.toString() ?? "");
-  const [subItems, setSubItems] = useState<SubItemState[]>([]);
+  const [checklistItemName, setChecklistItemName] = useState(initialChecklistItemName);
+  const [quantity, setQuantity] = useState("");
+  const [rows, setRows] = useState<ChecklistITemRowModel[]>([]);
+
+  const handleSubItemChange = (index: number, field: 'name' | 'quantity', value: string) => {
+    const newSubItems = [...rows];
+    newSubItems[index][field] = value;
+    setRows(newSubItems);
+  };
 
   useEffect(() => {
     if (isOpen) {
-      setItemText(initialText);
-      setQuantity(initialQuantity?.toString() ?? "");
-      const formattedSubItems = initialSubItems.map(si => ({
-          text: si.text,
-          quantity: si.quantity?.toString() ?? ""
-      }));
-      setSubItems(formattedSubItems.length > 0 ? formattedSubItems : [{ text: "", quantity: "" }]);
+        setChecklistItemName(initialChecklistItemName)
     }
-  }, [isOpen, initialText, initialQuantity, initialSubItems]);
-
-  const handleSubItemChange = (index: number, field: 'text' | 'quantity', value: string) => {
-    const newSubItems = [...subItems];
-    newSubItems[index][field] = value;
-    setSubItems(newSubItems);
-  };
+  }, [initialChecklistItemName])
 
   const addSubItemInput = () => {
-    setSubItems([...subItems, { text: "", quantity: "" }]);
+    setRows([...rows, { name: "", quantity: "" }]);
   };
 
   const removeSubItemInput = (index: number) => {
-    if (subItems.length > 1) {
-      const newSubItems = subItems.filter((_, i) => i !== index);
-      setSubItems(newSubItems);
+    if (rows.length > 1) {
+      const newSubItems = rows.filter((_, i) => i !== index);
+      setRows(newSubItems);
     } else {
-      setSubItems([{ text: "", quantity: "" }]);
+      setRows([{ name: "", quantity: "" }]);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (itemText.trim()) {
-      const finalSubItems = subItems
-        .map(s => ({ text: s.text.trim(), quantity: s.quantity ? parseInt(s.quantity) : undefined }))
-        .filter(s => s.text !== "");
-      onAddItem(itemText.trim(), quantity ? parseInt(quantity) : undefined, finalSubItems);
+    if (checklistItemName.trim()) {
+      const checklistItemRows = rows
+        .map(s => ({ name: s.name.trim(), } as ChecklistItemRowResponse))
+        .filter(s => s.name !== "");
+        const item = ({
+          name: checklistItemName.trim(),
+          rows: checklistItemRows ?? []
+        }) as ChecklistItemResponse
+        console.log("submit")
+      onAddItem(item)
       handleClose();
     }
   };
   
   const handleClose = () => {
-    setItemText("");
+    setChecklistItemName("");
     setQuantity("");
-    setSubItems([{ text: "", quantity: "" }]);
+    setRows([{ name: "", quantity: "" }]);
     onClose();
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto p-4">
         <DialogHeader>
           <DialogTitle>Add New Item</DialogTitle>
         </DialogHeader>
@@ -94,8 +89,8 @@ export function AddItemModal({
             <div className="grid grid-cols-6 items-center gap-4">
               <Input
                 id="name"
-                value={itemText}
-                onChange={(e) => setItemText(e.target.value)}
+                value={checklistItemName}
+                onChange={(e) => setChecklistItemName(e.target.value)}
                 placeholder="Main item name..."
                 className="col-span-4"
                 required
@@ -111,17 +106,17 @@ export function AddItemModal({
             </div>
             <div className="col-span-6 space-y-2">
               <label className="text-sm font-medium">Sub-items (optional)</label>
-              {subItems.map((subItem, index) => (
+              {rows.map((row, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <Input
-                    value={subItem.text}
-                    onChange={(e) => handleSubItemChange(index, 'text', e.target.value)}
+                    value={row.name}
+                    onChange={(e) => handleSubItemChange(index, 'name', e.target.value)}
                     placeholder={`Sub-item ${index + 1}`}
                     className="flex-grow"
                   />
                   <Input
                     type="number"
-                    value={subItem.quantity}
+                    value={row.quantity}
                     onChange={(e) => handleSubItemChange(index, 'quantity', e.target.value)}
                     placeholder="Qty."
                     className="w-20"
@@ -152,3 +147,4 @@ export function AddItemModal({
     </Dialog>
   );
 }
+  

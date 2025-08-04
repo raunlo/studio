@@ -1,4 +1,3 @@
-
 "use client";
 
 import { PredefinedChecklistItem } from "@/lib/knowledge-base";

@@ -10,10 +10,37 @@ if (!privateApiBaseUrl) {
 }
 
 const auth = new GoogleAuth();
-let client: IdTokenClient | null = null;
+const useMockAuth = process.env.MOCK_AUTH === 'true';
+
+class MockIdTokenClient {
+  async getRequestHeaders(_url?: string) {
+    const token = process.env.MOCK_ID_TOKEN || 'mock-token';
+    return { Authorization: `Bearer ${token}` } as any;
+  }
+  async request(opts: any) {
+    const res = await fetch(opts.url, {
+      method: opts.method,
+      headers: opts.headers,
+      body: opts.body,
+    });
+    return {
+      data: opts.responseType === 'stream' ? res.body : await res.text(),
+      status: res.status,
+      statusText: res.statusText,
+      headers: Object.fromEntries(res.headers.entries()),
+    } as any;
+  }
+}
+
+let client: IdTokenClient | MockIdTokenClient | null = null;
 
 async function getAuthenticatedClient() {
   if (client) {
+    return client;
+  }
+  if (useMockAuth) {
+    console.log('Using mock authentication client');
+    client = new MockIdTokenClient();
     return client;
   }
   try {
@@ -39,23 +66,17 @@ async function handler(req: NextRequest) {
 
     // Log the token for debugging
     try {
-      const headers = await authedClient.getRequestHeaders(targetUrl);
-      const token = headers['Authorization']?.split(' ')[1];
-      if (token) {
-        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-        // console.log('Decoded Token Payload:', JSON.stringify(payload, null, 2));
-      } else {
-        // console.log('No Authorization token found in generated headers.');
-      }
+      //const headers = await authedClient.getRequestHeaders(targetUrl);
+     // const token = headers['Authorization']?.split(' ')[1];
     } catch (e: any) {
-        // console.error('Failed to decode token for logging:', e.message);
+         console.error('Failed to decode token for logging:', e.message);
     }
     
     // We explicitly buffer the body to handle different request types (e.g., streaming)
     // and to avoid issues with the underlying http libraries.
     const bodyBuffer = await req.arrayBuffer();
 
-    const requestHeaders = new Headers(req.headers);
+    const requestHeaders = new Headers();
     // Ensure Content-Type is set for methods that have a body, as it can get lost.
     if (['POST', 'PUT', 'PATCH'].includes(req.method) && bodyBuffer.byteLength > 0) {
       if (!requestHeaders.has('Content-Type')) {
@@ -65,7 +86,7 @@ async function handler(req: NextRequest) {
 
     const res = await authedClient.request({
       url: targetUrl,
-      method: req.method,
+      method: req.method as "POST" | "PUT" | "PATCH" | "GET" | "HEAD" | "DELETE" | "CONNECT" | "OPTIONS" | "TRACE",
       headers: {
         ...Object.fromEntries(requestHeaders.entries()),
         // The host header must match the target service's URL for routing.
