@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -17,10 +18,6 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-  },
-  publicRuntimeConfig: {
-    // Will be available on both server and client
-    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
   },
 };
 
