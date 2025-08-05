@@ -12,7 +12,7 @@ import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { AddItemForm } from "@/components/add-item-form";
 import { PredefinedChecklistItem, PredefinedSubItem } from "@/lib/knowledge-base";
 import {ChecklistItemResponse, ChecklistResponse, CreateChecklistItemRequest} from "@/api/checklistServiceV1.schemas"
-import { useGetAllChecklistItems, createChecklistItem } from "@/api/checklist-item/checklist-item"
+import { useGetAllChecklistItems, createChecklistItem, deleteChecklistItemById } from "@/api/checklist-item/checklist-item"
 import { axiousProps } from "@/lib/axios";
 import {ChecklistCardHandle} from "@/components/shared/types"
 import {changeChecklistItemOrderNumber, updateChecklistItemBychecklistIdAndItemId} from "@/api/checklist-item/checklist-item" 
@@ -64,8 +64,22 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
   const [rows, setRows] = useState<PredefinedSubItem[]>([]);
 
   const handleAddItem = async (checklistItem: ChecklistItemResponse) => {
-    
-   const response =  await createChecklistItem(
+    mutate(current => {
+      if (!current) throw new Error("mutate cannot be null")
+      
+      const currentItems = current.data
+      currentItems.push(checklistItem)
+      console.log({
+        ...current,
+        data: currentItems
+      })
+      return {
+        ...current,
+        data: currentItems
+      }
+    }, {revalidate: false})
+
+    await createChecklistItem(
       checklist.id,
       {
         name: checklistItem.name,
@@ -73,20 +87,17 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
       } as CreateChecklistItemRequest,
       axiousProps
     )
+      console.log("aha")
+  console.log(data)
 
-    mutate(current => {
-      if (!current) throw new Error("mutate cannot be null")
-      
-      const currentItems = current.data
-      currentItems.push(response.data)
-      return {
-        ...current,
-        data: currentItems
-      }
-    })
   };
 
-  const handleOnDeleteChecklistItem = (checklistItemId: number) => {
+  const handleOnDeleteChecklistItem = async (checklistItemId: number) => {
+    await deleteChecklistItemById(
+      checklist.id,
+      checklistItemId,
+      axiousProps
+    )
     mutate((current) => {
         if (!current) throw new Error("On mutate current cannot be null")
         const items = current?.data;
@@ -101,19 +112,20 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
     }
 
   const handleChecklistItemUpdate = async (updatedChecklistItem: ChecklistItemResponse) => {
-   const response = await updateChecklistItemBychecklistIdAndItemId(
-      checklist.id,
-      updatedChecklistItem.id,
-      updatedChecklistItem,
-      axiousProps
-    )
-
     mutate((current) => {
        if (!current) throw new Error("Cannot mutate checklist items list response when response is null");
 
-      const updatedItems =  current.data.map(item => response.data.id === item.id ?
-          response.data : item
-       )
+      const updatedItems =  current.data.map(item => updatedChecklistItem.id === item.id ?
+          updatedChecklistItem : item
+       ).sort((a, b) => {
+            // Sort by completion status first
+            if (a.completed !== b.completed) {
+              return a.completed ? 1 : -1; // false first
+            }
+
+            // Then sort by orderNumber
+            return a.orderNumber - b.orderNumber;
+        })
        return {
         ...current,
         data: updatedItems
@@ -156,8 +168,8 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                 ref={provided.innerRef}
                 className="space-y-2 min-h-[10px] w-full"
               >
-                {items.map((row: ChecklistItemResponse, index: number) => (
-                  <Draggable  key={row.id} draggableId={String(row.id)} index={index}>
+                {items.map((item: ChecklistItemResponse, index: number) => (
+                  <Draggable  key={item.id ?? `temp-${index}`} draggableId={String(item.id)} index={index}>
                     {(provided, snapshot) => (
                             <div
                               ref={provided.innerRef}
@@ -174,8 +186,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
               {...provided.dragHandleProps}
             > 
                   <ChecklistItemComponent
-                      item={row}
-                      index={index}
+                      item={item}
                       checklistId={checklist.id}
                       onChecklistItemUpdate={handleChecklistItemUpdate}
                       onHandleChecklistItemDelete={(checklistItem: ChecklistItemResponse) => handleOnDeleteChecklistItem(checklistItem.id)}
