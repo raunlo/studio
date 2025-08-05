@@ -8,5 +8,17 @@ export type ChecklistCardProps = {
   checklist: ChecklistResponse;
 };
 
-export type ChecklistItem = ChecklistItemResponse
-export type ChecklistItemRow = ChecklistItemRowResponse
+export interface ChecklistItem {
+    completed: boolean
+    id: number | undefined
+    name: string
+    orderNumber: number | undefined
+    rows: Array<ChecklistItemRow>
+}
+
+
+export interface ChecklistItemRow {
+    id: number | undefined
+    name: string
+    completed: false
+}

@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Plus, Trash2 } from "lucide-react";
-import {ChecklistItemResponse, ChecklistItemRowResponse} from "@/api/checklistServiceV1.schemas"
+import {ChecklistItemResponse, ChecklistItemRowResponse, UpdateChecklistItemRequest} from "@/api/checklistServiceV1.schemas"
 import { CheckedState } from "@radix-ui/react-checkbox";
-import { deleteChecklistItemById } from "@/api/checklist-item/checklist-item"
+import { deleteChecklistItemById, createChecklistItemRow, updateChecklistItemBychecklistIdAndItemId } from "@/api/checklist-item/checklist-item"
 import { axiousProps } from "@/lib/axios";
+import { it } from "node:test";
 
 type ChecklistItemProps = {
   item: ChecklistItemResponse;
-  index: number;
   checklistId: number;
   onChecklistItemUpdate: (checklistITem: ChecklistItemResponse) => void;
   onHandleChecklistItemDelete: (checklistItem: ChecklistItemResponse) => void 
@@ -22,7 +22,6 @@ type ChecklistItemProps = {
 
 export function ChecklistItemComponent({
   item,
-  index,
   checklistId,
   onChecklistItemUpdate,
   onHandleChecklistItemDelete
@@ -30,47 +29,70 @@ export function ChecklistItemComponent({
   const [expanded, setExpanded] = useState(false)
   const [newSubItemText, setNewSubItemText] = useState("");
   const [newSubItemQuantity, setNewSubItemQuantity] = useState("");
-
-  const handleAddRowItem = (e: React.FormEvent) => {
+  const rowsSortFn = (a: ChecklistItemRowResponse, b: ChecklistItemRowResponse) => {return Number(a.completed) - Number(b.completed)}
+  const updateItem = async (item: UpdateChecklistItemRequest) =>  {
+      await updateChecklistItemBychecklistIdAndItemId(
+      checklistId,
+      item.id,
+      item,
+      axiousProps
+    )
+  }
+  const handleAddRowItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if(newSubItemText.trim()) {
+    const newRowName = newSubItemText.trim()
+    if(newRowName) {
+     const newItemRow =  {
+        name: newRowName,
+        completed: false
+      }
         const quantity = newSubItemQuantity ? parseInt(newSubItemQuantity) : undefined;
-       // onAddSubItem(checklistId, item.itemId, newSubItemText.trim(), quantity);
         setNewSubItemText("");
         setNewSubItemQuantity("");
+
+      item.rows.push({
+        id: 0,
+        name: newItemRow.name,
+        completed: newItemRow.completed,
+      })
+      item.rows.sort(rowsSortFn)
+      onChecklistItemUpdate(item)
+       await createChecklistItemRow(
+          checklistId,
+          item.id,
+          newItemRow,
+          axiousProps
+      ) 
     }
   };
 
-  const handleItemCompleted = (checked: Boolean) => {
-      const updatedItem = {...item, completed: checked} as ChecklistItemResponse
-        const updatedRows = updatedItem.rows.map((row) =>
-           ({...row, completed: checked}) as ChecklistItemRowResponse
-       ) 
-  
-      onChecklistItemUpdate({
-        ...updatedItem,
+  const handleItemCompleted = async (checked: Boolean) => {
+      let updatedChecklistItem = {...item, completed: checked} as ChecklistItemResponse
+      const rows = updatedChecklistItem.rows ?? []
+      const updatedRows = rows.map((row) =>
+          ({...row, completed: checked}) as ChecklistItemRowResponse
+      )
+      updatedChecklistItem = { 
+        ...updatedChecklistItem,
         rows: updatedRows
-      })
+      }
+
+      onChecklistItemUpdate(updatedChecklistItem)
+
+      await updateItem(updatedChecklistItem)
   }
 
-  const handleOnDeleteItem = async (itemId: number) => {
-      console.log(itemId)
-      await deleteChecklistItemById(
-        checklistId,
-        itemId,
-        axiousProps
-      )
-    onHandleChecklistItemDelete(item)
-  } 
-
-  const deleteRow = (itemId: number, rowId : number) => {
+  const deleteRow = async (rowId : number) => {
     item.rows = item.rows.filter(row => row.id !== rowId)
     onChecklistItemUpdate(item)
+
+    await updateItem(item)
   }
 
-  const handleToggleRowChecked = (rowItem: ChecklistItemRowResponse, checked: boolean) => {
+  const handleRowCompleted = async (rowItem: ChecklistItemRowResponse, checked: boolean) => {
     const updatedRow = { ...rowItem, completed: checked };
      const updatedRows = item.rows.map(row => row.id === updatedRow.id ? updatedRow : row)
+        .sort(rowsSortFn)
       const allRowsAreDone = updatedRows.filter(rows => !rows.completed).length === 0
       const updatedChecklistItem = {
         ...item,
@@ -78,6 +100,8 @@ export function ChecklistItemComponent({
         rows: updatedRows 
       }
       onChecklistItemUpdate(updatedChecklistItem)
+
+      await updateItem(updatedChecklistItem)
   }
 
   return (
@@ -110,8 +134,8 @@ export function ChecklistItemComponent({
           {/* Subitems preview (collapsed state only) */}
           {!expanded && item.rows?.length > 0 && (
             <div className="flex flex-wrap gap-x-2 text-xs text-muted-foreground pointer-events-none">
-              {item.rows.map((row) => (
-                <span key={row.id} className={cn(row.completed && "line-through")}>
+              {item.rows.map((row, index) => (
+                <span key={row.id ?? `temp-${index}`} className={cn(row.completed && "line-through")}>
                   {row.name}
                 </span>
               ))}
@@ -123,7 +147,7 @@ export function ChecklistItemComponent({
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => handleOnDeleteItem(item.id)}
+        onClick={() => onHandleChecklistItemDelete(item)}
         aria-label="Delete item"
         className="h-8 w-8 shrink-0"
       >
@@ -134,13 +158,13 @@ export function ChecklistItemComponent({
     {/* Expanded subitems content */}
     <CollapsibleContent>
       <div className="pl-1 pt-2 space-y-2">
-        {item.rows?.map((row) => (
-          <div key={row.id} className="flex items-center justify-between group">
+        {item.rows?.map((row, index) => (
+          <div key={row.id ?? `temp-${index}`} className="flex items-center justify-between group">
             <div className="flex items-center gap-3">
               <Checkbox
                 id={String(row.id)}
                 checked={row.completed as CheckedState}
-                onCheckedChange={(checked) => handleToggleRowChecked(row, checked as boolean)}
+                onCheckedChange={(checked) => handleRowCompleted(row, checked as boolean)}
                 className="h-4 w-4"
                 aria-label={`Mark sub-item ${row.name} as complete`}
               />
@@ -154,7 +178,7 @@ export function ChecklistItemComponent({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => deleteRow(item.id, row.id)}
+              onClick={() => deleteRow(row.id)}
               className="h-7 w-7"
               aria-label="Delete sub-item"
             >

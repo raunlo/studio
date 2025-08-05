@@ -26,7 +26,9 @@ import type {
   ChangeChecklistItemOrderNumberBody,
   ChangeChecklistItemOrderNumberParams,
   ChecklistItemResponse,
+  ChecklistItemRowResponse,
   CreateChecklistItemRequest,
+  CreateChecklistItemRowRequest,
   Error,
   GetAllChecklistItemsParams,
   UpdateChecklistItemRequest
@@ -302,6 +304,54 @@ export const useChangeChecklistItemOrderNumber = <TError = AxiosError<Error>>(
 
   const swrKey = swrOptions?.swrKey ?? getChangeChecklistItemOrderNumberMutationKey(checklistId,itemId);
   const swrFn = getChangeChecklistItemOrderNumberMutationFetcher(checklistId,itemId,params,axiosOptions);
+
+  const query = useSWRMutation(swrKey, swrFn, swrOptions)
+
+  return {
+    swrKey,
+    ...query
+  }
+}
+/**
+ * @summary Create checklist item row
+ */
+export const createChecklistItemRow = (
+    checklistId: number,
+    itemId: number,
+    createChecklistItemRowRequest: CreateChecklistItemRowRequest, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<ChecklistItemRowResponse>> => {
+    return axios.post(
+      `/api/v1/checklists/${checklistId}/items/${itemId}/rows`,
+      createChecklistItemRowRequest,options
+    );
+  }
+
+
+
+export const getCreateChecklistItemRowMutationFetcher = (checklistId: number,
+    itemId: number, options?: AxiosRequestConfig) => {
+  return (_: string, { arg }: { arg: CreateChecklistItemRowRequest }): Promise<AxiosResponse<ChecklistItemRowResponse>> => {
+    return createChecklistItemRow(checklistId, itemId, arg, options);
+  }
+}
+export const getCreateChecklistItemRowMutationKey = (checklistId: number,
+    itemId: number,) => `/api/v1/checklists/${checklistId}/items/${itemId}/rows` as const;
+
+export type CreateChecklistItemRowMutationResult = NonNullable<Awaited<ReturnType<typeof createChecklistItemRow>>>
+export type CreateChecklistItemRowMutationError = AxiosError<Error>
+
+/**
+ * @summary Create checklist item row
+ */
+export const useCreateChecklistItemRow = <TError = AxiosError<Error>>(
+  checklistId: number,
+    itemId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof createChecklistItemRow>>, TError, string, CreateChecklistItemRowRequest, Awaited<ReturnType<typeof createChecklistItemRow>>> & { swrKey?: string }, axios?: AxiosRequestConfig }
+) => {
+
+  const {swr: swrOptions, axios: axiosOptions} = options ?? {}
+
+  const swrKey = swrOptions?.swrKey ?? getCreateChecklistItemRowMutationKey(checklistId,itemId);
+  const swrFn = getCreateChecklistItemRowMutationFetcher(checklistId,itemId,axiosOptions);
 
   const query = useSWRMutation(swrKey, swrFn, swrOptions)
 
