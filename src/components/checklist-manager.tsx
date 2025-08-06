@@ -28,7 +28,7 @@ export function ChecklistManager() {
   const checklistCardRefs = useRef<Record<string, ChecklistCardHandle>>({});
   // This hook fetches data on the CLIENT side. The component will initially render
   // with a loading state, and then update once the data is fetched from the /api/proxy endpoint.
-  const { data, error, isLoading } = useGetAllChecklists({
+  const { data, error, isLoading, mutate } = useGetAllChecklists({
     swr : {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
@@ -96,9 +96,9 @@ export function ChecklistManager() {
             <ChecklistCard
               ref={(ref) => {
                 if (ref) {
-                  checklistCardRefs.current[checklist.id] = ref;
+                  checklistCardRefs.current[String(checklist.id)] = ref;
                 } else {
-                  delete checklistCardRefs.current[checklist.id];
+                  delete checklistCardRefs.current[String(checklist.id)];
                 }
               }}
               key={String(checklist.id)}
