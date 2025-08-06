@@ -133,7 +133,7 @@ export function ChecklistItemComponent({
 
           {/* Subitems preview (collapsed state only) */}
           {!expanded && item.rows?.length > 0 && (
-            <div className="flex flex-wrap gap-x-2 text-xs text-muted-foreground pointer-events-none">
+            <div className="flex flex-wrap gap-x-2 text-sm italic text-muted-foreground pointer-events-none">
               {item.rows.map((row, index) => (
                 <span key={row.id ?? `temp-${index}`} className={cn(row.completed && "line-through")}>
                   {row.name}
