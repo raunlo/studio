@@ -38,6 +38,7 @@ export function ChecklistItemComponent({
       axiousProps
     )
   }
+
   const handleAddRowItem = async (e: React.FormEvent) => {
     e.preventDefault();
     const newRowName = newSubItemText.trim()
@@ -147,7 +148,7 @@ export function ChecklistItemComponent({
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => onHandleChecklistItemDelete(item)}
+        onClick={() =>  onHandleChecklistItemDelete(item)}
         aria-label="Delete item"
         className="h-8 w-8 shrink-0"
       >
