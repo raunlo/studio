@@ -69,10 +69,6 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
       
       const currentItems = current.data
       currentItems.push(checklistItem)
-      console.log({
-        ...current,
-        data: currentItems
-      })
       return {
         ...current,
         data: currentItems
@@ -93,11 +89,6 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
   };
 
   const handleOnDeleteChecklistItem = async (checklistItemId: number) => {
-    await deleteChecklistItemById(
-      checklist.id,
-      checklistItemId,
-      axiousProps
-    )
     mutate((current) => {
         if (!current) throw new Error("On mutate current cannot be null")
         const items = current?.data;
@@ -108,7 +99,17 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
           ...current,
           data: newItemsList
         }
-      })
+      }, {revalidate: false})
+      try {
+        await deleteChecklistItemById(
+          checklist.id,
+          checklistItemId,
+          axiousProps
+        )
+      } catch(error) {
+        console.log(error)
+        mutate(undefined)
+      }
     }
 
   const handleChecklistItemUpdate = async (updatedChecklistItem: ChecklistItemResponse) => {
