@@ -2,8 +2,7 @@
 # https://firebase.google.com/docs/app-hosting/configure
 
 # The region to deploy the backend to.
-# https://firebase.google.com/docs/app-hosting/locations
-location: europe-west1
+location: europe-west4
 
 runConfig:
   # By setting minInstances to 1, you ensure that there is always at least one
