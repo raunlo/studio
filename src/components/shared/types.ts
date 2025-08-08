@@ -1,4 +1,4 @@
-import {ChecklistItemResponse, ChecklistItemRowResponse, ChecklistResponse} from "@/api/checklistServiceV1.schemas"
+import { ChecklistResponse } from "@/api/checklistServiceV1.schemas";
 
 export type ChecklistCardHandle = {
    handleReorder: (fromIndex: number, toIndex: number) => Promise<void>;
@@ -9,16 +9,15 @@ export type ChecklistCardProps = {
 };
 
 export interface ChecklistItem {
-    completed: boolean
-    id: number | undefined
-    name: string
-    orderNumber: number | undefined
-    rows: Array<ChecklistItemRow>
+  id: number | null;
+  name: string;
+  completed: boolean;
+  orderNumber: number | null;
+  rows: ChecklistItemRow[] | null;
 }
 
-
 export interface ChecklistItemRow {
-    id: number | undefined
-    name: string
-    completed: false
+  id: number | null;
+  name: string;
+  completed: boolean | null;
 }

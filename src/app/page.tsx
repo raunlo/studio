@@ -18,7 +18,6 @@ export default function Home() {
               Organize your tasks with AI-powered suggestions.
             </p>
           </header>
-          {/* ChecklistManager is a Client Component, but the server will render its initial HTML shell. */}
           <ChecklistManager />
         </div>
       </main>

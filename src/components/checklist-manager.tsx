@@ -1,20 +1,12 @@
 
 "use client";
 
-// This is a Client Component.
-// The "use client" directive tells Next.js to send the JavaScript for this component
-// to the user's browser. This is necessary because it uses hooks like `useState` and `useSWR`
-// to manage state and fetch data, which can only be done on the client.
-
-import { useMemo, useRef } from "react";
+import { useRef } from "react";
 import { ChecklistCard } from "@/components/checklist-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
-import { PredefinedSubItem } from "@/lib/knowledge-base";
-import { useToast } from "@/hooks/use-toast";
-import {useGetAllChecklists} from "@/api/checklist/checklist"
-import {axiousProps} from "@/lib/axios"
-import {ChecklistCardHandle, ChecklistCardProps} from "@/components/shared/types"
+import { useChecklist } from "@/hooks/use-checklist";
+import { ChecklistCardHandle } from "@/components/shared/types";
  
 // --- START: Frontend-specific types ---
 // We create local types to match what the UI components expect (e.g., checklistId, title).
@@ -26,25 +18,7 @@ import {ChecklistCardHandle, ChecklistCardProps} from "@/components/shared/types
 
 export function ChecklistManager() {
   const checklistCardRefs = useRef<Record<string, ChecklistCardHandle>>({});
-  // This hook fetches data on the CLIENT side. The component will initially render
-  // with a loading state, and then update once the data is fetched from the /api/proxy endpoint.
-  const { data, error, isLoading, mutate } = useGetAllChecklists({
-    swr : {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      revalidateIfStale: false,
-  },axios: axiousProps});
-  const { toast } = useToast();
-  
-
-  const handleError = (title: string, error: any) => {
-    console.error(error);
-    toast({
-      variant: "destructive",
-      title: title,
-      description: "Your change could not be saved. Please try again.",
-    });
-  };
+  const { checklists, isLoading, error } = useChecklist();
   
   const onDragEnd = async (result: DropResult) => {
     const { source, destination } = result;
@@ -85,8 +59,6 @@ export function ChecklistManager() {
       </div>
     )
   }
-
-  const checklists = data?.data!!
 
   return (
     <div className="space-y-6">
