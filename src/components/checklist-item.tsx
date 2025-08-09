@@ -9,7 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Plus, Trash2 } from "lucide-react";
 import {ChecklistItemResponse, ChecklistItemRowResponse, UpdateChecklistItemRequest} from "@/api/checklistServiceV1.schemas"
 import { CheckedState } from "@radix-ui/react-checkbox";
-import { deleteChecklistItemById, createChecklistItemRow, updateChecklistItemBychecklistIdAndItemId } from "@/api/checklist-item/checklist-item"
+import { deleteChecklistItemById, createChecklistItemRow, updateChecklistItemBychecklistIdAndItemId, deleteChecklistItemRow } from "@/api/checklist-item/checklist-item"
 import { axiousProps } from "@/lib/axios";
 import { it } from "node:test";
 
@@ -86,8 +86,12 @@ export function ChecklistItemComponent({
   const deleteRow = async (rowId : number) => {
     item.rows = item.rows.filter(row => row.id !== rowId)
     onChecklistItemUpdate(item)
-
-    await updateItem(item)
+    await deleteChecklistItemRow(
+        checklistId,
+        item.id,
+        rowId,
+        axiousProps
+    )
   }
 
   const handleRowCompleted = async (rowItem: ChecklistItemRowResponse, checked: boolean) => {
