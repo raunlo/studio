@@ -30,7 +30,6 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
     }));
 
 
-
   const handleAddItem = async (checklistItem: ChecklistItem) => {
     await addItem(checklistItem);
   };
