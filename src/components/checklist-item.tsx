@@ -17,7 +17,7 @@ type ChecklistItemProps = {
 };
 
 export function ChecklistItemComponent({ item, checklistId }: ChecklistItemProps) {
-  const { updateItem, addRow, deleteItem } = useChecklist(checklistId);
+  const { updateItem, addRow, deleteItem, deleteRow } = useChecklist(checklistId);
   const [expanded, setExpanded] = useState(false);
   const [newSubItemText, setNewSubItemText] = useState("");
   const [newSubItemQuantity, setNewSubItemQuantity] = useState("");
@@ -55,14 +55,6 @@ export function ChecklistItemComponent({ item, checklistId }: ChecklistItemProps
     };
 
     await updateItem(updatedChecklistItem);
-  };
-
-  const deleteRow = async (rowId: number) => {
-    const updatedItem: ChecklistItem = {
-      ...item,
-      rows: item.rows ? item.rows.filter((row) => row.id !== rowId) : null,
-    };
-    await updateItem(updatedItem);
   };
 
   const handleRowCompleted = async (rowItem: ChecklistItemRow, checked: boolean) => {
@@ -154,7 +146,7 @@ export function ChecklistItemComponent({ item, checklistId }: ChecklistItemProps
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => deleteRow(row.id!)}
+              onClick={() => deleteRow(item.id, row.id!)}
               className="h-7 w-7"
               aria-label="Delete sub-item"
             >

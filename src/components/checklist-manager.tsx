@@ -26,10 +26,6 @@ export function ChecklistManager() {
   if (!destination || source.droppableId !== destination.droppableId) return;
 
   const checklistId = source.droppableId;
-  const sourceIndex = source.index;
-  const destinationIndex = destination.index;
-  console.log("Source index: " + sourceIndex)
-  console.log("destination index: " + destinationIndex)
 
   const checklistRef = checklistCardRefs.current[checklistId];
   if (checklistRef) {

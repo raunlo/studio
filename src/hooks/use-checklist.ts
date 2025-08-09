@@ -15,10 +15,12 @@ import {
   updateChecklistItemBychecklistIdAndItemId,
   changeChecklistItemOrderNumber,
   createChecklistItemRow,
+  deleteChecklistItemRow,
 } from "@/api/checklist-item/checklist-item";
 import { useGetAllChecklists } from "@/api/checklist/checklist";
 import { axiousProps } from "@/lib/axios";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
+import {AxiosResponse} from "axios"
 
 interface ChecklistHookResult {
   checklists: ChecklistResponse[];
@@ -30,6 +32,7 @@ interface ChecklistHookResult {
   deleteItem: (itemId: number | null) => Promise<void>;
   reorderItem: (from: number, to: number) => Promise<void>;
   addRow: (itemId: number | null, row: ChecklistItemRow) => Promise<void>;
+  deleteRow: (itemId: number | null, rowId: number | null) => Promise<void>;
 }
 
 export function useChecklist(checklistId?: number): ChecklistHookResult {
@@ -115,24 +118,36 @@ export function useChecklist(checklistId?: number): ChecklistHookResult {
   };
 
   const reorderItem = async (from: number, to: number) => {
-    if (!checklistId) return;
+     
+    const exectuonFn = async (numberRetries: number) => {
+    let retry = false
+    if (!checklistId) return {retry: retry};
+    const targetOrderNumber = items[to]?.orderNumber;
     const newList = [...items];
     const [moved] = newList.splice(from, 1);
     newList.splice(to, 0, moved);
     mutateItems(newList, false);
-    if (moved?.id) {
+    if (moved?.id && targetOrderNumber) {
       try {
         await changeChecklistItemOrderNumber(
           checklistId,
           moved.id,
-          { newOrderNumber: to + 1 },
+          { newOrderNumber: targetOrderNumber},
           undefined,
           axiousProps,
         );
       } catch (e) {
         mutateItems();
+        if (numberRetries === 1) retry = true
       }
     }
+    return {retry: retry}
+  }
+
+  const res = await exectuonFn(0)
+  if (res.retry) {
+    await exectuonFn(1)
+  }
   };
 
   const addRow = async (itemId: number | null, row: ChecklistItemRow) => {
@@ -140,13 +155,16 @@ export function useChecklist(checklistId?: number): ChecklistHookResult {
     mutateItems(
       items.map((item) =>
         item.id === itemId
-          ? { ...item, rows: [...(item.rows ?? []), row] }
+          ? { ...item, completed: item.completed ? false: true,
+             rows: [...(item.rows ?? []), row] }
           : item,
       ),
       false,
     );
     if (itemId) {
-      await createChecklistItemRow(
+      const requests = []
+      const checklistItem = items.find(item => item.id === itemId)
+     const addRowFn = createChecklistItemRow(
         checklistId,
         itemId,
         { name: row.name, completed: row.completed ?? null } as Omit<
@@ -155,6 +173,35 @@ export function useChecklist(checklistId?: number): ChecklistHookResult {
         >,
         axiousProps,
       );
+      requests.push(addRowFn)
+      if (checklistItem && checklistItem.completed) {
+        requests.push(updateItem(
+          {
+            ...checklistItem,
+            completed: false
+          }
+        ))
+      }
+      await Promise.all(requests)
+      mutateItems();
+    }
+  };
+
+  const deleteRow = async (itemId: number | null, rowId: number | null) => {
+    if (!checklistId) return;
+    mutateItems(
+      items.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              rows: item.rows?.filter((row) => row.id !== rowId) ?? null,
+            }
+          : item,
+      ),
+      false,
+    );
+    if (itemId && rowId) {
+      await deleteChecklistItemRow(checklistId, itemId, rowId, axiousProps);
       mutateItems();
     }
   };
@@ -171,6 +218,7 @@ export function useChecklist(checklistId?: number): ChecklistHookResult {
     deleteItem,
     reorderItem,
     addRow,
+    deleteRow,
   };
 }
 
