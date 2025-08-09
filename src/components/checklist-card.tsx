@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
 import { ChecklistItemComponent } from "@/components/checklist-item";
-import { AddItemModal } from "@/components/add-item-modal";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { AddItemForm } from "@/components/add-item-form";
 import { PredefinedChecklistItem } from "@/lib/knowledge-base";
@@ -30,21 +29,22 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
       },
     }));
 
-  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
-  const [newChecklistItemName, setNewChecklistItemName] = useState("");
+
 
   const handleAddItem = async (checklistItem: ChecklistItem) => {
     await addItem(checklistItem);
   };
 
-  const handleFormSubmit = (text: string) => {
-    setNewChecklistItemName(text);
-    setIsAddItemModalOpen(true);
+  const handleFormSubmit = async (checklistItemName: string) => {
+      const checklistItem: ChecklistItem = {
+        completed: false,
+        name: checklistItemName,
+        id: null,
+        orderNumber: null,
+        rows: []
+      }
+     await addItem(checklistItem);
   };
-
-  const handleTemplateSelect = (item: PredefinedChecklistItem) => {
-    setNewChecklistItemName(item.text);
-  }
 
   return (
     <>
@@ -57,7 +57,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
         </CardHeader>
         <CardContent className="pt-2 pb-4 flex-grow">
           <div className="pb-4 border-b mb-4">
-            <AddItemForm onFormSubmit={handleFormSubmit} onTemplateSelect={handleTemplateSelect} />
+            <AddItemForm onFormSubmit={handleFormSubmit} />
           </div>
           <Droppable droppableId={String(checklist.id)} type="items">
             {(provided) => (
@@ -102,13 +102,6 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
           </Droppable>
         </CardContent>
       </Card>
-
-     <AddItemModal 
-        isOpen={isAddItemModalOpen}
-        initialChecklistItemName={newChecklistItemName}
-        onClose={() => setIsAddItemModalOpen(false)}
-        onAddItem={handleAddItem}
-      />
     </>
   );
 }

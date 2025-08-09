@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -10,29 +9,41 @@ import { PredefinedItemsDropdown } from "./predefined-items-dropdown";
 
 type AddItemFormProps = {
   onFormSubmit: (text: string) => void;
-  onTemplateSelect: (item: PredefinedChecklistItem) => void;
 };
 
-export function AddItemForm({ onFormSubmit, onTemplateSelect }: AddItemFormProps) {
+export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
   const [itemText, setItemText] = useState("");
   const [filteredItems, setFilteredItems] = useState<PredefinedChecklistItem[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false); // NEW
+
+  const suppressNextOpenRef = useRef(false); // NEW
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (itemText.trim().length > 1) {
       const allItems = getPredefinedItems();
       const lowercasedText = itemText.toLowerCase();
-      const found = allItems.filter(item => 
+
+      const found = allItems.filter(item =>
         item.text.toLowerCase().includes(lowercasedText)
       );
+
+      // kui just valisime dropdownist, ära ava uuesti
+      if (suppressNextOpenRef.current) {
+        suppressNextOpenRef.current = false;
+        setFilteredItems(found);
+        setIsDropdownOpen(false);
+        return;
+      }
+
       setFilteredItems(found);
-      setIsDropdownOpen(found.length > 0);
+      setIsDropdownOpen(isInputFocused && found.length > 0); // vaid kui input on fookuses
     } else {
       setFilteredItems([]);
       setIsDropdownOpen(false);
     }
-  }, [itemText]);
+  }, [itemText, isInputFocused]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -40,9 +51,10 @@ export function AddItemForm({ onFormSubmit, onTemplateSelect }: AddItemFormProps
         setIsDropdownOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
+    // kasuta 'click', mitte 'mousedown', et Reacti onClick jõuaks enne joosta
+    document.addEventListener("click", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, []);
 
@@ -52,14 +64,16 @@ export function AddItemForm({ onFormSubmit, onTemplateSelect }: AddItemFormProps
       onFormSubmit(itemText.trim());
       setItemText("");
       setIsDropdownOpen(false);
+      setFilteredItems([]);
     }
   };
 
   const handleTemplateClick = (item: PredefinedChecklistItem) => {
-    onTemplateSelect(item);
-    setItemText("");
+    suppressNextOpenRef.current = true;           // ära luba järgmisel efektitsüklil avada
+    setItemText(item.text);
     setIsDropdownOpen(false);
-  }
+    setFilteredItems([]);                         // kohe puhasta, et mitte “re-openida”
+  };
 
   return (
     <form onSubmit={handleSubmit} className="relative flex gap-2 w-full" ref={formRef}>
@@ -68,20 +82,23 @@ export function AddItemForm({ onFormSubmit, onTemplateSelect }: AddItemFormProps
           value={itemText}
           onChange={(e) => setItemText(e.target.value)}
           onFocus={() => {
-            if (filteredItems.length > 0) {
-              setIsDropdownOpen(true);
-            }
+            setIsInputFocused(true);
+            if (filteredItems.length > 0) setIsDropdownOpen(true);
+          }}
+          onBlur={() => {
+            // NB: dropdowni li onMouseDown preventib blur’i, nii et see ei sulge valimisel
+            setIsInputFocused(false);
           }}
           placeholder="Add item or search templates..."
           className="h-9 w-full"
           autoComplete="off"
         />
         {isDropdownOpen && (
-           <PredefinedItemsDropdown items={filteredItems} onSelect={handleTemplateClick} />
+          <PredefinedItemsDropdown items={filteredItems} onSelect={handleTemplateClick} />
         )}
       </div>
-      <Button 
-        type="submit" 
+      <Button
+        type="submit"
         size="sm"
         className="h-9"
         disabled={!itemText.trim()}
