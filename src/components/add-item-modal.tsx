@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { X, Plus } from "lucide-react";
-import { ChecklistItemResponse, ChecklistItemRowResponse } from "@/api/checklistServiceV1.schemas";
+import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 
 type ChecklistITemRowModel = {
     name: string;
@@ -17,7 +17,7 @@ type AddItemModalProps = {
   isOpen: boolean;
   initialChecklistItemName: string;
   onClose: () => void;
-  onAddItem: (newItem: ChecklistItemResponse) => void;
+  onAddItem: (newItem: ChecklistItem) => void;
 };
 
 export function AddItemModal({ 
@@ -58,15 +58,22 @@ export function AddItemModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (checklistItemName.trim()) {
-      const checklistItemRows = rows
-        .map(s => ({ name: s.name.trim(), } as ChecklistItemRowResponse))
-        .filter(s => s.name !== "");
-        const item = ({
-          name: checklistItemName.trim(),
-          rows: checklistItemRows ?? []
-        }) as ChecklistItemResponse
-        console.log("submit")
-      onAddItem(item)
+      const checklistItemRows: ChecklistItemRow[] = rows
+        .map((s) => ({
+          id: null,
+          name: s.name.trim(),
+          completed: false,
+        }))
+        .filter((s) => s.name !== "");
+
+      const item: ChecklistItem = {
+        id: null,
+        name: checklistItemName.trim(),
+        completed: false,
+        orderNumber: null,
+        rows: checklistItemRows.length > 0 ? checklistItemRows : null,
+      };
+      onAddItem(item);
       handleClose();
     }
   };

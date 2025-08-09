@@ -10,13 +10,10 @@ import { ChecklistItemComponent } from "@/components/checklist-item";
 import { AddItemModal } from "@/components/add-item-modal";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { AddItemForm } from "@/components/add-item-form";
-import { PredefinedChecklistItem, PredefinedSubItem } from "@/lib/knowledge-base";
-import {ChecklistItemResponse, ChecklistResponse, CreateChecklistItemRequest} from "@/api/checklistServiceV1.schemas"
-import { useGetAllChecklistItems, createChecklistItem, deleteChecklistItemById } from "@/api/checklist-item/checklist-item"
-import { axiousProps } from "@/lib/axios";
-import {ChecklistCardHandle} from "@/components/shared/types"
-import {changeChecklistItemOrderNumber, updateChecklistItemBychecklistIdAndItemId} from "@/api/checklist-item/checklist-item" 
-import { AxiosResponse } from "axios";
+import { PredefinedChecklistItem } from "@/lib/knowledge-base";
+import { ChecklistResponse } from "@/api/checklistServiceV1.schemas";
+import { ChecklistCardHandle, ChecklistItem } from "@/components/shared/types";
+import { useChecklist } from "@/hooks/use-checklist";
 
 
 type ChecklistCardProps = {
@@ -25,130 +22,30 @@ type ChecklistCardProps = {
 
 export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>(
   ({ checklist }, ref): JSX.Element => {
-  const {data, mutate, error, isLoading} = useGetAllChecklistItems(checklist.id, {
-    completed: undefined
-  }, {
-    swr: {
-      refreshInterval: 10000
-    }, axios: axiousProps
-  })
+  const { items, addItem, reorderItem } = useChecklist(checklist.id);
 
   useImperativeHandle(ref, () => ({
       async handleReorder(from, to) {
-        const fromObj = items[from]
-
-        const reordered = [...items];
-        const [moved] = reordered.splice(from, 1);
-        reordered.splice(to, 0, moved);
-
-        mutate({ ...data, data: reordered } as AxiosResponse<ChecklistItemResponse[]>, { revalidate: false });
-
-        try {
-         await changeChecklistItemOrderNumber(
-          checklist.id,
-          fromObj.id,
-          {newOrderNumber: to + 1},
-          undefined, // sort order lets ignore it
-          axiousProps
-         )
-        } catch (e) {
-          console.log(e)
-          mutate({...data, data:items} as AxiosResponse<ChecklistItemResponse[]>, {revalidate: false})
-        }
+        await reorderItem(from, to);
       },
     }));
 
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [newChecklistItemName, setNewChecklistItemName] = useState("");
-  const [itemQuantity, setItemQuantity] = useState<number | undefined>();
-  const [rows, setRows] = useState<PredefinedSubItem[]>([]);
 
-  const handleAddItem = async (checklistItem: ChecklistItemResponse) => {
-    mutate(current => {
-      if (!current) throw new Error("mutate cannot be null")
-      
-      const currentItems = current.data
-      currentItems.push(checklistItem)
-      return {
-        ...current,
-        data: currentItems
-      }
-    }, {revalidate: false})
-
-    await createChecklistItem(
-      checklist.id,
-      {
-        name: checklistItem.name,
-        rows: checklistItem.rows
-      } as CreateChecklistItemRequest,
-      axiousProps
-    )
-      console.log("aha")
-  console.log(data)
-
+  const handleAddItem = async (checklistItem: ChecklistItem) => {
+    await addItem(checklistItem);
   };
-
-  const handleOnDeleteChecklistItem = async (checklistItemId: number) => {
-    mutate((current) => {
-        if (!current) throw new Error("On mutate current cannot be null")
-        const items = current?.data;
-
-        const newItemsList = items.filter(i => i.id != checklistItemId)
-
-        return {
-          ...current,
-          data: newItemsList
-        }
-      }, {revalidate: false})
-      try {
-        await deleteChecklistItemById(
-          checklist.id,
-          checklistItemId,
-          axiousProps
-        )
-      } catch(error) {
-        console.log(error)
-        mutate(undefined)
-      }
-    }
-
-  const handleChecklistItemUpdate = async (updatedChecklistItem: ChecklistItemResponse) => {
-    mutate((current) => {
-       if (!current) throw new Error("Cannot mutate checklist items list response when response is null");
-
-      const updatedItems =  current.data.map(item => updatedChecklistItem.id === item.id ?
-          updatedChecklistItem : item
-       ).sort((a, b) => {
-            // Sort by completion status first
-            if (a.completed !== b.completed) {
-              return a.completed ? 1 : -1; // false first
-            }
-
-            // Then sort by orderNumber
-            return a.orderNumber - b.orderNumber;
-        })
-       return {
-        ...current,
-        data: updatedItems
-       }
-    }, {revalidate: false})
-  }
 
   const handleFormSubmit = (text: string) => {
     setNewChecklistItemName(text);
-  //  setItemQuantity(undefined);
-  //  setRows([]);
     setIsAddItemModalOpen(true);
   };
 
   const handleTemplateSelect = (item: PredefinedChecklistItem) => {
     setNewChecklistItemName(item.text);
-   // setItemQuantity(item.quantity);
-   // setRows(item.subItems);
-   // setIsAddItemModalOpen(true);
   }
 
-   const items = isLoading || error != null ? [] : data!.data
   return (
     <>
       <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
@@ -169,8 +66,8 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                 ref={provided.innerRef}
                 className="space-y-2 min-h-[10px] w-full"
               >
-                {items.map((item: ChecklistItemResponse, index: number) => (
-                  <Draggable  key={item.id ?? `temp-${index}`} draggableId={String(item.id)} index={index}>
+                {items.map((item: ChecklistItem, index: number) => (
+                  <Draggable  key={item.id ?? `temp-${index}`} draggableId={item.id ? String(item.id) : `temp-${index}`} index={index}>
                     {(provided, snapshot) => (
                             <div
                               ref={provided.innerRef}
@@ -189,8 +86,6 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                   <ChecklistItemComponent
                       item={item}
                       checklistId={checklist.id}
-                      onChecklistItemUpdate={handleChecklistItemUpdate}
-                      onHandleChecklistItemDelete={(checklistItem: ChecklistItemResponse) => handleOnDeleteChecklistItem(checklistItem.id)}
                   />
                   </div>
                   </div>

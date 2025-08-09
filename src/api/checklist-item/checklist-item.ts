@@ -360,3 +360,53 @@ export const useCreateChecklistItemRow = <TError = AxiosError<Error>>(
     ...query
   }
 }
+/**
+ * @summary Delete checklist item row by checklistId, itemId and rowId
+ */
+export const deleteChecklistItemRow = (
+    checklistId: number,
+    itemId: number,
+    rowId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<void>> => {
+    return axios.delete(
+      `/api/v1/checklists/${checklistId}/items/${itemId}/rows/${rowId}`,options
+    );
+  }
+
+
+
+export const getDeleteChecklistItemRowMutationFetcher = (checklistId: number,
+    itemId: number,
+    rowId: number, options?: AxiosRequestConfig) => {
+  return (_: string, __: { arg: Arguments }): Promise<AxiosResponse<void>> => {
+    return deleteChecklistItemRow(checklistId, itemId, rowId, options);
+  }
+}
+export const getDeleteChecklistItemRowMutationKey = (checklistId: number,
+    itemId: number,
+    rowId: number,) => `/api/v1/checklists/${checklistId}/items/${itemId}/rows/${rowId}` as const;
+
+export type DeleteChecklistItemRowMutationResult = NonNullable<Awaited<ReturnType<typeof deleteChecklistItemRow>>>
+export type DeleteChecklistItemRowMutationError = AxiosError<Error>
+
+/**
+ * @summary Delete checklist item row by checklistId, itemId and rowId
+ */
+export const useDeleteChecklistItemRow = <TError = AxiosError<Error>>(
+  checklistId: number,
+    itemId: number,
+    rowId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof deleteChecklistItemRow>>, TError, string, Arguments, Awaited<ReturnType<typeof deleteChecklistItemRow>>> & { swrKey?: string }, axios?: AxiosRequestConfig }
+) => {
+
+  const {swr: swrOptions, axios: axiosOptions} = options ?? {}
+
+  const swrKey = swrOptions?.swrKey ?? getDeleteChecklistItemRowMutationKey(checklistId,itemId,rowId);
+  const swrFn = getDeleteChecklistItemRowMutationFetcher(checklistId,itemId,rowId,axiosOptions);
+
+  const query = useSWRMutation(swrKey, swrFn, swrOptions)
+
+  return {
+    swrKey,
+    ...query
+  }
+}
