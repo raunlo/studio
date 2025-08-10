@@ -126,8 +126,13 @@ export function useChecklist(checklistId?: number): ChecklistHookResult {
     const newList = [...items];
     const [moved] = newList.splice(from, 1);
     newList.splice(to, 0, moved);
-    mutateItems(newList, false);
-    if (moved?.id && targetOrderNumber) {
+
+    const reordered = newList.map((item, idx) => ({
+      ...item,
+      orderNumber: idx,
+    }));
+    mutateItems(reordered, false);
+    if (moved?.id && targetOrderNumber != null) {
       try {
         await changeChecklistItemOrderNumber(
           checklistId,
