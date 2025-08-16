@@ -179,8 +179,11 @@ export function useChecklist(
     mutateItems(
       items.map((item) =>
         item.id === itemId
-          ? { ...item, completed: item.completed ? false: true,
-             rows: [...(item.rows ?? []), row] }
+          ? {
+              ...item,
+              completed: item.completed ? false : item.completed,
+              rows: [...(item.rows ?? []), row],
+            }
           : item,
       ),
       false,
