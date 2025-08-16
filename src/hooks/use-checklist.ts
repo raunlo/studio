@@ -20,7 +20,6 @@ import {
 import { useGetAllChecklists } from "@/api/checklist/checklist";
 import { axiousProps } from "@/lib/axios";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
-import {AxiosResponse} from "axios"
 
 interface ChecklistHookResult {
   checklists: ChecklistResponse[];
@@ -35,12 +34,21 @@ interface ChecklistHookResult {
   deleteRow: (itemId: number | null, rowId: number | null) => Promise<void>;
 }
 
-export function useChecklist(checklistId?: number): ChecklistHookResult {
+interface ChecklistHookOptions {
+  refreshInterval?: number;
+}
+
+export function useChecklist(
+  checklistId?: number,
+  options: ChecklistHookOptions = {},
+): ChecklistHookResult {
+  const { refreshInterval } = options;
+
   const {
     data: checklistRes,
     error,
     isLoading: isChecklistsLoading,
-  } = useGetAllChecklists({ axios: axiousProps });
+  } = useGetAllChecklists({ axios: axiousProps, swr: { refreshInterval } });
 
   const { data: items = [], mutate: mutateItems } = useSWR<ChecklistItem[]>(
     checklistId ? ["checklist-items", checklistId] : null,
@@ -63,6 +71,7 @@ export function useChecklist(checklistId?: number): ChecklistHookResult {
           })) ?? null,
       }));
     },
+    { refreshInterval },
   );
 
   const addItem = async (item: ChecklistItem) => {
