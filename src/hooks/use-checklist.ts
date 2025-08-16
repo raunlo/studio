@@ -149,7 +149,8 @@ export function useChecklist(
       const newList = [...items];
       const [moved] = newList.splice(from, 1);
       newList.splice(to, 0, moved);
-      mutateItems(newList, false);
+      const previousItems = [...items];
+      mutateItems(newList, { revalidate: false });
       if (moved?.id && targetOrderNumber) {
         try {
           await changeChecklistItemOrderNumber(
@@ -160,7 +161,7 @@ export function useChecklist(
             axiousProps,
           );
         } catch (e) {
-          mutateItems();
+          mutateItems(previousItems, { revalidate: false });
           if (numberRetries === 1) retry = true;
         }
       }
