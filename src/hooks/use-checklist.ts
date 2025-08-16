@@ -76,8 +76,7 @@ export function useChecklist(
 
   const addItem = async (item: ChecklistItem) => {
     if (!checklistId) return;
-    mutateItems([...(items ?? []), item], false);
-    await createChecklistItem(
+    const res = await createChecklistItem(
       checklistId,
       {
         name: item.name,
@@ -89,7 +88,20 @@ export function useChecklist(
       } as CreateChecklistItemRequest,
       axiousProps,
     );
-    mutateItems();
+    const created = res.data;
+    const newItem: ChecklistItem = {
+      id: created.id,
+      name: created.name,
+      completed: created.completed,
+      orderNumber: created.orderNumber,
+      rows:
+        created.rows?.map((r) => ({
+          id: r.id,
+          name: r.name,
+          completed: r.completed,
+        })) ?? null,
+    };
+    mutateItems([...(items ?? []), newItem], { revalidate: false });
   };
 
   const updateItem = async (item: ChecklistItem) => {
