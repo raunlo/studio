@@ -21,7 +21,7 @@ type ChecklistCardProps = {
 
 export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>(
   ({ checklist }, ref): JSX.Element => {
-  const { items, addItem, reorderItem } = useChecklist(checklist.id);
+  const { items, addItem, reorderItem } = useChecklist(checklist.id, { refreshInterval: 10000 });
 
   useImperativeHandle(ref, () => ({
       async handleReorder(from, to) {
