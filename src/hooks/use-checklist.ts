@@ -127,36 +127,50 @@ export function useChecklist(
   };
 
   const reorderItem = async (from: number, to: number) => {
-     
-    const exectuonFn = async (numberRetries: number) => {
-    let retry = false
-    if (!checklistId) return {retry: retry};
-    const targetOrderNumber = items[to]?.orderNumber;
-    const newList = [...items];
-    const [moved] = newList.splice(from, 1);
-    newList.splice(to, 0, moved);
-    mutateItems(newList, false);
-    if (moved?.id && targetOrderNumber) {
-      try {
-        await changeChecklistItemOrderNumber(
-          checklistId,
-          moved.id,
-          { newOrderNumber: targetOrderNumber},
-          undefined,
-          axiousProps,
-        );
-      } catch (e) {
-        mutateItems();
-        if (numberRetries === 1) retry = true
-      }
-    }
-    return {retry: retry}
-  }
+    // Prevent moving completed items before incomplete ones and vice versa
+    const movingItem = items[from];
+    if (!movingItem) return;
 
-  const res = await exectuonFn(0)
-  if (res.retry) {
-    await exectuonFn(1)
-  }
+    const firstDoneIndex = items.findIndex((i) => i.completed);
+    const doneStartIndex = firstDoneIndex === -1 ? items.length : firstDoneIndex;
+
+    if (!movingItem.completed && to >= doneStartIndex) {
+      return;
+    }
+
+    if (movingItem.completed && to < doneStartIndex) {
+      return;
+    }
+
+    const exectuonFn = async (numberRetries: number) => {
+      let retry = false;
+      if (!checklistId) return { retry };
+      const targetOrderNumber = items[to]?.orderNumber;
+      const newList = [...items];
+      const [moved] = newList.splice(from, 1);
+      newList.splice(to, 0, moved);
+      mutateItems(newList, false);
+      if (moved?.id && targetOrderNumber) {
+        try {
+          await changeChecklistItemOrderNumber(
+            checklistId,
+            moved.id,
+            { newOrderNumber: targetOrderNumber },
+            undefined,
+            axiousProps,
+          );
+        } catch (e) {
+          mutateItems();
+          if (numberRetries === 1) retry = true;
+        }
+      }
+      return { retry };
+    };
+
+    const res = await exectuonFn(0);
+    if (res.retry) {
+      await exectuonFn(1);
+    }
   };
 
   const addRow = async (itemId: number | null, row: ChecklistItemRow) => {
