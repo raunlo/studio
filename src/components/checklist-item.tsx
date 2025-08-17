@@ -9,7 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Plus, Trash2 } from "lucide-react";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 import { CheckedState } from "@radix-ui/react-checkbox";
-import { useChecklist } from "@/hooks/use-checklist";
+import { useChecklistItems } from "@/hooks/use-checklist";
 
 type ChecklistItemProps = {
   item: ChecklistItem;

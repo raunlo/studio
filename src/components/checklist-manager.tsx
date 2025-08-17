@@ -5,7 +5,7 @@ import { useRef } from "react";
 import { ChecklistCard } from "@/components/checklist-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
-import { useChecklist } from "@/hooks/use-checklist";
+import { useChecklistItems } from "@/hooks/use-checklist";
 import { ChecklistCardHandle } from "@/components/shared/types";
 import {useGetAllChecklists } from "@/api/checklist/checklist"
 import { axiousProps } from "@/lib/axios";
@@ -21,7 +21,8 @@ import { axiousProps } from "@/lib/axios";
 export function ChecklistManager() {
   const checklistCardRefs = useRef<Record<string, ChecklistCardHandle>>({});
   const { data, isLoading, error } = useGetAllChecklists({
-    axios: axiousProps
+    axios: axiousProps,
+    swr: {refreshInterval: 10000}
   });
   
   const onDragEnd = async (result: DropResult) => {

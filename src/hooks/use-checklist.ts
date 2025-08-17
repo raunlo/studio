@@ -17,7 +17,6 @@ import {
   createChecklistItemRow,
   deleteChecklistItemRow,
 } from "@/api/checklist-item/checklist-item";
-import { useGetAllChecklists } from "@/api/checklist/checklist";
 import { axiousProps } from "@/lib/axios";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 
@@ -33,10 +32,7 @@ async function dedupeRequest<T>(key: string, fn: () => Promise<T>): Promise<T> {
 }
 
 interface ChecklistHookResult {
-  checklists: ChecklistResponse[];
   items: ChecklistItem[];
-  isLoading: boolean;
-  error: unknown;
   addItem: (item: ChecklistItem) => Promise<void>;
   updateItem: (item: ChecklistItem) => Promise<void>;
   deleteItem: (itemId: number | null) => Promise<void>;
@@ -49,17 +45,11 @@ interface ChecklistHookOptions {
   refreshInterval?: number;
 }
 
-export function useChecklist(
-  checklistId?: number,
+export function useChecklistItems(
+  checklistId: number,
   options: ChecklistHookOptions = {},
 ): ChecklistHookResult {
   const { refreshInterval } = options;
-
-  const {
-    data: checklistRes,
-    error,
-    isLoading: isChecklistsLoading,
-  } = useGetAllChecklists({ axios: axiousProps, swr: { refreshInterval } });
 
   const { data: items = [], mutate: mutateItems } = useSWR<ChecklistItem[]>(
     checklistId ? ["checklist-items", checklistId] : null,
@@ -282,13 +272,9 @@ export function useChecklist(
     }
   };
 
-  const isLoading = isChecklistsLoading || (checklistId ? items.length === 0 : false);
 
   return {
-    checklists: checklistRes?.data ?? [],
     items,
-    isLoading,
-    error,
     addItem,
     updateItem,
     deleteItem,
