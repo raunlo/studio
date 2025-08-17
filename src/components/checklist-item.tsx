@@ -13,11 +13,13 @@ import { useChecklist } from "@/hooks/use-checklist";
 
 type ChecklistItemProps = {
   item: ChecklistItem;
-  checklistId: number;
+  updateItem: (item: ChecklistItem) => Promise<void>
+  addRow: (itemId: number | null, row: ChecklistItemRow) => Promise<void>
+  deleteItem: (itemId: number | null) => Promise<void>
+  deleteRow: (itemId: number | null, rowId: number | null) => Promise<void>
 };
 
-export function ChecklistItemComponent({ item, checklistId }: ChecklistItemProps) {
-  const { updateItem, addRow, deleteItem, deleteRow } = useChecklist(checklistId);
+export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, deleteRow }: ChecklistItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [newSubItemText, setNewSubItemText] = useState("");
   const [newSubItemQuantity, setNewSubItemQuantity] = useState("");

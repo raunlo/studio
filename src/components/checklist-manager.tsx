@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { useChecklist } from "@/hooks/use-checklist";
 import { ChecklistCardHandle } from "@/components/shared/types";
+import {useGetAllChecklists } from "@/api/checklist/checklist"
+import { axiousProps } from "@/lib/axios";
  
 // --- START: Frontend-specific types ---
 // We create local types to match what the UI components expect (e.g., checklistId, title).
@@ -18,7 +20,9 @@ import { ChecklistCardHandle } from "@/components/shared/types";
 
 export function ChecklistManager() {
   const checklistCardRefs = useRef<Record<string, ChecklistCardHandle>>({});
-  const { checklists, isLoading, error } = useChecklist();
+  const { data, isLoading, error } = useGetAllChecklists({
+    axios: axiousProps
+  });
   
   const onDragEnd = async (result: DropResult) => {
     const { source, destination } = result;
@@ -55,6 +59,8 @@ export function ChecklistManager() {
       </div>
     )
   }
+
+  const checklists = data?.data ?? []
 
   return (
     <div className="space-y-6">

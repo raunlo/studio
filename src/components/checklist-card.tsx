@@ -9,10 +9,10 @@ import { Trash2 } from "lucide-react";
 import { ChecklistItemComponent } from "@/components/checklist-item";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { AddItemForm } from "@/components/add-item-form";
-import { PredefinedChecklistItem } from "@/lib/knowledge-base";
 import { ChecklistResponse } from "@/api/checklistServiceV1.schemas";
 import { ChecklistCardHandle, ChecklistItem } from "@/components/shared/types";
 import { useChecklist } from "@/hooks/use-checklist";
+import { add } from "date-fns";
 
 
 type ChecklistCardProps = {
@@ -21,7 +21,12 @@ type ChecklistCardProps = {
 
 export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>(
   ({ checklist }, ref): JSX.Element => {
-  const { items, addItem, reorderItem } = useChecklist(checklist.id, { refreshInterval: 10000 });
+  const { items, addItem, reorderItem,
+    deleteRow: deleteRowFn,
+    updateItem: updateItemFn,
+    addRow: addRowFn,
+    deleteItem: deleteItemFn
+   } = useChecklist(checklist.id, { refreshInterval: 10000 });
 
   useImperativeHandle(ref, () => ({
       async handleReorder(from, to) {
@@ -84,7 +89,10 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
             > 
                   <ChecklistItemComponent
                       item={item}
-                      checklistId={checklist.id}
+                      deleteRow={deleteRowFn}
+                      updateItem={updateItemFn}
+                      addRow={addRowFn}
+                      deleteItem={deleteItemFn}
                   />
                   </div>
                   </div>
