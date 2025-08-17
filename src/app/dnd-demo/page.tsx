@@ -1,7 +1,7 @@
 'use client';
 
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Task {
   id: string;
@@ -9,12 +9,17 @@ interface Task {
 }
 
 export default function DndDemoPage() {
-  const [todo, setTodo] = useState<Task[]>([
-    { id: 'task-1', content: 'Vajab tegemist' },
-  ]);
-  const [done, setDone] = useState<Task[]>([
-    { id: 'task-2', content: 'Valmis töö' },
-  ]);
+  const [todo, setTodo] = useState<Task[]>([]);
+  const [done, setDone] = useState<Task[]>([]);
+
+  useEffect(() => {
+    fetch('/api/dnd-demo')
+      .then((res) => res.json())
+      .then((data: { todo: Task[]; done: Task[] }) => {
+        setTodo(data.todo);
+        setDone(data.done);
+      });
+  }, []);
 
   const onDragEnd = (result: DropResult) => {
     const { source, destination } = result;
