@@ -9,10 +9,10 @@ import { Trash2 } from "lucide-react";
 import { ChecklistItemComponent } from "@/components/checklist-item";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { AddItemForm } from "@/components/add-item-form";
-import { PredefinedChecklistItem } from "@/lib/knowledge-base";
 import { ChecklistResponse } from "@/api/checklistServiceV1.schemas";
 import { ChecklistCardHandle, ChecklistItem } from "@/components/shared/types";
-import { useChecklist } from "@/hooks/use-checklist";
+import { useChecklistItems } from "@/hooks/use-checklist";
+import { add } from "date-fns";
 
 
 type ChecklistCardProps = {
@@ -21,7 +21,12 @@ type ChecklistCardProps = {
 
 export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>(
   ({ checklist }, ref): JSX.Element => {
-  const { items, addItem, reorderItem } = useChecklist(checklist.id, { refreshInterval: 10000 });
+  const { items, addItem, reorderItem,
+    deleteRow: deleteRowFn,
+    updateItem: updateItemFn,
+    addRow: addRowFn,
+    deleteItem: deleteItemFn
+   } = useChecklistItems(checklist.id, { refreshInterval: 10000 });
 
   useImperativeHandle(ref, () => ({
       async handleReorder(from, to) {
@@ -50,9 +55,6 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
       <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between pb-4">
           <h2 className="text-2xl font-bold font-headline">{checklist.name}</h2>
-          <Button variant="ghost" size="icon" onClick={() => {}} aria-label="Delete checklist">
-            <Trash2 className="h-5 w-5 text-muted-foreground" />
-          </Button>
         </CardHeader>
         <CardContent className="pt-2 pb-4 flex-grow">
           <div className="pb-4 border-b mb-4">
@@ -84,7 +86,10 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
             > 
                   <ChecklistItemComponent
                       item={item}
-                      checklistId={checklist.id}
+                      deleteRow={deleteRowFn}
+                      updateItem={updateItemFn}
+                      addRow={addRowFn}
+                      deleteItem={deleteItemFn}
                   />
                   </div>
                   </div>

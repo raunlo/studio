@@ -5,8 +5,10 @@ import { useRef } from "react";
 import { ChecklistCard } from "@/components/checklist-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
-import { useChecklist } from "@/hooks/use-checklist";
+import { useChecklistItems } from "@/hooks/use-checklist";
 import { ChecklistCardHandle } from "@/components/shared/types";
+import {useGetAllChecklists } from "@/api/checklist/checklist"
+import { axiousProps } from "@/lib/axios";
  
 // --- START: Frontend-specific types ---
 // We create local types to match what the UI components expect (e.g., checklistId, title).
@@ -18,8 +20,9 @@ import { ChecklistCardHandle } from "@/components/shared/types";
 
 export function ChecklistManager() {
   const checklistCardRefs = useRef<Record<string, ChecklistCardHandle>>({});
-  const { checklists, isLoading, error } = useChecklist(undefined, {
-    refreshInterval: 10000
+  const { data, isLoading, error } = useGetAllChecklists({
+    axios: axiousProps,
+    swr: {refreshInterval: 10000}
   });
   
   const onDragEnd = async (result: DropResult) => {
@@ -57,6 +60,8 @@ export function ChecklistManager() {
       </div>
     )
   }
+
+  const checklists = data?.data ?? []
 
   return (
     <div className="space-y-6">
