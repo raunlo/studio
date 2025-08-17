@@ -21,6 +21,17 @@ import { useGetAllChecklists } from "@/api/checklist/checklist";
 import { axiousProps } from "@/lib/axios";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 
+const inFlightRequests = new Map<string, Promise<any>>();
+
+async function dedupeRequest<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  if (inFlightRequests.has(key)) {
+    return inFlightRequests.get(key)! as Promise<T>;
+  }
+  const promise = fn().finally(() => inFlightRequests.delete(key));
+  inFlightRequests.set(key, promise);
+  return promise;
+}
+
 interface ChecklistHookResult {
   checklists: ChecklistResponse[];
   items: ChecklistItem[];
@@ -53,10 +64,14 @@ export function useChecklist(
   const { data: items = [], mutate: mutateItems } = useSWR<ChecklistItem[]>(
     checklistId ? ["checklist-items", checklistId] : null,
     async () => {
-      const res = await getAllChecklistItems(
-        checklistId!,
-        { completed: undefined },
-        axiousProps,
+      const res = await dedupeRequest(
+        `checklist-items-${checklistId}`,
+        () =>
+          getAllChecklistItems(
+            checklistId!,
+            { completed: undefined },
+            axiousProps,
+          ),
       );
       return res.data.map((i: ChecklistItemResponse) => ({
         id: i.id,
@@ -76,17 +91,21 @@ export function useChecklist(
 
   const addItem = async (item: ChecklistItem) => {
     if (!checklistId) return;
-    const res = await createChecklistItem(
-      checklistId,
-      {
-        name: item.name,
-        rows:
-          item.rows?.map((r) => ({
-            name: r.name,
-            completed: r.completed ?? null,
-          })) ?? [],
-      } as CreateChecklistItemRequest,
-      axiousProps,
+    const res = await dedupeRequest(
+      `add-item-${checklistId}-${item.name}`,
+      () =>
+        createChecklistItem(
+          checklistId,
+          {
+            name: item.name,
+            rows:
+              item.rows?.map((r) => ({
+                name: r.name,
+                completed: r.completed ?? null,
+              })) ?? [],
+          } as CreateChecklistItemRequest,
+          axiousProps,
+        ),
     );
     const created = res.data;
     const newItem: ChecklistItem = {
@@ -119,11 +138,15 @@ export function useChecklist(
             completed: r.completed ?? null,
           })) ?? [],
       };
-      await updateChecklistItemBychecklistIdAndItemId(
-        checklistId,
-        item.id,
-        req,
-        axiousProps,
+      await dedupeRequest(
+        `update-item-${checklistId}-${item.id}`,
+        () =>
+          updateChecklistItemBychecklistIdAndItemId(
+            checklistId,
+            item.id!,
+            req,
+            axiousProps,
+          ),
       );
       mutateItems();
     }
@@ -133,7 +156,10 @@ export function useChecklist(
     if (!checklistId) return;
     mutateItems(items.filter((i) => i.id !== itemId), false);
     if (itemId) {
-      await deleteChecklistItemById(checklistId, itemId, axiousProps);
+      await dedupeRequest(
+        `delete-item-${checklistId}-${itemId}`,
+        () => deleteChecklistItemById(checklistId, itemId, axiousProps),
+      );
       mutateItems();
     }
   };
@@ -165,12 +191,16 @@ export function useChecklist(
       mutateItems(newList, { revalidate: false });
       if (moved?.id && targetOrderNumber) {
         try {
-          await changeChecklistItemOrderNumber(
-            checklistId,
-            moved.id,
-            { newOrderNumber: targetOrderNumber },
-            undefined,
-            axiousProps,
+          await dedupeRequest(
+            `reorder-item-${checklistId}-${moved.id}-${targetOrderNumber}`,
+            () =>
+              changeChecklistItemOrderNumber(
+                checklistId,
+                moved.id!,
+                { newOrderNumber: targetOrderNumber },
+                undefined,
+                axiousProps,
+              ),
           );
         } catch (e) {
           mutateItems(previousItems, { revalidate: false });
@@ -201,27 +231,31 @@ export function useChecklist(
       false,
     );
     if (itemId) {
-      const requests = []
-      const checklistItem = items.find(item => item.id === itemId)
-     const addRowFn = createChecklistItemRow(
-        checklistId,
-        itemId,
-        { name: row.name, completed: row.completed ?? null } as Omit<
-          ChecklistItemRowResponse,
-          "id"
-        >,
-        axiousProps,
+      const requests: Promise<unknown>[] = [];
+      const checklistItem = items.find((item) => item.id === itemId);
+      const addRowFn = dedupeRequest(
+        `add-row-${checklistId}-${itemId}-${row.name}`,
+        () =>
+          createChecklistItemRow(
+            checklistId,
+            itemId,
+            { name: row.name, completed: row.completed ?? null } as Omit<
+              ChecklistItemRowResponse,
+              "id"
+            >,
+            axiousProps,
+          ),
       );
-      requests.push(addRowFn)
+      requests.push(addRowFn);
       if (checklistItem && checklistItem.completed) {
-        requests.push(updateItem(
-          {
+        requests.push(
+          updateItem({
             ...checklistItem,
-            completed: false
-          }
-        ))
+            completed: false,
+          }),
+        );
       }
-      await Promise.all(requests)
+      await Promise.all(requests);
       mutateItems();
     }
   };
@@ -240,7 +274,10 @@ export function useChecklist(
       false,
     );
     if (itemId && rowId) {
-      await deleteChecklistItemRow(checklistId, itemId, rowId, axiousProps);
+      await dedupeRequest(
+        `delete-row-${checklistId}-${itemId}-${rowId}`,
+        () => deleteChecklistItemRow(checklistId, itemId, rowId, axiousProps),
+      );
       mutateItems();
     }
   };
