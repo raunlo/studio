@@ -1,52 +1,54 @@
 'use client';
 
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { useState, useEffect } from 'react';
-
-interface Task {
-  id: string;
-  content: string;
-}
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from '@hello-pangea/dnd';
+import { useChecklist } from '@/hooks/use-checklist';
+import { ChecklistItem } from '@/components/shared/types';
 
 export default function DndDemoPage() {
-  const [todo, setTodo] = useState<Task[]>([]);
-  const [done, setDone] = useState<Task[]>([]);
+  const { items, reorderItem } = useChecklist(1);
+  const todo = items.filter((i) => !i.completed);
+  const done = items.filter((i) => i.completed);
 
-  useEffect(() => {
-    fetch('/api/dnd-demo')
-      .then((res) => res.json())
-      .then((data: { todo: Task[]; done: Task[] }) => {
-        setTodo(data.todo);
-        setDone(data.done);
-      });
-  }, []);
-
-  const onDragEnd = (result: DropResult) => {
+  const onDragEnd = async (result: DropResult) => {
     const { source, destination } = result;
-    if (!destination) return;
-    if (source.droppableId !== destination.droppableId) return; // block cross-list moves
-
-    const list = source.droppableId === 'todo' ? Array.from(todo) : Array.from(done);
-    const [moved] = list.splice(source.index, 1);
-    list.splice(destination.index, 0, moved);
-
-    if (source.droppableId === 'todo') {
-      setTodo(list);
-    } else {
-      setDone(list);
+    if (!destination || source.droppableId !== destination.droppableId) {
+      return;
     }
+
+    const from =
+      source.droppableId === 'todo'
+        ? source.index
+        : todo.length + source.index;
+    const to =
+      destination.droppableId === 'todo'
+        ? destination.index
+        : todo.length + destination.index;
+
+    await reorderItem(from, to);
   };
 
-  const renderList = (droppableId: 'todo' | 'done', items: Task[]) => (
-    <Droppable droppableId={droppableId}>
+  const renderList = (
+    droppableId: 'todo' | 'done',
+    list: ChecklistItem[],
+  ) => (
+    <Droppable droppableId={droppableId} type={droppableId}>
       {(provided) => (
         <div
           ref={provided.innerRef}
           {...provided.droppableProps}
           className="bg-muted p-4 rounded min-h-[120px] flex-1"
         >
-          {items.map((task, index) => (
-            <Draggable key={task.id} draggableId={task.id} index={index}>
+          {list.map((task, index) => (
+            <Draggable
+              key={String(task.id ?? index)}
+              draggableId={String(task.id ?? `temp-${index}`)}
+              index={index}
+            >
               {(prov) => (
                 <div
                   ref={prov.innerRef}
@@ -54,7 +56,7 @@ export default function DndDemoPage() {
                   {...prov.dragHandleProps}
                   className="mb-2 p-2 bg-card border rounded"
                 >
-                  {task.content}
+                  {task.name}
                 </div>
               )}
             </Draggable>
