@@ -18,7 +18,9 @@ import { ChecklistCardHandle } from "@/components/shared/types";
 
 export function ChecklistManager() {
   const checklistCardRefs = useRef<Record<string, ChecklistCardHandle>>({});
-  const { checklists, isLoading, error } = useChecklist();
+  const { checklists, isLoading, error } = useChecklist(undefined, {
+    refreshInterval: 10000
+  });
   
   const onDragEnd = async (result: DropResult) => {
     const { source, destination } = result;

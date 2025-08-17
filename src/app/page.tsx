@@ -12,10 +12,10 @@ export default function Home() {
         <div className="container mx-auto max-w-2xl p-2 sm:p-6 md:p-8">
           <header className="text-center mb-8 md:mb-12">
             <h1 className="font-headline text-4xl md:text-5xl font-bold text-foreground">
-              QuickCheck
+              Checklist
             </h1>
             <p className="text-muted-foreground mt-2 text-lg">
-              Organize your tasks with AI-powered suggestions.
+              Organize checklist here using drag and drop to order your items.
             </p>
           </header>
           <ChecklistManager />
