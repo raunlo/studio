@@ -3,12 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleAuth } from 'google-auth-library';
 import type { IdTokenClient } from 'google-auth-library/build/src/auth/idtokenclient';
 
-const privateApiBaseUrl = process.env.PRIVATE_API_BASE_URL;
-
-if (!privateApiBaseUrl) {
-  throw new Error('PRIVATE_API_BASE_URL is not set in environment variables');
-}
-
 const auth = new GoogleAuth();
 const useMockAuth = process.env.MOCK_AUTH === 'true';
 
@@ -34,7 +28,7 @@ class MockIdTokenClient {
 
 let client: IdTokenClient | MockIdTokenClient | null = null;
 
-async function getAuthenticatedClient() {
+async function getAuthenticatedClient(baseUrl: string) {
   if (client) {
     return client;
   }
@@ -44,8 +38,8 @@ async function getAuthenticatedClient() {
     return client;
   }
   try {
-    console.log(`Authenticating for audience: ${privateApiBaseUrl}`);
-    client = await auth.getIdTokenClient(privateApiBaseUrl!!);
+    console.log(`Authenticating for audience: ${baseUrl}`);
+    client = await auth.getIdTokenClient(baseUrl);
     console.log('Successfully created authenticated client.');
     return client;
   } catch (error) {
@@ -55,8 +49,17 @@ async function getAuthenticatedClient() {
 }
 
 async function handler(req: NextRequest) {
+  const privateApiBaseUrl = process.env.PRIVATE_API_BASE_URL;
+  if (!privateApiBaseUrl) {
+    console.error('PRIVATE_API_BASE_URL is not set in environment variables');
+    return new NextResponse(
+      JSON.stringify({ message: 'PRIVATE_API_BASE_URL is not configured' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
-    const authedClient = await getAuthenticatedClient();
+    const authedClient = await getAuthenticatedClient(privateApiBaseUrl);
 
     const incomingUrl = new URL(req.nextUrl);
     const requestPath = incomingUrl.pathname.replace('/api/proxy', '');
