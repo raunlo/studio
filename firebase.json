@@ -6,6 +6,11 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "build": {
+      "env": {
+        "PRIVATE_API_BASE_URL": "https://example.com"
+      }
+    },
     "frameworksBackend": {
       "region": "europe-west1"
     }
