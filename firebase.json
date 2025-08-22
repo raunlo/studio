@@ -6,6 +6,11 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "build": {
+      "env": {
+        "PRIVATE_API_BASE_URL": "https://checklistapp-159775351199.europe-west1.run.app"
+      }
+    },
     "frameworksBackend": {
       "region": "europe-west1"
     }
