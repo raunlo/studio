@@ -30,7 +30,7 @@ const clientCache = new Map<string, IdTokenClient | MockIdTokenClient>();
 
 async function getAuthenticatedClient(baseUrl: string) {
   if (clientCache.has(baseUrl)) {
-    return clientCache.get(baseUrl)!
+    return clientCache.get(baseUrl)!;
   }
   if (useMockAuth) {
     console.log('Using mock authentication client');
@@ -40,7 +40,7 @@ async function getAuthenticatedClient(baseUrl: string) {
   }
   try {
     console.log(`Authenticating for audience: ${baseUrl}`);
-    client = await auth.getIdTokenClient(baseUrl);
+    const authedClient = await auth.getIdTokenClient(baseUrl);
     console.log('Successfully created authenticated client.');
     clientCache.set(baseUrl, authedClient);
     return authedClient;
@@ -58,7 +58,8 @@ async function handler(req: NextRequest) {
     );
     return NextResponse.json(
       { message: 'PRIVATE_API_BASE_URL is not configured' },
-      { status: 500 }
+      { status: 500 },
+    );
   }
 
   try {
