@@ -26,22 +26,24 @@ class MockIdTokenClient {
   }
 }
 
-let client: IdTokenClient | MockIdTokenClient | null = null;
+const clientCache = new Map<string, IdTokenClient | MockIdTokenClient>();
 
 async function getAuthenticatedClient(baseUrl: string) {
-  if (client) {
-    return client;
+  if (clientCache.has(baseUrl)) {
+    return clientCache.get(baseUrl)!
   }
   if (useMockAuth) {
     console.log('Using mock authentication client');
-    client = new MockIdTokenClient();
-    return client;
+    const mockClient = new MockIdTokenClient();
+    clientCache.set(baseUrl, mockClient);
+    return mockClient;
   }
   try {
     console.log(`Authenticating for audience: ${baseUrl}`);
     client = await auth.getIdTokenClient(baseUrl);
     console.log('Successfully created authenticated client.');
-    return client;
+    clientCache.set(baseUrl, authedClient);
+    return authedClient;
   } catch (error) {
     console.error('Error creating authenticated client:', error);
     throw new Error('Could not create an authenticated client.');
@@ -51,11 +53,12 @@ async function getAuthenticatedClient(baseUrl: string) {
 async function handler(req: NextRequest) {
   const privateApiBaseUrl = process.env.PRIVATE_API_BASE_URL;
   if (!privateApiBaseUrl) {
-    console.error('PRIVATE_API_BASE_URL is not set in environment variables');
-    return new NextResponse(
-      JSON.stringify({ message: 'PRIVATE_API_BASE_URL is not configured' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    console.error(
+      new Error('PRIVATE_API_BASE_URL is not set in environment variables')
     );
+    return NextResponse.json(
+      { message: 'PRIVATE_API_BASE_URL is not configured' },
+      { status: 500 }
   }
 
   try {
@@ -66,14 +69,6 @@ async function handler(req: NextRequest) {
     const targetUrl = `${privateApiBaseUrl}${requestPath}${incomingUrl.search}`;
 
     console.log(`Proxying request to: ${targetUrl}`);
-
-    // Log the token for debugging
-    try {
-      //const headers = await authedClient.getRequestHeaders(targetUrl);
-     // const token = headers['Authorization']?.split(' ')[1];
-    } catch (e: any) {
-         console.error('Failed to decode token for logging:', e.message);
-    }
     
     // We explicitly buffer the body to handle different request types (e.g., streaming)
     // and to avoid issues with the underlying http libraries.
@@ -113,9 +108,9 @@ async function handler(req: NextRequest) {
     
     const errorData = error.response?.data?.error || error.response?.data || error.message;
 
-    return new NextResponse(
-      JSON.stringify({ message: 'Error proxying request', details: errorData }),
-      { status: error.response?.status || 500, headers: { 'Content-Type': 'application/json' } }
+    return NextResponse.json(
+      { message: 'Error proxying request', details: errorData },
+      { status: error.response?.status || 500 }
     );
   }
 }

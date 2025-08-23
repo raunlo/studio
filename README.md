@@ -10,4 +10,15 @@ The application expects `PRIVATE_API_BASE_URL` to be available at runtime. Build
 can proceed without it, but the proxy API routes will return an error until the
 variable is set. When deploying with Firebase Hosting, you can provide it in
 `firebase.json` under `hosting.build.env` and in `apphosting.yaml` under
-`runConfig.env`.
+`runConfig.env`. For App Hosting, define the variable with the `variable` key:
+
+```yaml
+runConfig:
+  env:
+    - variable: PRIVATE_API_BASE_URL
+      value: https://your-private-api.example.com
+      availability:
+        - RUNTIME
+```
+
+After updating these files, deploy with `firebase deploy` to apply the settings.
