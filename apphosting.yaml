@@ -16,11 +16,12 @@ runConfig:
   # Explicitly set the CPU and memory to low values.
   cpu: 1
   memoryMiB: 512
-  env:
-    - variable: PRIVATE_API_BASE_URL
-      value: https://checklistapp-159775351199.europe-west1.run.app
-      availability:
-        - RUNTIME
+env:
+  - variable: PRIVATE_API_BASE_URL
+    value: https://checklistapp-159775351199.europe-west1.run.app
+    availability:
+      - RUNTIME
+      - BUILD
 
 # Managed an automated, zero-config CI/CD pipeline.
 # https://firebase.google.com/docs/app-hosting/configure-ci-cd
