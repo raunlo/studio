@@ -8,7 +8,7 @@ runConfig:
   # By setting minInstances to 1, you ensure that there is always at least one
   # running instance of your application, which significantly reduces "cold starts"
   # and improves request response times.
-  minInstances: 1
+  minInstances: 0
   # This setting is the most important for cost control.
   # By setting maxInstances to 1, you prevent the system
   # from automatically scaling up to handle more traffic.
