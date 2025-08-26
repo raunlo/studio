@@ -18,7 +18,7 @@ runConfig:
   memoryMiB: 512
 env:
   - variable: PRIVATE_API_BASE_URL
-    value: https://checklistapp-159775351199.europe-west1.run.app
+    value: https://checklist-app-go-qqzjtedwva-ez.a.run.app
     availability:
       - RUNTIME
       - BUILD
