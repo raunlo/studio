@@ -8,7 +8,7 @@
     ],
     "build": {
       "env": {
-        "PRIVATE_API_BASE_URL": "https://checklistapp-159775351199.europe-west1.run.app"
+        "PRIVATE_API_BASE_URL": "https://checklist-app-go"
       }
     },
     "frameworksBackend": {

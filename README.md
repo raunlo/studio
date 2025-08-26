@@ -16,9 +16,16 @@ variable is set. When deploying with Firebase Hosting, you can provide it in
 runConfig:
   env:
     - variable: PRIVATE_API_BASE_URL
-      value: https://your-private-api.example.com
+      value: https://checklist-app-go
       availability:
         - RUNTIME
 ```
 
 After updating these files, deploy with `firebase deploy` to apply the settings.
+
+## API proxying
+
+All requests beginning with `/api/` are internally rewritten to
+`/api/proxy/` via the Next.js configuration. This allows the frontend to use
+relative `/api` paths while the proxy route handles authentication and forwards
+requests to the `checklist-app-go` service.
