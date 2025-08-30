@@ -68,7 +68,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                 className="space-y-2 min-h-[10px] w-full"
               >
                 {items.map((item: ChecklistItem, index: number) => (
-                  <Draggable  key={item.id ?? `temp-${index}`} draggableId={item.id ? String(item.id) : `temp-${index}`} index={index}>
+                  <Draggable  key={item.id ? `checklistItem-${item.id}` :`checklistItem-temp-${index}`} draggableId={item.id ? String(item.id) : `temp-${index}`} index={index}>
                     {(provided, snapshot) => (
                             <div
                               ref={provided.innerRef}

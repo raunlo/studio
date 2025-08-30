@@ -4,7 +4,6 @@ import useSWR from "swr";
 import {
   ChecklistItemResponse,
   ChecklistItemRowResponse,
-  ChecklistResponse,
   CreateChecklistItemRequest,
   UpdateChecklistItemRequest,
 } from "@/api/checklistServiceV1.schemas";
