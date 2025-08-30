@@ -105,7 +105,7 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
             {!expanded && item.rows && item.rows.length > 0 && (
               <div className="flex flex-wrap gap-x-2 text-sm italic text-muted-foreground pointer-events-none">
                 {item.rows.map((row, index) => (
-                <span key={row.id ?? `temp-${index}`} className={cn(row.completed && "line-through")}>
+                <span key={row.id ? `checklistItem-row-${row.id}` : `checklistItem-row-temp-${index}`} className={cn(row.completed && "line-through")}>
                   {row.name}
                 </span>
               ))}

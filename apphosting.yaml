@@ -22,6 +22,11 @@ env:
     availability:
       - RUNTIME
       - BUILD
+  - variable: BACKEND_URL
+    value: https://checklist-app-go-qqzjtedwva-ez.a.run.app/
+    availability:
+      - RUNTIME
+      - BUILD
 
 # Managed an automated, zero-config CI/CD pipeline.
 # https://firebase.google.com/docs/app-hosting/configure-ci-cd
