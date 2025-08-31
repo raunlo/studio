@@ -8,7 +8,7 @@
     ],
     "build": {
       "env": {
-        "PRIVATE_API_BASE_URL": "https://checklist-app-go"
+        "NEXT_PUBLIC_BACKEND_URL": "https://checklist-app-go-qqzjtedwva-ez.a.run.app/"
       }
     },
     "frameworksBackend": {

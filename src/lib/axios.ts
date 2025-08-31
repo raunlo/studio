@@ -4,8 +4,9 @@ import http from 'http';
 import https from 'https';
 
 // The base URL should always be the relative path to our proxy.
-const NEXT_PUBLIC_API_BASE_URL = process.env.BACKEND_URL;
+const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+// Create a custom axios instance with keep-alive agents
 const axiousProps: AxiosRequestConfig = {
   baseURL: NEXT_PUBLIC_API_BASE_URL,
   httpAgent: new http.Agent({ keepAlive: true }),
