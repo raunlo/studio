@@ -3,8 +3,8 @@ import Axios, { AxiosError, AxiosRequestConfig, CreateAxiosDefaults } from 'axio
 import http from 'http';
 import https from 'https';
 
-// The base URL should always be the relative path to our proxy.
-const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+// Direct backend URL instead of proxy
+const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_DIRECT_BACKEND_URL || 'https://checklist-app-go-qqzjtedwva-ez.a.run.app';
 
 // Create a custom axios instance with keep-alive agents
 const axiousProps: AxiosRequestConfig = {
@@ -17,7 +17,17 @@ const axiosInstance = Axios.create(axiousProps as CreateAxiosDefaults);
 
 export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> => {
   try {
-    const { data } = await axiosInstance.request<T>({ ...config });
+    // Add authentication header if needed (for direct backend calls)
+    const authConfig = {
+      ...config,
+      headers: {
+        ...config.headers,
+        // Add your authentication logic here if needed
+        // For example: 'Authorization': `Bearer ${token}`
+      }
+    };
+    
+    const { data } = await axiosInstance.request<T>(authConfig);
     return data;
   } catch (error) {
     if (error instanceof AxiosError) {
