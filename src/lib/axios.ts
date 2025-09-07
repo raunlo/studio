@@ -5,7 +5,7 @@ import https from 'https';
 
 
 // Direct backend URL instead of proxy
-const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_DIRECT_BACKEND_URL || 'https://checklist-app-go-qqzjtedwva-ez.a.run.app';
+const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_DIRECT_BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://checklist-app-go-qqzjtedwva-ez.a.run.app';
 
 
 // Create a custom axios instance with keep-alive agents
