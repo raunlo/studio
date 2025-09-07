@@ -30,6 +30,11 @@ export type ChangeChecklistItemOrderNumberParams = {
 sortOrder?: ChangeChecklistItemOrderNumberSortOrder;
 };
 
+export type ToggleChecklistItemCompleteBody = {
+  /** New completion status */
+  completed: boolean;
+};
+
 export type GetAllChecklistItemsSort = typeof GetAllChecklistItemsSort[keyof typeof GetAllChecklistItemsSort];
 
 

@@ -6,6 +6,12 @@ module.exports = {
       mode: 'tags-split',
       target: './src/api/',   // your generated code will appear here
       client: 'swr',          // generates SWR-ready hooks!
+      override: {
+        mutator: {
+          path: './src/lib/axios.ts',
+          name: 'customInstance'
+        }
+      }
     },
   },
 };

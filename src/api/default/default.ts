@@ -5,12 +5,6 @@
  * Checklist service v1
  * OpenAPI spec version: 1.0.0
  */
-import axios from 'axios'
-import type {
-  AxiosError,
-  AxiosRequestConfig,
-  AxiosResponse
-} from 'axios'
 import useSwr from 'swr'
 import type {
   Key,
@@ -19,6 +13,7 @@ import type {
 import type {
   Get200
 } from '../checklistServiceV1.schemas'
+import { customInstance } from '../../lib/axios';
 
 
   
@@ -26,32 +21,33 @@ import type {
  * @summary Health check
  */
 export const get = (
-     options?: AxiosRequestConfig
- ): Promise<AxiosResponse<Get200>> => {
-    return axios.get(
-      `/`,options
-    );
-  }
-
+    
+ ) => {
+      return customInstance<Get200>(
+      {url: `/`, method: 'GET'
+    },
+      );
+    }
+  
 
 
 export const getGetKey = () => [`/`] as const;
 
 
 export type GetQueryResult = NonNullable<Awaited<ReturnType<typeof get>>>
-export type GetQueryError = AxiosError<unknown>
+export type GetQueryError = unknown
 
 /**
  * @summary Health check
  */
-export const useGet = <TError = AxiosError<unknown>>(
-   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof get>>, TError> & { swrKey?: Key, enabled?: boolean }, axios?: AxiosRequestConfig }
+export const useGet = <TError = unknown>(
+   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof get>>, TError> & { swrKey?: Key, enabled?: boolean },  }
 ) => {
-  const {swr: swrOptions, axios: axiosOptions} = options ?? {}
+  const {swr: swrOptions} = options ?? {}
 
   const isEnabled = swrOptions?.enabled !== false
   const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetKey() : null);
-  const swrFn = () => get(axiosOptions);
+  const swrFn = () => get();
 
   const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
 

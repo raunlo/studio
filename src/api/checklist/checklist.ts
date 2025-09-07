@@ -5,12 +5,6 @@
  * Checklist service v1
  * OpenAPI spec version: 1.0.0
  */
-import axios from 'axios'
-import type {
-  AxiosError,
-  AxiosRequestConfig,
-  AxiosResponse
-} from 'axios'
 import useSwr from 'swr'
 import type {
   Arguments,
@@ -26,6 +20,7 @@ import type {
   CreateChecklistRequest,
   Error
 } from '../checklistServiceV1.schemas'
+import { customInstance } from '../../lib/axios';
 
 
   
@@ -33,32 +28,33 @@ import type {
  * @summary Get all checklists
  */
 export const getAllChecklists = (
-     options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ChecklistResponse[]>> => {
-    return axios.get(
-      `/api/v1/checklists`,options
-    );
-  }
-
+    
+ ) => {
+      return customInstance<ChecklistResponse[]>(
+      {url: `/api/v1/checklists`, method: 'GET'
+    },
+      );
+    }
+  
 
 
 export const getGetAllChecklistsKey = () => [`/api/v1/checklists`] as const;
 
 
 export type GetAllChecklistsQueryResult = NonNullable<Awaited<ReturnType<typeof getAllChecklists>>>
-export type GetAllChecklistsQueryError = AxiosError<Error>
+export type GetAllChecklistsQueryError = Error
 
 /**
  * @summary Get all checklists
  */
-export const useGetAllChecklists = <TError = AxiosError<Error>>(
-   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getAllChecklists>>, TError> & { swrKey?: Key, enabled?: boolean }, axios?: AxiosRequestConfig }
+export const useGetAllChecklists = <TError = Error>(
+   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getAllChecklists>>, TError> & { swrKey?: Key, enabled?: boolean },  }
 ) => {
-  const {swr: swrOptions, axios: axiosOptions} = options ?? {}
+  const {swr: swrOptions} = options ?? {}
 
   const isEnabled = swrOptions?.enabled !== false
   const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetAllChecklistsKey() : null);
-  const swrFn = () => getAllChecklists(axiosOptions);
+  const swrFn = () => getAllChecklists();
 
   const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
 
@@ -71,37 +67,39 @@ export const useGetAllChecklists = <TError = AxiosError<Error>>(
  * @summary Create a new checklist
  */
 export const createChecklist = (
-    createChecklistRequest: CreateChecklistRequest, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ChecklistResponse>> => {
-    return axios.post(
-      `/api/v1/checklists`,
-      createChecklistRequest,options
-    );
-  }
+    createChecklistRequest: CreateChecklistRequest,
+ ) => {
+      return customInstance<ChecklistResponse>(
+      {url: `/api/v1/checklists`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createChecklistRequest
+    },
+      );
+    }
+  
 
 
-
-export const getCreateChecklistMutationFetcher = ( options?: AxiosRequestConfig) => {
-  return (_: string, { arg }: { arg: CreateChecklistRequest }): Promise<AxiosResponse<ChecklistResponse>> => {
-    return createChecklist(arg, options);
+export const getCreateChecklistMutationFetcher = ( ) => {
+  return (_: string, { arg }: { arg: CreateChecklistRequest }): Promise<ChecklistResponse> => {
+    return createChecklist(arg);
   }
 }
 export const getCreateChecklistMutationKey = () => `/api/v1/checklists` as const;
 
 export type CreateChecklistMutationResult = NonNullable<Awaited<ReturnType<typeof createChecklist>>>
-export type CreateChecklistMutationError = AxiosError<Error>
+export type CreateChecklistMutationError = Error
 
 /**
  * @summary Create a new checklist
  */
-export const useCreateChecklist = <TError = AxiosError<Error>>(
-   options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof createChecklist>>, TError, string, CreateChecklistRequest, Awaited<ReturnType<typeof createChecklist>>> & { swrKey?: string }, axios?: AxiosRequestConfig }
+export const useCreateChecklist = <TError = Error>(
+   options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof createChecklist>>, TError, string, CreateChecklistRequest, Awaited<ReturnType<typeof createChecklist>>> & { swrKey?: string },  }
 ) => {
 
-  const {swr: swrOptions, axios: axiosOptions} = options ?? {}
+  const {swr: swrOptions} = options ?? {}
 
   const swrKey = swrOptions?.swrKey ?? getCreateChecklistMutationKey();
-  const swrFn = getCreateChecklistMutationFetcher(axiosOptions);
+  const swrFn = getCreateChecklistMutationFetcher();
 
   const query = useSWRMutation(swrKey, swrFn, swrOptions)
 
@@ -114,32 +112,33 @@ export const useCreateChecklist = <TError = AxiosError<Error>>(
  * @summary Get checklist by ID
  */
 export const getChecklistById = (
-    checklistId: number, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ChecklistResponse>> => {
-    return axios.get(
-      `/api/v1/checklists/${checklistId}`,options
-    );
-  }
-
+    checklistId: number,
+ ) => {
+      return customInstance<ChecklistResponse>(
+      {url: `/api/v1/checklists/${checklistId}`, method: 'GET'
+    },
+      );
+    }
+  
 
 
 export const getGetChecklistByIdKey = (checklistId: number,) => [`/api/v1/checklists/${checklistId}`] as const;
 
 
 export type GetChecklistByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getChecklistById>>>
-export type GetChecklistByIdQueryError = AxiosError<Error>
+export type GetChecklistByIdQueryError = Error
 
 /**
  * @summary Get checklist by ID
  */
-export const useGetChecklistById = <TError = AxiosError<Error>>(
-  checklistId: number, options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getChecklistById>>, TError> & { swrKey?: Key, enabled?: boolean }, axios?: AxiosRequestConfig }
+export const useGetChecklistById = <TError = Error>(
+  checklistId: number, options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getChecklistById>>, TError> & { swrKey?: Key, enabled?: boolean },  }
 ) => {
-  const {swr: swrOptions, axios: axiosOptions} = options ?? {}
+  const {swr: swrOptions} = options ?? {}
 
   const isEnabled = swrOptions?.enabled !== false && !!(checklistId)
   const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetChecklistByIdKey(checklistId) : null);
-  const swrFn = () => getChecklistById(checklistId, axiosOptions);
+  const swrFn = () => getChecklistById(checklistId, );
 
   const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
 
@@ -153,37 +152,39 @@ export const useGetChecklistById = <TError = AxiosError<Error>>(
  */
 export const updateChecklistById = (
     checklistId: number,
-    createChecklistRequest: CreateChecklistRequest, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ChecklistResponse>> => {
-    return axios.put(
-      `/api/v1/checklists/${checklistId}`,
-      createChecklistRequest,options
-    );
-  }
+    createChecklistRequest: CreateChecklistRequest,
+ ) => {
+      return customInstance<ChecklistResponse>(
+      {url: `/api/v1/checklists/${checklistId}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: createChecklistRequest
+    },
+      );
+    }
+  
 
 
-
-export const getUpdateChecklistByIdMutationFetcher = (checklistId: number, options?: AxiosRequestConfig) => {
-  return (_: string, { arg }: { arg: CreateChecklistRequest }): Promise<AxiosResponse<ChecklistResponse>> => {
-    return updateChecklistById(checklistId, arg, options);
+export const getUpdateChecklistByIdMutationFetcher = (checklistId: number, ) => {
+  return (_: string, { arg }: { arg: CreateChecklistRequest }): Promise<ChecklistResponse> => {
+    return updateChecklistById(checklistId, arg);
   }
 }
 export const getUpdateChecklistByIdMutationKey = (checklistId: number,) => `/api/v1/checklists/${checklistId}` as const;
 
 export type UpdateChecklistByIdMutationResult = NonNullable<Awaited<ReturnType<typeof updateChecklistById>>>
-export type UpdateChecklistByIdMutationError = AxiosError<Error>
+export type UpdateChecklistByIdMutationError = Error
 
 /**
  * @summary Update checklist by ID
  */
-export const useUpdateChecklistById = <TError = AxiosError<Error>>(
-  checklistId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof updateChecklistById>>, TError, string, CreateChecklistRequest, Awaited<ReturnType<typeof updateChecklistById>>> & { swrKey?: string }, axios?: AxiosRequestConfig }
+export const useUpdateChecklistById = <TError = Error>(
+  checklistId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof updateChecklistById>>, TError, string, CreateChecklistRequest, Awaited<ReturnType<typeof updateChecklistById>>> & { swrKey?: string },  }
 ) => {
 
-  const {swr: swrOptions, axios: axiosOptions} = options ?? {}
+  const {swr: swrOptions} = options ?? {}
 
   const swrKey = swrOptions?.swrKey ?? getUpdateChecklistByIdMutationKey(checklistId);
-  const swrFn = getUpdateChecklistByIdMutationFetcher(checklistId,axiosOptions);
+  const swrFn = getUpdateChecklistByIdMutationFetcher(checklistId,);
 
   const query = useSWRMutation(swrKey, swrFn, swrOptions)
 
@@ -196,36 +197,37 @@ export const useUpdateChecklistById = <TError = AxiosError<Error>>(
  * @summary Delete checklist by ID
  */
 export const deleteChecklistById = (
-    checklistId: number, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ChecklistResponse>> => {
-    return axios.delete(
-      `/api/v1/checklists/${checklistId}`,options
-    );
-  }
+    checklistId: number,
+ ) => {
+      return customInstance<ChecklistResponse>(
+      {url: `/api/v1/checklists/${checklistId}`, method: 'DELETE'
+    },
+      );
+    }
+  
 
 
-
-export const getDeleteChecklistByIdMutationFetcher = (checklistId: number, options?: AxiosRequestConfig) => {
-  return (_: string, __: { arg: Arguments }): Promise<AxiosResponse<ChecklistResponse>> => {
-    return deleteChecklistById(checklistId, options);
+export const getDeleteChecklistByIdMutationFetcher = (checklistId: number, ) => {
+  return (_: string, __: { arg: Arguments }): Promise<ChecklistResponse> => {
+    return deleteChecklistById(checklistId);
   }
 }
 export const getDeleteChecklistByIdMutationKey = (checklistId: number,) => `/api/v1/checklists/${checklistId}` as const;
 
 export type DeleteChecklistByIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteChecklistById>>>
-export type DeleteChecklistByIdMutationError = AxiosError<Error>
+export type DeleteChecklistByIdMutationError = Error
 
 /**
  * @summary Delete checklist by ID
  */
-export const useDeleteChecklistById = <TError = AxiosError<Error>>(
-  checklistId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof deleteChecklistById>>, TError, string, Arguments, Awaited<ReturnType<typeof deleteChecklistById>>> & { swrKey?: string }, axios?: AxiosRequestConfig }
+export const useDeleteChecklistById = <TError = Error>(
+  checklistId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof deleteChecklistById>>, TError, string, Arguments, Awaited<ReturnType<typeof deleteChecklistById>>> & { swrKey?: string },  }
 ) => {
 
-  const {swr: swrOptions, axios: axiosOptions} = options ?? {}
+  const {swr: swrOptions} = options ?? {}
 
   const swrKey = swrOptions?.swrKey ?? getDeleteChecklistByIdMutationKey(checklistId);
-  const swrFn = getDeleteChecklistByIdMutationFetcher(checklistId,axiosOptions);
+  const swrFn = getDeleteChecklistByIdMutationFetcher(checklistId,);
 
   const query = useSWRMutation(swrKey, swrFn, swrOptions)
 
