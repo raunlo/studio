@@ -9,37 +9,20 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Plus, Trash2 } from "lucide-react";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 import { CheckedState } from "@radix-ui/react-checkbox";
-import { useToggleChecklistItemComplete } from "@/api/checklist-item/checklist-item";
-import { useSWRConfig } from "swr";
 
 type ChecklistItemProps = {
   item: ChecklistItem;
-  checklistId: number;
   updateItem: (item: ChecklistItem) => Promise<void>
   addRow: (itemId: number | null, row: ChecklistItemRow) => Promise<void>
   deleteItem: (itemId: number | null) => Promise<void>
   deleteRow: (itemId: number | null, rowId: number | null) => Promise<void>
+  toggleCompletion: (itemId: number | null) => Promise<void>
 };
 
-export function ChecklistItemComponent({ item, checklistId, addRow, updateItem, deleteItem, deleteRow }: ChecklistItemProps) {
+export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, deleteRow, toggleCompletion }: ChecklistItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [newSubItemText, setNewSubItemText] = useState("");
   const [newSubItemQuantity, setNewSubItemQuantity] = useState("");
-  const { mutate } = useSWRConfig();
-  
-  // Use toggle endpoint with cache invalidation
-  const { trigger: toggleCompletion, isMutating } = useToggleChecklistItemComplete(
-    checklistId, 
-    item.id || 0,
-    {
-      swr: {
-        onSuccess: () => {
-          // Invalidate checklist items cache to refresh UI immediately
-          mutate(["checklist-items", checklistId]);
-        }
-      }
-    }
-  );
   
   const rowsSortFn = (
     a: ChecklistItemRow,
@@ -64,10 +47,10 @@ export function ChecklistItemComponent({ item, checklistId, addRow, updateItem, 
   };
 
   const handleItemCompleted = async (checked: boolean) => {
-    if (!item.id || isMutating) return;
+    if (!item.id) return;
     
-    // Use toggle endpoint - it's faster and more specific
-    await toggleCompletion({ completed: checked });
+    // Use toggle completion from umbrella hook
+    await toggleCompletion(item.id);
   };
 
   const handleRowCompleted = async (rowItem: ChecklistItemRow, checked: boolean) => {

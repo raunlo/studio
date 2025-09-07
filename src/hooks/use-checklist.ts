@@ -15,6 +15,7 @@ import {
   changeChecklistItemOrderNumber,
   createChecklistItemRow,
   deleteChecklistItemRow,
+  toggleChecklistItemComplete,
 } from "@/api/checklist-item/checklist-item";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 
@@ -37,13 +38,14 @@ interface ChecklistHookResult {
   reorderItem: (from: number, to: number) => Promise<void>;
   addRow: (itemId: number | null, row: ChecklistItemRow) => Promise<void>;
   deleteRow: (itemId: number | null, rowId: number | null) => Promise<void>;
+  toggleCompletion: (itemId: number | null) => Promise<void>;
 }
 
 interface ChecklistHookOptions {
   refreshInterval?: number;
 }
 
-export function useChecklistItems(
+export function useChecklist(
   checklistId: number,
   options: ChecklistHookOptions = {},
 ): ChecklistHookResult {
@@ -264,6 +266,37 @@ export function useChecklistItems(
     }
   };
 
+  const toggleCompletion = async (itemId: number | null) => {
+    if (!checklistId || !itemId) return;
+    
+    // Optimistic update
+    const currentItem = items.find((item) => item.id === itemId);
+    if (!currentItem) return;
+    
+    const newCompletedStatus = !currentItem.completed;
+    const updatedItem = { ...currentItem, completed: newCompletedStatus };
+    mutateItems(
+      items.map((item) => (item.id === itemId ? updatedItem : item)),
+      false,
+    );
+    
+    try {
+      await dedupeRequest(
+        `toggle-completion-${checklistId}-${itemId}`,
+        () => toggleChecklistItemComplete(checklistId, itemId, { completed: newCompletedStatus }),
+      );
+      // Revalidate to get the updated data from server
+      mutateItems();
+    } catch (error) {
+      // Revert optimistic update on error
+      mutateItems(
+        items.map((item) => (item.id === itemId ? currentItem : item)),
+        false,
+      );
+      throw error;
+    }
+  };
+
 
   return {
     items,
@@ -273,6 +306,7 @@ export function useChecklistItems(
     reorderItem,
     addRow,
     deleteRow,
+    toggleCompletion,
   };
 }
 
