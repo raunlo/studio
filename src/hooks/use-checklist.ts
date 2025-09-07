@@ -16,7 +16,6 @@ import {
   createChecklistItemRow,
   deleteChecklistItemRow,
 } from "@/api/checklist-item/checklist-item";
-import { axiousProps } from "@/lib/axios";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 
 const inFlightRequests = new Map<string, Promise<any>>();
@@ -58,17 +57,16 @@ export function useChecklistItems(
         () =>
           getAllChecklistItems(
             checklistId!,
-            { completed: undefined },
-            axiousProps,
+            { completed: undefined }
           ),
       );
-      return res.data.map((i: ChecklistItemResponse) => ({
+      return res.map((i: ChecklistItemResponse) => ({
         id: i.id,
         name: i.name,
         completed: i.completed,
         orderNumber: i.orderNumber,
         rows:
-          i.rows?.map((r) => ({
+          i.rows?.map((r: any) => ({
             id: r.id,
             name: r.name,
             completed: r.completed,
@@ -92,18 +90,17 @@ export function useChecklistItems(
                 name: r.name,
                 completed: r.completed ?? null,
               })) ?? [],
-          } as CreateChecklistItemRequest,
-          axiousProps,
+          } as CreateChecklistItemRequest
         ),
     );
-    const created = res.data;
+    const created = res;
     const newItem: ChecklistItem = {
       id: created.id,
       name: created.name,
       completed: created.completed,
       orderNumber: created.orderNumber,
       rows:
-        created.rows?.map((r) => ({
+        created.rows?.map((r: any) => ({
           id: r.id,
           name: r.name,
           completed: r.completed,
@@ -133,8 +130,7 @@ export function useChecklistItems(
           updateChecklistItemBychecklistIdAndItemId(
             checklistId,
             item.id!,
-            req,
-            axiousProps,
+            req
           ),
       );
       mutateItems();
@@ -147,7 +143,7 @@ export function useChecklistItems(
     if (itemId) {
       await dedupeRequest(
         `delete-item-${checklistId}-${itemId}`,
-        () => deleteChecklistItemById(checklistId, itemId, axiousProps),
+        () => deleteChecklistItemById(checklistId, itemId),
       );
       mutateItems();
     }
@@ -186,9 +182,7 @@ export function useChecklistItems(
               changeChecklistItemOrderNumber(
                 checklistId,
                 moved.id!,
-                { newOrderNumber: targetOrderNumber },
-                undefined,
-                axiousProps,
+                { newOrderNumber: targetOrderNumber }
               ),
           );
         } catch (e) {
@@ -231,8 +225,7 @@ export function useChecklistItems(
             { name: row.name, completed: row.completed ?? null } as Omit<
               ChecklistItemRowResponse,
               "id"
-            >,
-            axiousProps,
+            >
           ),
       );
       requests.push(addRowFn);
@@ -265,7 +258,7 @@ export function useChecklistItems(
     if (itemId && rowId) {
       await dedupeRequest(
         `delete-row-${checklistId}-${itemId}-${rowId}`,
-        () => deleteChecklistItemRow(checklistId, itemId, rowId, axiousProps),
+        () => deleteChecklistItemRow(checklistId, itemId, rowId),
       );
       mutateItems();
     }

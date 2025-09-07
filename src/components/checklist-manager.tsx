@@ -8,7 +8,6 @@ import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { useChecklistItems } from "@/hooks/use-checklist";
 import { ChecklistCardHandle } from "@/components/shared/types";
 import {useGetAllChecklists } from "@/api/checklist/checklist"
-import { axiousProps } from "@/lib/axios";
  
 // --- START: Frontend-specific types ---
 // We create local types to match what the UI components expect (e.g., checklistId, title).
@@ -21,7 +20,6 @@ import { axiousProps } from "@/lib/axios";
 export function ChecklistManager() {
   const checklistCardRefs = useRef<Record<string, ChecklistCardHandle>>({});
   const { data, isLoading, error } = useGetAllChecklists({
-    axios: axiousProps,
     swr: {refreshInterval: 10000}
   });
   
@@ -61,13 +59,13 @@ export function ChecklistManager() {
     )
   }
 
-  const checklists = data?.data ?? []
+  const checklists = data ?? []
 
   return (
     <div className="space-y-6">
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="space-y-6">
-          {checklists.map((checklist) => (
+          {checklists.map((checklist: any) => (
             <ChecklistCard
               ref={(ref) => {
                 if (ref) {
