@@ -1,6 +1,7 @@
 "use client";
 
 import useSWR from "swr";
+import { useRef, useCallback } from "react";
 import {
   ChecklistItemResponse,
   ChecklistItemRowResponse,
@@ -50,6 +51,23 @@ export function useChecklist(
   options: ChecklistHookOptions = {},
 ): ChecklistHookResult {
   const { refreshInterval } = options;
+  
+  // Ref to track rapid operations and debounce refetching
+  const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isRapidOperationRef = useRef(false);
+
+  // Debounced refetch function
+  const debouncedRefetch = useCallback(() => {
+    if (refetchTimeoutRef.current) {
+      clearTimeout(refetchTimeoutRef.current);
+    }
+    
+    isRapidOperationRef.current = true;
+    refetchTimeoutRef.current = setTimeout(() => {
+      isRapidOperationRef.current = false;
+      mutateItems();
+    }, 1500); // Wait 1.5 seconds after last operation before refetching
+  }, []);
 
   const { data: items = [], mutate: mutateItems } = useSWR<ChecklistItem[]>(
     checklistId ? ["checklist-items", checklistId] : null,
@@ -135,7 +153,8 @@ export function useChecklist(
             req
           ),
       );
-      mutateItems();
+      // Use debounced refetch to prevent UI jumping during rapid row toggling
+      debouncedRefetch();
     }
   };
 
@@ -275,6 +294,9 @@ export function useChecklist(
     
     const newCompletedStatus = !currentItem.completed;
     const updatedItem = { ...currentItem, completed: newCompletedStatus };
+    
+    // Keep items in their current order for optimistic update
+    // This prevents jumping during rapid clicking
     mutateItems(
       items.map((item) => (item.id === itemId ? updatedItem : item)),
       false,
@@ -285,8 +307,10 @@ export function useChecklist(
         `toggle-completion-${checklistId}-${itemId}`,
         () => toggleChecklistItemComplete(checklistId, itemId, { completed: newCompletedStatus }),
       );
-      // Revalidate to get the updated data from server
-      mutateItems();
+      
+      // Use debounced refetch to prevent UI jumping during rapid operations
+      debouncedRefetch();
+      
     } catch (error) {
       // Revert optimistic update on error
       mutateItems(

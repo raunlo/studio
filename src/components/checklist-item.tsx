@@ -24,13 +24,6 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
   const [expanded, setExpanded] = useState(false);
   const [newSubItemText, setNewSubItemText] = useState("");
   const [newSubItemQuantity, setNewSubItemQuantity] = useState("");
-  
-  const rowsSortFn = (
-    a: ChecklistItemRow,
-    b: ChecklistItemRow,
-  ) => {
-    return Number(a.completed) - Number(b.completed);
-  };
 
   const handleAddRowItem = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,8 +50,7 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
   const handleRowCompleted = async (rowItem: ChecklistItemRow, checked: boolean) => {
     const updatedRow = { ...rowItem, completed: checked };
     const updatedRows = (item.rows ?? [])
-      .map((row) => (row.id === updatedRow.id ? updatedRow : row))
-      .sort(rowsSortFn);
+      .map((row) => (row.id === updatedRow.id ? updatedRow : row));
     const allRowsAreDone = updatedRows.filter((rows) => !rows.completed).length === 0;
     const updatedChecklistItem: ChecklistItem = {
       ...item,
