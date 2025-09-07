@@ -9,9 +9,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Plus, Trash2 } from "lucide-react";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 import { CheckedState } from "@radix-ui/react-checkbox";
+import { useChecklistItems } from "@/hooks/use-checklist";
+import { useToggleChecklistItemComplete } from "@/api/checklist-item/checklist-item";
 
 type ChecklistItemProps = {
   item: ChecklistItem;
+  checklistId: number;
   updateItem: (item: ChecklistItem) => Promise<void>
   addRow: (itemId: number | null, row: ChecklistItemRow) => Promise<void>
   deleteItem: (itemId: number | null) => Promise<void>

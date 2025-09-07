@@ -22,7 +22,6 @@ if (typeof window !== 'undefined') {
   setInterval(warmupBackend, 4 * 60 * 1000);
   // Initial warmup
   setTimeout(warmupBackend, 1000);
-}
 
 
 // Create a lightweight axios instance

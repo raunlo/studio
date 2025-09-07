@@ -89,6 +89,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
             > 
                   <ChecklistItemComponent
                       item={item}
+                      checklistId={checklist.id}
                       deleteRow={deleteRowFn}
                       updateItem={updateItemFn}
                       addRow={addRowFn}
