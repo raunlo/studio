@@ -9,8 +9,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Plus, Trash2 } from "lucide-react";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 import { CheckedState } from "@radix-ui/react-checkbox";
-import { useChecklistItems } from "@/hooks/use-checklist";
-import { useToggleChecklistItemComplete } from "@/api/checklist-item/checklist-item";
 
 type ChecklistItemProps = {
   item: ChecklistItem;
@@ -19,15 +17,13 @@ type ChecklistItemProps = {
   addRow: (itemId: number | null, row: ChecklistItemRow) => Promise<void>
   deleteItem: (itemId: number | null) => Promise<void>
   deleteRow: (itemId: number | null, rowId: number | null) => Promise<void>
+  toggleCompletion: (itemId: number | null) => Promise<void>
 };
 
-export function ChecklistItemComponent({ item, checklistId, addRow, updateItem, deleteItem, deleteRow }: ChecklistItemProps) {
+export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, deleteRow, toggleCompletion }: ChecklistItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [newSubItemText, setNewSubItemText] = useState("");
   const [newSubItemQuantity, setNewSubItemQuantity] = useState("");
-  
-  // Add the toggle completion hook
-  const { trigger: toggleCompletion } = useToggleChecklistItemComplete(checklistId, item.id || 0);
   
   const rowsSortFn = (
     a: ChecklistItemRow,
@@ -54,24 +50,8 @@ export function ChecklistItemComponent({ item, checklistId, addRow, updateItem, 
   const handleItemCompleted = async (checked: boolean) => {
     if (!item.id) return;
     
-    try {
-      // Use the new toggle endpoint instead of full update
-      await toggleCompletion({ completed: checked });
-    } catch (error) {
-      console.error('Failed to toggle item completion:', error);
-      // Fallback to the old update method if toggle fails
-      let updatedChecklistItem: ChecklistItem = { ...item, completed: checked };
-      const rows = updatedChecklistItem.rows ?? [];
-      const updatedRows = rows.map(
-        (row) => ({ ...row, completed: checked }) as ChecklistItemRow,
-      );
-      updatedChecklistItem = {
-        ...updatedChecklistItem,
-        rows: updatedRows,
-      };
-
-      await updateItem(updatedChecklistItem);
-    }
+    // Use toggle completion from umbrella hook
+    await toggleCompletion(item.id);
   };
 
   const handleRowCompleted = async (rowItem: ChecklistItemRow, checked: boolean) => {

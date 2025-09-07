@@ -15,8 +15,8 @@ import {
   changeChecklistItemOrderNumber,
   createChecklistItemRow,
   deleteChecklistItemRow,
+  toggleChecklistItemComplete,
 } from "@/api/checklist-item/checklist-item";
-import { axiousProps } from "@/lib/axios";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 
 const inFlightRequests = new Map<string, Promise<any>>();
@@ -38,13 +38,14 @@ interface ChecklistHookResult {
   reorderItem: (from: number, to: number) => Promise<void>;
   addRow: (itemId: number | null, row: ChecklistItemRow) => Promise<void>;
   deleteRow: (itemId: number | null, rowId: number | null) => Promise<void>;
+  toggleCompletion: (itemId: number | null) => Promise<void>;
 }
 
 interface ChecklistHookOptions {
   refreshInterval?: number;
 }
 
-export function useChecklistItems(
+export function useChecklist(
   checklistId: number,
   options: ChecklistHookOptions = {},
 ): ChecklistHookResult {
@@ -58,17 +59,16 @@ export function useChecklistItems(
         () =>
           getAllChecklistItems(
             checklistId!,
-            { completed: undefined },
-            axiousProps,
+            { completed: undefined }
           ),
       );
-      return res.data.map((i: ChecklistItemResponse) => ({
+      return res.map((i: ChecklistItemResponse) => ({
         id: i.id,
         name: i.name,
         completed: i.completed,
         orderNumber: i.orderNumber,
         rows:
-          i.rows?.map((r) => ({
+          i.rows?.map((r: any) => ({
             id: r.id,
             name: r.name,
             completed: r.completed,
@@ -92,18 +92,17 @@ export function useChecklistItems(
                 name: r.name,
                 completed: r.completed ?? null,
               })) ?? [],
-          } as CreateChecklistItemRequest,
-          axiousProps,
+          } as CreateChecklistItemRequest
         ),
     );
-    const created = res.data;
+    const created = res;
     const newItem: ChecklistItem = {
       id: created.id,
       name: created.name,
       completed: created.completed,
       orderNumber: created.orderNumber,
       rows:
-        created.rows?.map((r) => ({
+        created.rows?.map((r: any) => ({
           id: r.id,
           name: r.name,
           completed: r.completed,
@@ -133,8 +132,7 @@ export function useChecklistItems(
           updateChecklistItemBychecklistIdAndItemId(
             checklistId,
             item.id!,
-            req,
-            axiousProps,
+            req
           ),
       );
       mutateItems();
@@ -147,7 +145,7 @@ export function useChecklistItems(
     if (itemId) {
       await dedupeRequest(
         `delete-item-${checklistId}-${itemId}`,
-        () => deleteChecklistItemById(checklistId, itemId, axiousProps),
+        () => deleteChecklistItemById(checklistId, itemId),
       );
       mutateItems();
     }
@@ -186,9 +184,7 @@ export function useChecklistItems(
               changeChecklistItemOrderNumber(
                 checklistId,
                 moved.id!,
-                { newOrderNumber: targetOrderNumber },
-                undefined,
-                axiousProps,
+                { newOrderNumber: targetOrderNumber }
               ),
           );
         } catch (e) {
@@ -231,8 +227,7 @@ export function useChecklistItems(
             { name: row.name, completed: row.completed ?? null } as Omit<
               ChecklistItemRowResponse,
               "id"
-            >,
-            axiousProps,
+            >
           ),
       );
       requests.push(addRowFn);
@@ -265,9 +260,40 @@ export function useChecklistItems(
     if (itemId && rowId) {
       await dedupeRequest(
         `delete-row-${checklistId}-${itemId}-${rowId}`,
-        () => deleteChecklistItemRow(checklistId, itemId, rowId, axiousProps),
+        () => deleteChecklistItemRow(checklistId, itemId, rowId),
       );
       mutateItems();
+    }
+  };
+
+  const toggleCompletion = async (itemId: number | null) => {
+    if (!checklistId || !itemId) return;
+    
+    // Optimistic update
+    const currentItem = items.find((item) => item.id === itemId);
+    if (!currentItem) return;
+    
+    const newCompletedStatus = !currentItem.completed;
+    const updatedItem = { ...currentItem, completed: newCompletedStatus };
+    mutateItems(
+      items.map((item) => (item.id === itemId ? updatedItem : item)),
+      false,
+    );
+    
+    try {
+      await dedupeRequest(
+        `toggle-completion-${checklistId}-${itemId}`,
+        () => toggleChecklistItemComplete(checklistId, itemId, { completed: newCompletedStatus }),
+      );
+      // Revalidate to get the updated data from server
+      mutateItems();
+    } catch (error) {
+      // Revert optimistic update on error
+      mutateItems(
+        items.map((item) => (item.id === itemId ? currentItem : item)),
+        false,
+      );
+      throw error;
     }
   };
 
@@ -280,6 +306,7 @@ export function useChecklistItems(
     reorderItem,
     addRow,
     deleteRow,
+    toggleCompletion,
   };
 }
 
