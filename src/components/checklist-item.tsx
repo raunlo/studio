@@ -187,6 +187,7 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
         <div className="flex flex-col items-start gap-2 text-left flex-grow pt-0.5">
           {/* Editable title */}
           {isEditingTitle ? (
+            /* Prevent event bubbling so the collapsible trigger does not fire when interacting with edit controls */
             <div className="flex items-center gap-2 w-full" onClick={(e) => e.stopPropagation()}>
               <Input
                 ref={titleInputRef}
@@ -219,6 +220,7 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
             <span 
               className={cn("cursor-pointer hover:text-primary transition-colors", item.completed && "line-through text-muted-foreground")}
               onClick={(e) => {
+                // Prevent event bubbling so the collapsible trigger does not fire when clicking to edit
                 e.stopPropagation();
                 startTitleEdit();
               }}
