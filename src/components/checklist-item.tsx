@@ -59,8 +59,11 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
         name: newRowName,
         completed: false,
       };
+      // Clear input immediately for better UX
       setNewSubItemText("");
       setNewSubItemQuantity("");
+      
+      // Add row with optimistic update already handled in hook
       await addRow(item.id, newItemRow);
     }
   };
@@ -68,18 +71,38 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
   const handleItemCompleted = async (checked: boolean) => {
     if (!item.id) return;
     
-    // Use toggle completion from umbrella hook
-    await toggleCompletion(item.id);
+    // If checking main item as completed, mark all sub-items as completed
+    // If unchecking main item, mark all sub-items as uncompleted
+    if (item.rows && item.rows.length > 0) {
+      const updatedRows = item.rows.map(row => ({ ...row, completed: checked }));
+      const updatedItem: ChecklistItem = {
+        ...item,
+        completed: checked,
+        rows: updatedRows
+      };
+      
+      // Update the item with all sub-items synced
+      await updateItem(updatedItem);
+    } else {
+      // No sub-items, just toggle the main item
+      await toggleCompletion(item.id);
+    }
   };
 
   const handleRowCompleted = async (rowItem: ChecklistItemRow, checked: boolean) => {
     const updatedRow = { ...rowItem, completed: checked };
     const updatedRows = (item.rows ?? [])
       .map((row) => (row.id === updatedRow.id ? updatedRow : row));
+    
+    // Check if all sub-items are completed to auto-complete the main item
     const allRowsAreDone = updatedRows.filter((rows) => !rows.completed).length === 0;
+    const anyRowsUndone = updatedRows.some((rows) => !rows.completed);
+    
     const updatedChecklistItem: ChecklistItem = {
       ...item,
-      completed: allRowsAreDone ? true : false,
+      // Auto-complete main item if all sub-items are done
+      // Auto-uncomplete main item if any sub-item is undone (only if main was completed)
+      completed: allRowsAreDone ? true : (anyRowsUndone && item.completed ? false : item.completed),
       rows: updatedRows,
     };
 
