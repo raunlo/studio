@@ -222,18 +222,24 @@ export function useChecklist(
 
   const addRow = async (itemId: number | null, row: ChecklistItemRow) => {
     if (!checklistId) return;
+    
+    // Generate temporary ID for better optimistic update rendering
+    const tempId = -Date.now() - Math.random() * 1000; // Negative ID to distinguish from real IDs
+    const optimisticRow = { ...row, id: tempId };
+    
     mutateItems(
       items.map((item) =>
         item.id === itemId
           ? {
               ...item,
               completed: item.completed ? false : item.completed,
-              rows: [...(item.rows ?? []), row],
+              rows: [...(item.rows ?? []), optimisticRow],
             }
           : item,
       ),
       false,
     );
+    
     if (itemId) {
       const requests: Promise<unknown>[] = [];
       const checklistItem = items.find((item) => item.id === itemId);
