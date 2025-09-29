@@ -2,6 +2,10 @@
 import Axios, { AxiosError, AxiosRequestConfig, CreateAxiosDefaults } from 'axios';
 import http from 'http';
 import https from 'https';
+// lightweight client id generator (no extra deps)
+function newId() {
+  return 'cid-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
 
 // Direct backend URL instead of proxy
 const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_DIRECT_BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://checklist-app-go-qqzjtedwva-ez.a.run.app';
@@ -15,6 +19,35 @@ const axiousProps: AxiosRequestConfig = {
 
 // The base URL is now the local proxy endpoint.
 const axiosInstance = Axios.create(axiousProps as CreateAxiosDefaults);
+
+// Generate or return a persistent client id stored in localStorage
+export function getClientId(): string {
+  try {
+    const key = 'checklist_client_id';
+    let id = localStorage.getItem(key) || '';
+    if (!id) {
+      id = newId();
+      localStorage.setItem(key, id);
+    }
+    return id;
+  } catch (e) {
+    // fallback to ephemeral id if localStorage unavailable
+    return newId();
+  }
+}
+
+// Attach client id header to all requests
+axiosInstance.interceptors.request.use((cfg) => {
+  try {
+    const clientId = getClientId();
+    cfg.headers = cfg.headers ?? {} as Record<string, any>;
+    // assign header in a type-safe way
+    (cfg.headers as Record<string, any>)['X-Client-Id'] = clientId;
+  } catch (e) {
+    // ignore
+  }
+  return cfg;
+});
 
 export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> => {
   try {

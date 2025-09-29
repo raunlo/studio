@@ -59,6 +59,90 @@ export type Get200 = {
   status?: string;
 };
 
+export interface ChecklistItemReorderedEventPayload {
+  /**
+   * @minimum 1
+   */
+  itemId: number;
+  /**
+   * @minimum 1
+   */
+  newOrderNumber: number;
+  /** Indicates if the order number was changed */
+  orderChanged: boolean;
+}
+
+export interface ChecklistItemDeletedEventPayload {
+  /**
+   * @minimum 1
+   */
+  itemId: number;
+}
+
+export interface ChecklistItemRowAddedEventPayload {
+  /**
+   * @minimum 1
+   */
+  itemId: number;
+  row: ChecklistItemRowResponse;
+}
+
+export interface ChecklistItemRowDeletedEventPayload {
+  /**
+   * @minimum 1
+   */
+  itemId: number;
+  /**
+   * @minimum 1
+   */
+  rowId: number;
+}
+
+/**
+ * Event type identifier
+ */
+export type EventEnvelopeType = typeof EventEnvelopeType[keyof typeof EventEnvelopeType];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const EventEnvelopeType = {
+  checklistItemCreated: 'checklistItemCreated',
+  checklistItemUpdated: 'checklistItemUpdated',
+  checklistItemDeleted: 'checklistItemDeleted',
+  checklistItemRowAdded: 'checklistItemRowAdded',
+  checklistItemRowUpdated: 'checklistItemRowUpdated',
+  checklistItemRowDeleted: 'checklistItemRowDeleted',
+  checklistItemReordered: 'checklistItemReordered',
+} as const;
+
+/**
+ * Envelope for SSE events; sent as JSON in the SSE data field.
+The `type` field indicates the event type, and the `payload` field contains the event data.
+The expected structure of `payload` for each `type` is as follows:
+  - checklistItemCreated: ChecklistItemResponse
+  - checklistItemUpdated: ChecklistItemResponse
+  - checklistItemDeleted: ChecklistItemDeletedEventPayload
+  - checklistItemRowAdded: ChecklistItemRowResponse
+  - checklistItemRowUpdated: ChecklistItemRowResponse
+  - checklistItemRowDeleted: ChecklistItemRowDeletedEventPayload
+  - checklistItemRowAdded: ChecklistItemRowAddedEventPayload
+  - checklistItemReordered: ChecklistItemReorderedEventPayload
+For event types not listed above, `payload` may be null or a free-form object.
+
+ */
+export interface EventEnvelope {
+  /** Payload structure depends on event type:
+  - checklistItemCreated, checklistItemUpdated: ChecklistItemResponse
+  - checklistItemDeleted: ChecklistItemDeletedEventPayload
+  - checklistItemRowAdded, checklistItemRowUpdated: ChecklistItemRowResponse
+  - checklistItemRowDeleted: ChecklistItemRowDeletedEventPayload
+  - checklistItemReordered: ChecklistItemReorderedEventPayload
+ */
+  payload?: EventEnvelopePayload;
+  /** Event type identifier */
+  type: EventEnvelopeType;
+}
+
 export interface ChecklistResponse {
   /**
    * @minimum 1
@@ -123,6 +207,17 @@ export interface ChecklistItemResponse {
   orderNumber: number;
   rows: ChecklistItemRowResponse[];
 }
+
+/**
+ * Payload structure depends on event type:
+  - checklistItemCreated, checklistItemUpdated: ChecklistItemResponse
+  - checklistItemDeleted: ChecklistItemDeletedEventPayload
+  - checklistItemRowAdded, checklistItemRowUpdated: ChecklistItemRowResponse
+  - checklistItemRowDeleted: ChecklistItemRowDeletedEventPayload
+  - checklistItemReordered: ChecklistItemReorderedEventPayload
+
+ */
+export type EventEnvelopePayload = ChecklistItemResponse | ChecklistItemRowResponse | ChecklistItemRowDeletedEventPayload | ChecklistItemRowAddedEventPayload | ChecklistItemDeletedEventPayload | ChecklistItemReorderedEventPayload;
 
 export type UpdateChecklistItemRequestRowsItem = {
   /** @nullable */

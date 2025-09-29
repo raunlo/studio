@@ -7,6 +7,9 @@ import {
   ChecklistItemRowResponse,
   CreateChecklistItemRequest,
   UpdateChecklistItemRequest,
+  ChecklistItemReorderedEventPayload,
+  ChecklistItemRowDeletedEventPayload,
+  ChecklistItemRowAddedEventPayload
 } from "@/api/checklistServiceV1.schemas";
 import {
   getAllChecklistItems,
@@ -19,8 +22,8 @@ import {
   toggleChecklistItemComplete,
 } from "@/api/checklist-item/checklist-item";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
-import { useSSE } from './use-sse';
-import type { SseEvent } from './use-sse';
+import { useSSE } from './use-checklist-item-updates';
+import type { MessageHandlers } from './use-checklist-item-updates';
 // SSE used for realtime updates
 
 const inFlightRequests = new Map<string, Promise<any>>();
@@ -63,9 +66,6 @@ export function useChecklist(
   
   // Ref to track rapid operations and debounce refetching
   const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isRapidOperationRef = useRef(false);
-
-  
 
   const { data: items = [], mutate: mutateItems } = useSWR<ChecklistItem[]>(
     checklistId ? ["checklist-items", checklistId] : null,
@@ -94,19 +94,13 @@ export function useChecklist(
     { refreshInterval },
   );
 
-  // Debounced refetch function. Use this from UI operations and realtime events
-  // to avoid double/immediate refetches during rapid changes.
-  // scheduleRefetch({ immediate, completionOnly })
-  // - immediate: perform refetch immediately instead of debouncing
-  // - completionOnly: only update completed field, not order
-  // Add debug logs to scheduleRefetch to verify completionOnly behavior
-  const scheduleRefetch = useCallback((options: { items?: Array<ChecklistItem>} = {}) => {
-    const { items  } = options;
+  // Handlers for checklist items real time updates via SSE
+  const scheduleRefetch = useCallback((options: { updatedItems?: Array<ChecklistItem>} = {}) => {
+    const { updatedItems: items  } = options;
     console.debug('scheduleRefetch called with options:', options);
 
     // Update the UI immediately
     if (items) {
-    
       mutateItems(items, { revalidate: false }); // Update UI immediately
     }
 
@@ -127,125 +121,92 @@ export function useChecklist(
     }, 1500);
   }, [mutateItems, checklistId]);
 
-  const triggerRefetch = useCallback(() => {
-    console.debug('Triggering immediate refetch.');
-    void (async () => {
-      try {
-        console.debug('Performing immediate refetch.');
-        mutateItems();
-      } catch (e) {
-        console.error('Error during immediate refetch:', e);
+  const handleItemCreatedMessageFromChecklistItemUpdates = (newItem: ChecklistItem)  => {
+          const firstCompletedIndex = itemsRef.current.findIndex(item => item.completed);
+          const insertIndex = firstCompletedIndex === -1 ? itemsRef.current.length : firstCompletedIndex;
+          const updatedItems = [
+        ...itemsRef.current.slice(0, insertIndex),
+        newItem,
+        ...itemsRef.current.slice(insertIndex)
+          ];
+          scheduleRefetch({ updatedItems: updatedItems });
+        }
+  
+  const handleItemUpdatedMessageFromChecklistItemUpdates = (payload: ChecklistItem)  => {
+          scheduleRefetch({ updatedItems: (itemsRef.current ?? []).map(item => item.id === payload.id ? payload : item) });
+  }
+  const handleItemReorderedMessageFromChecklistItemUpdates = (payload: ChecklistItemReorderedEventPayload)  => {
+          const itemId = payload.itemId;
+          const newOrderNumber = payload.newOrderNumber;
+
+          // Copy current items
+          const itemsCopy = [...(itemsRef.current ?? [])];
+          const movedIndex = itemsCopy.findIndex(item => item.id === itemId);
+          if (movedIndex === -1) return;
+
+          // Remove the moved item
+          const [movedItem] = itemsCopy.splice(movedIndex, 1);
+
+          // Find the target index for the new order number
+          let targetIndex = itemsCopy.findIndex(item => item.orderNumber === newOrderNumber);
+
+          // If not found, put at the end
+          if (targetIndex === -1) {
+            targetIndex = itemsCopy.length;
+          }
+
+          // Insert the moved item at the target index
+          itemsCopy.splice(targetIndex, 0, { ...movedItem, orderNumber: newOrderNumber });
+
+          // Reassign orderNumbers to ensure correct sequence
+          const sortedItems = itemsCopy.map((item, idx) => ({
+            ...item,
+            orderNumber: idx + 1,
+          }));
+
+          scheduleRefetch({ updatedItems: sortedItems });
+  }
+  const handleItemDeletedMessageFromChecklistItemUpdates = (payload: { itemId: number })  => {
+          const updatedItems = itemsRef.current.filter(item => item.id !== payload.itemId);
+          scheduleRefetch({ updatedItems });
+  }
+  const handleItemRowAddedMessageFromChecklistItemUpdates = (payload: ChecklistItemRowAddedEventPayload)  => {
+     const currentItems = itemsRef.current;
+      const item = currentItems.find((i) => i.id === payload.itemId);
+      if (item) {
+        const newRows = [...(item.rows || []), payload.row];
+        const updatedItem = { ...item, rows: newRows };
+        const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
+        scheduleRefetch({ updatedItems: newItemsArray });
       }
-    })();
-  }, [mutateItems]);
+    }
+  const handleItemRowDeletedMessageFromChecklistItemUpdates = (data: ChecklistItemRowDeletedEventPayload)  => {
+    const currentItems = itemsRef.current;
+      const item = currentItems.find((i) => i.id === data.itemId);
+      if (item) {
+        const newRows = (item.rows || []).filter((r) => r.id !== data.rowId);
+        const updatedItem = { ...item, rows: newRows };
+        const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
+        scheduleRefetch({ updatedItems: newItemsArray });
+      }
+    }
+
 
   // Keep itemsRef in sync with items
   useEffect(() => {
     itemsRef.current = items;
   }, [items]);
 
+  const handleRealtimeMessageFromSSE: MessageHandlers = {
+    itemUpdated: handleItemUpdatedMessageFromChecklistItemUpdates,
+    itemCreated: handleItemCreatedMessageFromChecklistItemUpdates,
+    itemReordered: handleItemReorderedMessageFromChecklistItemUpdates,
+    itemDeleted: handleItemDeletedMessageFromChecklistItemUpdates,
+    itemRowAdded: handleItemRowAddedMessageFromChecklistItemUpdates,
+    itemRowDeleted: handleItemRowDeletedMessageFromChecklistItemUpdates,
+  }
 
-  // Consolidated realtime handler (SSE target): accepts both legacy and new event names.
-  const handleRealtimeMessage = useCallback((message: { type: string; payload: any; checklistId?: number }) => {
-    // Only handle messages for this specific checklist
-    if (message.checklistId && message.checklistId !== checklistId) return;
-
-    console.log('Handling realtime message:', message);
-
-    // Normalize event names: allow backend to send either 'itemCreated' or 'checklist_item_created'
-    let t = message.type;
-    if (t === 'itemCreated') t = 'checklist_item_created';
-    if (t === 'itemUpdated') t = 'checklist_item_updated';
-    if (t === 'itemDeleted') t = 'checklist_item_deleted';
-    if (t === 'itemReordered') t = 'checklist_item_order_changed';
-    if (t === 'itemToggled') t = 'checklist_item_toggled';
-
-    const currentItems = itemsRef.current;
-
-    switch (t) {
-    case 'checklist_item_created':
-      if (message.payload) {
-        const itemId = message.payload.id || message.payload.Id;
-        const itemName = message.payload.name || message.payload.Name;
-        if (!itemId) return;
-        if (recentlyAddedItemsRef.current.has(itemId)) return;
-        const exists = currentItems.find(item => item.id === itemId);
-        if (exists) return;
-
-        const newItem: ChecklistItem = {
-          id: itemId,
-          name: itemName,
-          completed: message.payload.completed ?? message.payload.Completed ?? false,
-          orderNumber: message.payload.orderNumber || message.payload.OrderNumber || 0,
-          rows: (message.payload.rows || message.payload.Rows)?.map((r: any) => ({
-            id: r.id || r.Id,
-            name: r.name || r.Name,
-            completed: r.completed ?? r.Completed ?? false,
-          })) ?? null,
-        };
-        mutateItems([...(currentItems ?? []), newItem], { revalidate: false });
-      }
-      break;
-
-        case 'checklist_item_updated':
-      // Debounced revalidation to avoid jitter when updates come from UI + SSE
-      // write code to update items with new updated item
-      if (message.payload) {
-        const itemId = message.payload.id || message.payload.Id;
-        const itemName = message.payload.name || message.payload.Name;
-        if (!itemId) return;
-
-        const updatedItem: ChecklistItem = {
-          id: itemId,
-          name: itemName,
-          completed: message.payload.completed ?? message.payload.Completed ?? false,
-          orderNumber: message.payload.orderNumber || message.payload.OrderNumber || 0,
-          rows: (message.payload.rows || message.payload.Rows)?.map((r: any) => ({
-            id: r.id || r.Id,
-            name: r.name || r.Name,
-            completed: r.completed ?? r.Completed ?? false,
-          })) ?? null,
-        };
-
-        scheduleRefetch({ items: (currentItems ?? []).map(item => item.id === itemId ? updatedItem : item) });
-      }
-      break;
-
-    case 'checklist_item_order_changed':
-      if (message.payload?.itemId && message.payload?.newOrderNumber !== undefined) {
-        const reorderKey = `${message.payload.itemId}-${message.payload.newOrderNumber}`;
-        if (recentlyReorderedItemsRef.current.has(reorderKey)) {
-          recentlyReorderedItemsRef.current.delete(reorderKey);
-          return;
-        }
-        scheduleRefetch();
-      }
-      break;
-
-    case 'checklist_item_deleted':
-      scheduleRefetch();
-      break;
-    default:
-      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-        // eslint-disable-next-line no-console
-        console.debug('⚡ Unknown realtime message type:', message.type);
-      }
-    }
-  }, [checklistId, scheduleRefetch]);
-
-  // SSE connection for real-time updates (replaces FCM/WebSocket)
-  // Call the client-side hook directly (static import) so hooks rules are preserved.
-  const processedEventIds = useRef<Set<string>>(new Set());
-
-  useSSE((data: SseEvent) => {
-    const normalizedData = {
-      type: data.type,
-      payload: data.payload || {}, // Ensure payload is always defined
-      checklistId: data.checklistId,
-    };
-
-    handleRealtimeMessage(normalizedData);
-  });
+  useSSE(handleRealtimeMessageFromSSE, checklistId, [checklistId]);
 
   const addItem = async (item: ChecklistItem) => {
     if (!checklistId) return;
@@ -268,13 +229,6 @@ export function useChecklist(
       );
       const created = res;
       
-      // Mark this item as recently added to prevent WebSocket duplicate
-      recentlyAddedItemsRef.current.add(created.id);
-      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-        // eslint-disable-next-line no-console
-        console.debug('🏷️ Marked item as recently added:', created.id, created.name);
-      }
-      
       const newItem: ChecklistItem = {
         id: created.id,
         name: created.name,
@@ -288,16 +242,20 @@ export function useChecklist(
           })) ?? null,
       };
       
-      mutateItems([...(items ?? []), newItem], { revalidate: false });
-      
-      // Clean up the tracking after 5 seconds
-        setTimeout(() => {
-        recentlyAddedItemsRef.current.delete(created.id);
-        if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-          // eslint-disable-next-line no-console
-          console.debug('🧹 Cleaned up recently added item:', created.id);
-        }
-      }, 5000);
+      // Insert the new item before the first completed item so it lands
+      // at the bottom of incomplete items but at the top of completed ones.
+      {
+        const current = items ?? [];
+        const firstCompletedIndex = current.findIndex((i) => i.completed);
+        const insertIndex = firstCompletedIndex === -1 ? current.length : firstCompletedIndex;
+        const newItems = [
+          ...current.slice(0, insertIndex),
+          newItem,
+          ...current.slice(insertIndex),
+        ];
+        mutateItems(newItems, { revalidate: false });
+      }
+    
       
     } catch (error) {
       console.error('❌ Failed to add item:', error);
@@ -390,11 +348,7 @@ export function useChecklist(
           targetOrderNumber = to + 1; // Fallback
         }
       }
-      
-      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-        // eslint-disable-next-line no-console
-        console.debug('🔄 Calculated target order number:', targetOrderNumber, 'for position:', to, 'clientId:', clientIdRef.current);
-      }
+    
       
       const newList = [...items];
       const [moved] = newList.splice(from, 1);
@@ -524,7 +478,7 @@ export function useChecklist(
     if (!checklistId || !itemId) return;
     
     // Optimistic update
-    const currentItem = items.find((item) => item.id === itemId);
+    const currentItem = itemsRef.current.find((item) => item.id === itemId);
     if (!currentItem) return;
     
     const newCompletedStatus = !currentItem.completed;
@@ -545,8 +499,8 @@ export function useChecklist(
       
   // Use debounced refetch to prevent UI jumping during rapid operations
   // Only update completed field, do not move items
-  scheduleRefetch({ items: items.map((item) => item.id === itemId ? updatedItem : item) });
-      
+  scheduleRefetch({ updatedItems: items.map((item) => item.id === itemId ? updatedItem : item) });
+
     } catch (error) {
       // Revert optimistic update on error
       mutateItems(
