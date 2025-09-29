@@ -1,7 +1,7 @@
 import { EventEnvelopeType, EventEnvelope, ChecklistItemResponse, ChecklistItemRowDeletedEventPayload, ChecklistItemRowAddedEventPayload, ChecklistItemDeletedEventPayload, ChecklistItemReorderedEventPayload } from '@/api/checklistServiceV1.schemas';
 import { getClientId } from '@/lib/axios';
 import { useEffect, useRef } from 'react';
-
+import { NEXT_PUBLIC_API_BASE_URL } from '@/lib/axios';
 
 export type MessageHandlers = {
   itemUpdated: (data: ChecklistItemResponse) => void;
@@ -18,7 +18,7 @@ export function useSSE(messageHandlers: MessageHandlers, checklistId: number, de
   // allow duplicate ids; do not dedupe by id on client
 
   useEffect(() => {
-  const base = `${process.env.NEXT_PUBLIC_BACKEND_URL || ''}/v1/events/checklist-item-updates/${checklistId}`;
+  const base = `${NEXT_PUBLIC_API_BASE_URL|| ''}/v1/events/checklist-item-updates/${checklistId}`;
   const clientId = getClientId();
   const url = `${base}?clientId=${encodeURIComponent(clientId)}`;
       // Only log connection attempts when debugging is enabled
