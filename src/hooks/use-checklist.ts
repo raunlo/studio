@@ -1,12 +1,15 @@
 "use client";
 
 import useSWR from "swr";
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect, useMemo } from "react";
 import {
   ChecklistItemResponse,
   ChecklistItemRowResponse,
   CreateChecklistItemRequest,
   UpdateChecklistItemRequest,
+  ChecklistItemReorderedEventPayload,
+  ChecklistItemRowDeletedEventPayload,
+  ChecklistItemRowAddedEventPayload
 } from "@/api/checklistServiceV1.schemas";
 import {
   getAllChecklistItems,
@@ -19,6 +22,9 @@ import {
   toggleChecklistItemComplete,
 } from "@/api/checklist-item/checklist-item";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
+import { useSSE } from './use-checklist-item-updates';
+import type { MessageHandlers } from './use-checklist-item-updates';
+// SSE used for realtime updates
 
 const inFlightRequests = new Map<string, Promise<any>>();
 
@@ -52,22 +58,14 @@ export function useChecklist(
 ): ChecklistHookResult {
   const { refreshInterval } = options;
   
+  // Refs to track items and recent operations to prevent duplicates
+  const itemsRef = useRef<ChecklistItem[]>([]);
+  const recentlyAddedItemsRef = useRef<Set<number>>(new Set()); // Track recently added item IDs
+  const recentlyReorderedItemsRef = useRef<Set<string>>(new Set()); // Track recently reordered items
+  const clientIdRef = useRef<string>(Math.random().toString(36).substring(2, 15)); // Unique client ID
+  
   // Ref to track rapid operations and debounce refetching
   const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isRapidOperationRef = useRef(false);
-
-  // Debounced refetch function
-  const debouncedRefetch = useCallback(() => {
-    if (refetchTimeoutRef.current) {
-      clearTimeout(refetchTimeoutRef.current);
-    }
-    
-    isRapidOperationRef.current = true;
-    refetchTimeoutRef.current = setTimeout(() => {
-      isRapidOperationRef.current = false;
-      mutateItems();
-    }, 1500); // Wait 1.5 seconds after last operation before refetching
-  }, []);
 
   const { data: items = [], mutate: mutateItems } = useSWR<ChecklistItem[]>(
     checklistId ? ["checklist-items", checklistId] : null,
@@ -96,37 +94,172 @@ export function useChecklist(
     { refreshInterval },
   );
 
+  // Handlers for checklist items real time updates via SSE
+  const scheduleRefetch = useCallback((options: { updatedItems?: Array<ChecklistItem>} = {}) => {
+    const { updatedItems: items  } = options;
+    console.debug('scheduleRefetch called with options:', options);
+
+    // Update the UI immediately
+    if (items) {
+      mutateItems(items, { revalidate: false }); // Update UI immediately
+    }
+
+    // Debounced API call
+    if (refetchTimeoutRef.current) {
+      clearTimeout(refetchTimeoutRef.current);
+    }
+
+    refetchTimeoutRef.current = setTimeout(() => {
+      console.debug('Calling API after debounce.');
+      void (async () => {
+        try {
+          mutateItems(); // Fetch fresh data from API
+        } catch (e) {
+          console.error('Error during API call:', e);
+        }
+      })();
+    }, 1500);
+  }, [mutateItems, checklistId]);
+
+  const handleItemCreatedMessageFromChecklistItemUpdates = (newItem: ChecklistItem)  => {
+          const firstCompletedIndex = itemsRef.current.findIndex(item => item.completed);
+          const insertIndex = firstCompletedIndex === -1 ? itemsRef.current.length : firstCompletedIndex;
+          const updatedItems = [
+        ...itemsRef.current.slice(0, insertIndex),
+        newItem,
+        ...itemsRef.current.slice(insertIndex)
+          ];
+          scheduleRefetch({ updatedItems: updatedItems });
+        }
+  
+  const handleItemUpdatedMessageFromChecklistItemUpdates = (payload: ChecklistItem)  => {
+          scheduleRefetch({ updatedItems: (itemsRef.current ?? []).map(item => item.id === payload.id ? payload : item) });
+  }
+  const handleItemReorderedMessageFromChecklistItemUpdates = (payload: ChecklistItemReorderedEventPayload)  => {
+          const itemId = payload.itemId;
+          const newOrderNumber = payload.newOrderNumber;
+
+          // Copy current items
+          const itemsCopy = [...(itemsRef.current ?? [])];
+          const movedIndex = itemsCopy.findIndex(item => item.id === itemId);
+          if (movedIndex === -1) return;
+
+          // Remove the moved item
+          const [movedItem] = itemsCopy.splice(movedIndex, 1);
+
+          // Find the target index for the new order number
+          let targetIndex = itemsCopy.findIndex(item => item.orderNumber === newOrderNumber);
+
+          // If not found, put at the end
+          if (targetIndex === -1) {
+            targetIndex = itemsCopy.length;
+          }
+
+          // Insert the moved item at the target index
+          itemsCopy.splice(targetIndex, 0, { ...movedItem, orderNumber: newOrderNumber });
+
+          // Reassign orderNumbers to ensure correct sequence
+          const sortedItems = itemsCopy.map((item, idx) => ({
+            ...item,
+            orderNumber: idx + 1,
+          }));
+
+          scheduleRefetch({ updatedItems: sortedItems });
+  }
+  const handleItemDeletedMessageFromChecklistItemUpdates = (payload: { itemId: number })  => {
+          const updatedItems = itemsRef.current.filter(item => item.id !== payload.itemId);
+          scheduleRefetch({ updatedItems });
+  }
+  const handleItemRowAddedMessageFromChecklistItemUpdates = (payload: ChecklistItemRowAddedEventPayload)  => {
+     const currentItems = itemsRef.current;
+      const item = currentItems.find((i) => i.id === payload.itemId);
+      if (item) {
+        const newRows = [...(item.rows || []), payload.row];
+        const updatedItem = { ...item, rows: newRows };
+        const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
+        scheduleRefetch({ updatedItems: newItemsArray });
+      }
+    }
+  const handleItemRowDeletedMessageFromChecklistItemUpdates = (data: ChecklistItemRowDeletedEventPayload)  => {
+    const currentItems = itemsRef.current;
+      const item = currentItems.find((i) => i.id === data.itemId);
+      if (item) {
+        const newRows = (item.rows || []).filter((r) => r.id !== data.rowId);
+        const updatedItem = { ...item, rows: newRows };
+        const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
+        scheduleRefetch({ updatedItems: newItemsArray });
+      }
+    }
+
+
+  // Keep itemsRef in sync with items
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  const handleRealtimeMessageFromSSE: MessageHandlers = {
+    itemUpdated: handleItemUpdatedMessageFromChecklistItemUpdates,
+    itemCreated: handleItemCreatedMessageFromChecklistItemUpdates,
+    itemReordered: handleItemReorderedMessageFromChecklistItemUpdates,
+    itemDeleted: handleItemDeletedMessageFromChecklistItemUpdates,
+    itemRowAdded: handleItemRowAddedMessageFromChecklistItemUpdates,
+    itemRowDeleted: handleItemRowDeletedMessageFromChecklistItemUpdates,
+  }
+
+  useSSE(handleRealtimeMessageFromSSE, checklistId, [checklistId]);
+
   const addItem = async (item: ChecklistItem) => {
     if (!checklistId) return;
-    const res = await dedupeRequest(
-      `add-item-${checklistId}-${item.name}`,
-      () =>
-        createChecklistItem(
-          checklistId,
-          {
-            name: item.name,
-            rows:
-              item.rows?.map((r) => ({
-                name: r.name,
-                completed: r.completed ?? null,
-              })) ?? [],
-          } as CreateChecklistItemRequest
-        ),
-    );
-    const created = res;
-    const newItem: ChecklistItem = {
-      id: created.id,
-      name: created.name,
-      completed: created.completed,
-      orderNumber: created.orderNumber,
-      rows:
-        created.rows?.map((r: any) => ({
-          id: r.id,
-          name: r.name,
-          completed: r.completed,
-        })) ?? null,
-    };
-    mutateItems([...(items ?? []), newItem], { revalidate: false });
+    
+    try {
+      const res = await dedupeRequest(
+        `add-item-${checklistId}-${item.name}`,
+        () =>
+          createChecklistItem(
+            checklistId,
+            {
+              name: item.name,
+              rows:
+                item.rows?.map((r) => ({
+                  name: r.name,
+                  completed: r.completed ?? null,
+                })) ?? [],
+            } as CreateChecklistItemRequest
+          ),
+      );
+      const created = res;
+      
+      const newItem: ChecklistItem = {
+        id: created.id,
+        name: created.name,
+        completed: created.completed,
+        orderNumber: created.orderNumber,
+        rows:
+          created.rows?.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            completed: r.completed,
+          })) ?? null,
+      };
+      
+      // Insert the new item before the first completed item so it lands
+      // at the bottom of incomplete items but at the top of completed ones.
+      {
+        const current = items ?? [];
+        const firstCompletedIndex = current.findIndex((i) => i.completed);
+        const insertIndex = firstCompletedIndex === -1 ? current.length : firstCompletedIndex;
+        const newItems = [
+          ...current.slice(0, insertIndex),
+          newItem,
+          ...current.slice(insertIndex),
+        ];
+        mutateItems(newItems, { revalidate: false });
+      }
+    
+      
+    } catch (error) {
+      console.error('❌ Failed to add item:', error);
+    }
   };
 
   const updateItem = async (item: ChecklistItem) => {
@@ -153,8 +286,8 @@ export function useChecklist(
             req
           ),
       );
-      // Use debounced refetch to prevent UI jumping during rapid row toggling
-      debouncedRefetch();
+  // Use debounced refetch to prevent UI jumping during rapid row toggling
+  scheduleRefetch();
     }
   };
 
@@ -166,7 +299,8 @@ export function useChecklist(
         `delete-item-${checklistId}-${itemId}`,
         () => deleteChecklistItemById(checklistId, itemId),
       );
-      mutateItems();
+  // Debounced refetch to avoid immediate revalidation during rapid UI ops
+  scheduleRefetch();
     }
   };
 
@@ -189,23 +323,70 @@ export function useChecklist(
     const exectuonFn = async (numberRetries: number) => {
       let retry = false;
       if (!checklistId) return { retry };
-      const targetOrderNumber = items[to]?.orderNumber;
+      
+      // Calculate the correct target order number based on neighbor +/-1 strategy
+      // Use previous neighbor + 1 when moving after a previous item, or next neighbor - 1 when moving before next.
+      // This keeps integers and avoids midpoint fractions.
+      let targetOrderNumber: number;
+      if (to === 0) {
+        // Moving to first position: take firstItem.orderNumber - 1 or 1
+        const firstItem = items[0];
+        targetOrderNumber = firstItem && firstItem.orderNumber ? firstItem.orderNumber - 1 : 1;
+      } else if (to >= items.length - 1) {
+        // Moving to last position: take lastItem.orderNumber + 1
+        const lastItem = items[items.length - 1];
+        targetOrderNumber = lastItem && lastItem.orderNumber ? lastItem.orderNumber + 1 : items.length + 1;
+      } else {
+        // Prefer using previous neighbor + 1 to avoid fractional midpoints
+        const prevItem = items[to - 1];
+        const nextItem = items[to];
+        if (prevItem && typeof prevItem.orderNumber === 'number') {
+          targetOrderNumber = prevItem.orderNumber + 1;
+        } else if (nextItem && typeof nextItem.orderNumber === 'number') {
+          targetOrderNumber = nextItem.orderNumber - 1;
+        } else {
+          targetOrderNumber = to + 1; // Fallback
+        }
+      }
+    
+      
       const newList = [...items];
       const [moved] = newList.splice(from, 1);
       newList.splice(to, 0, moved);
       const previousItems = [...items];
       mutateItems(newList, { revalidate: false });
-      if (moved?.id && targetOrderNumber) {
+      if (moved?.id) {
         try {
+          // Ensure order number is an integer before sending to backend and at least 1
+          const sentOrderNumber = Math.max(1, Math.round(targetOrderNumber));
+
+          // Track this reorder operation to prevent WebSocket duplication (use the sent integer)
+          const reorderKey = `${moved.id}-${sentOrderNumber}`;
+          recentlyReorderedItemsRef.current.add(reorderKey);
+          if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+            // eslint-disable-next-line no-console
+            console.debug('🔄 Reordering item locally:', moved.id, 'to order:', sentOrderNumber, 'clientId:', clientIdRef.current);
+          }
+
           await dedupeRequest(
-            `reorder-item-${checklistId}-${moved.id}-${targetOrderNumber}`,
+            `reorder-item-${checklistId}-${moved.id}-${sentOrderNumber}`,
             () =>
               changeChecklistItemOrderNumber(
                 checklistId,
                 moved.id!,
-                { newOrderNumber: targetOrderNumber }
+                { newOrderNumber: sentOrderNumber }
               ),
           );
+
+          // Clean up the tracking after 5 seconds
+          setTimeout(() => {
+            recentlyReorderedItemsRef.current.delete(reorderKey);
+            if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+              // eslint-disable-next-line no-console
+              console.debug('🧹 Cleaned up recently reordered item:', reorderKey);
+            }
+          }, 5000);
+          
         } catch (e) {
           mutateItems(previousItems, { revalidate: false });
           if (numberRetries === 1) retry = true;
@@ -265,7 +446,8 @@ export function useChecklist(
         );
       }
       await Promise.all(requests);
-      mutateItems();
+  // Debounced refetch to pick up authoritative server state
+  scheduleRefetch();
     }
   };
 
@@ -287,7 +469,8 @@ export function useChecklist(
         `delete-row-${checklistId}-${itemId}-${rowId}`,
         () => deleteChecklistItemRow(checklistId, itemId, rowId),
       );
-      mutateItems();
+  // Debounced refetch after delete-row
+  scheduleRefetch();
     }
   };
 
@@ -295,7 +478,7 @@ export function useChecklist(
     if (!checklistId || !itemId) return;
     
     // Optimistic update
-    const currentItem = items.find((item) => item.id === itemId);
+    const currentItem = itemsRef.current.find((item) => item.id === itemId);
     if (!currentItem) return;
     
     const newCompletedStatus = !currentItem.completed;
@@ -314,9 +497,10 @@ export function useChecklist(
         () => toggleChecklistItemComplete(checklistId, itemId, { completed: newCompletedStatus }),
       );
       
-      // Use debounced refetch to prevent UI jumping during rapid operations
-      debouncedRefetch();
-      
+  // Use debounced refetch to prevent UI jumping during rapid operations
+  // Only update completed field, do not move items
+  scheduleRefetch({ updatedItems: items.map((item) => item.id === itemId ? updatedItem : item) });
+
     } catch (error) {
       // Revert optimistic update on error
       mutateItems(

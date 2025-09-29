@@ -6,8 +6,8 @@ import { ChecklistCard } from "@/components/checklist-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { ChecklistCardHandle } from "@/components/shared/types";
-import { useGetAllChecklists } from "@/api/checklist/checklist"
- 
+import { useGetAllChecklists } from "@/api/checklist/checklist";
+
 // --- START: Frontend-specific types ---
 // We create local types to match what the UI components expect (e.g., checklistId, title).
 // This decouples the UI from the exact API schema.
@@ -21,6 +21,9 @@ export function ChecklistManager() {
   const { data, isLoading, error } = useGetAllChecklists({
     swr: { refreshInterval: 10000 }
   });
+
+  // SSE for real-time updates: subscribe and refresh SWR keys when relevant
+
   
   const onDragEnd = async (result: DropResult) => {
     const { source, destination } = result;
