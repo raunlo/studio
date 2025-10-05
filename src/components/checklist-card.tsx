@@ -53,6 +53,19 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
      await addItem(checklistItem);
   };
 
+  const handleAddTemplateItems = async (items: { name: string, rows: { name: string }[] }[]) => {
+    for (const item of items) {
+      const checklistItem: ChecklistItem = {
+        completed: false,
+        name: item.name,
+        id: null,
+        orderNumber: null,
+        rows: item.rows.map(row => ({ id: null, name: row.name, completed: false }))
+      };
+      await addItem(checklistItem);
+    }
+  };
+
   return (
     <>
       <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col">
@@ -61,7 +74,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
         </CardHeader>
         <CardContent className="pt-2 pb-4 flex-grow">
           <div className="pb-4 border-b mb-4">
-            <AddItemForm onFormSubmit={handleFormSubmit} />
+            <AddItemForm onFormSubmit={handleFormSubmit} onAddTemplateItems={handleAddTemplateItems} />
           </div>
           <Droppable droppableId={String(checklist.id)} type="items">
             {(provided) => (

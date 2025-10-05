@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import SiteHeader from '@/components/site-header';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -101,34 +102,18 @@ export default function TemplateDetailPage() {
   const categoryConfig = categories.find(cat => cat.key === template.category) || 
                          { key: 'other', name: 'Other', color: '#64748b', bgColor: 'bg-gray-100', textColor: 'text-gray-800', icon: '📝' };
 
+  const RightAction = (
+    <div>
+      <Button disabled={isAddingToChecklist} onClick={handleAddToChecklist}>
+        <Plus className="h-4 w-4 mr-2" />
+        {isAddingToChecklist ? 'Lisamine...' : '🚀 Lisa checklist\'i'}
+      </Button>
+    </div>
+  );
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-3 sm:p-6">
-      {/* Simple Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link href="/templates">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Tagasi
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">{template.text}</h1>
-            <p className="text-slate-600">Template eelvaade ja kasutamine</p>
-          </div>
-        </div>
-        
-        {/* Simple Add Button */}
-        <Button 
-          onClick={handleAddToChecklist} 
-          className="bg-green-600 hover:bg-green-700"
-          disabled={isAddingToChecklist || !firstChecklist}
-          size="lg"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          {isAddingToChecklist ? '⏳ Lisab...' : '🚀 Lisa checklist\'i'}
-        </Button>
-      </div>
+      <SiteHeader title={template.text} subtitle={`${template.subItems.length} alamülesannet`} backHref="/templates" right={RightAction} />
 
       {/* Warning if no checklists */}
       {(!checklists || checklists.length === 0) && (

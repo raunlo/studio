@@ -22,7 +22,14 @@ export function PredefinedItemsDropdown({ items, onSelect }: PredefinedItemsDrop
             onClick={() => onSelect(item)}
             onMouseDown={(e) => e.preventDefault()} // Prevents input from losing focus
           >
-            {item.text}
+            <div className="font-medium">{item.text}</div>
+            {item.subItems.length > 0 && (
+              <ul className="ml-2 mt-1 text-xs text-muted-foreground list-disc">
+                {item.subItems.map((sub, idx) => (
+                  <li key={idx}>{sub.text}{sub.quantity ? ` (${sub.quantity})` : ""}</li>
+                ))}
+              </ul>
+            )}
           </li>
         ))}
       </ul>

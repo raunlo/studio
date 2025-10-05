@@ -3,6 +3,7 @@
 
 import { useRef } from "react";
 import { ChecklistCard } from "@/components/checklist-card";
+// ...existing code...
 import { Skeleton } from "@/components/ui/skeleton";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { ChecklistCardHandle } from "@/components/shared/types";
@@ -59,6 +60,8 @@ export function ChecklistManager() {
   }
 
   const checklists = data ?? []
+
+// ...existing code...
 
   return (
     <div className="space-y-6">

@@ -9,9 +9,10 @@ import { PredefinedItemsDropdown } from "./predefined-items-dropdown";
 
 type AddItemFormProps = {
   onFormSubmit: (text: string) => void;
+  onAddTemplateItems?: (items: { name: string, rows: { name: string }[] }[]) => void;
 };
 
-export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
+export function AddItemForm({ onFormSubmit, onAddTemplateItems }: AddItemFormProps) {
   const [itemText, setItemText] = useState("");
   const [filteredItems, setFilteredItems] = useState<PredefinedChecklistItem[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -69,10 +70,23 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
   };
 
   const handleTemplateClick = (item: PredefinedChecklistItem) => {
-    suppressNextOpenRef.current = true;           // ära luba järgmisel efektitsüklil avada
-    setItemText(item.text);
+    suppressNextOpenRef.current = true;
+    setItemText("");
     setIsDropdownOpen(false);
-    setFilteredItems([]);                         // kohe puhasta, et mitte “re-openida”
+    setFilteredItems([]);
+    // Kui onAddTemplateItems prop olemas, lisa kõik subItems checklisti
+    if (onAddTemplateItems) {
+      const items = [
+        {
+          name: item.text,
+          rows: item.subItems.map(sub => ({ name: sub.text }))
+        }
+      ]; 
+      onAddTemplateItems(items);
+    } else {
+      // fallback: lihtsalt lisa pealkiri
+      setItemText(item.text);
+    }
   };
 
   return (
