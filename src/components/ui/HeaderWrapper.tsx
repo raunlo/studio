@@ -33,10 +33,21 @@ export const HeaderWrapper = () => {
 
   const handleLogout = async () => {
     try {
+      // Call backend logout endpoint to clear cookies
+      await fetch('/api/auth/logout', { 
+        method: 'POST',
+        credentials: 'include' 
+      });
+      
+      // Clear session
       await fetch('/api/auth/session', { method: 'DELETE' });
-      window.location.reload();
+      
+      // Redirect to login page
+      window.location.href = '/login';
     } catch (error) {
       console.error('Logout failed:', error);
+      // Force redirect even if logout fails
+      window.location.href = '/login';
     }
   };
 
