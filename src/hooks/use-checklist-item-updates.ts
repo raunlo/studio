@@ -49,11 +49,6 @@ export function useSSE(messageHandlers: MessageHandlers, checklistId: number, de
       console.log('SSE connection opened');
     };
 
-    es.close = () => {
-      console.log('SSE connection closed by client');
-     // EventSource.prototype.close.call(es);
-    }
-
     es.onmessage = (ev) => {
       console.log('SSE message received:', ev.data);
       try {
