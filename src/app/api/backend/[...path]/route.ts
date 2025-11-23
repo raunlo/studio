@@ -51,15 +51,6 @@ async function getAuthenticatedClient(baseUrl: string) {
 }
 
 async function handler(req: NextRequest) {
-  // Skip NextAuth API routes - don't proxy them
-  const pathname = req.nextUrl.pathname;
-  if (pathname.startsWith('/api/auth/')) {
-    return NextResponse.json(
-      { message: 'NextAuth routes are not proxied' },
-      { status: 404 },
-    );
-  }
-
   const privateApiBaseUrl = process.env.PRIVATE_API_BASE_URL;
   if (!privateApiBaseUrl) {
     console.error(
@@ -75,7 +66,7 @@ async function handler(req: NextRequest) {
     const authedClient = await getAuthenticatedClient(privateApiBaseUrl);
 
     const incomingUrl = new URL(req.nextUrl);
-    const requestPath = incomingUrl.pathname.replace('/api/proxy', '');
+    const requestPath = incomingUrl.pathname.replace('/api/backend', '');
     const targetUrl = `${privateApiBaseUrl}${requestPath}${incomingUrl.search}`;
 
     console.log(`Proxying request to: ${targetUrl}`);
@@ -85,11 +76,24 @@ async function handler(req: NextRequest) {
     const bodyBuffer = await req.arrayBuffer();
 
     const requestHeaders = new Headers();
+    
+    // ⭐ Forward cookies from frontend to backend
+    const cookieHeader = req.headers.get('cookie');
+    if (cookieHeader) {
+      console.log('Forwarding cookies to backend:', cookieHeader);
+      requestHeaders.set('Cookie', cookieHeader);
+    }
+    
+    // Forward other important headers
+    const clientIdHeader = req.headers.get('x-client-id');
+    if (clientIdHeader) {
+      requestHeaders.set('X-Client-Id', clientIdHeader);
+    }
+    
     // Ensure Content-Type is set for methods that have a body, as it can get lost.
     if (['POST', 'PUT', 'PATCH'].includes(req.method) && bodyBuffer.byteLength > 0) {
-      if (!requestHeaders.has('Content-Type')) {
-        requestHeaders.set('Content-Type', 'application/json');
-      }
+      const contentType = req.headers.get('content-type') || 'application/json';
+      requestHeaders.set('Content-Type', contentType);
     }
 
     const res = await authedClient.request({

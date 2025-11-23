@@ -1,0 +1,59 @@
+{
+  "welcome": "Welcome to",
+  "appName": "Daily Chexly",
+  "tagline": "Keep your lists always at hand",
+  "subtitle": "Join thousands of users who keep their shopping lists, books and other things smartly in mind",
+  "benefits": {
+    "shopping": "Shopping lists and food menus",
+    "books": "Books and movies you want",
+    "tracking": "Mark bought/read/watched"
+  },
+  "cta": {
+    "button": "Start keeping lists for FREE!",
+    "subtitle": "Just one click and start right away!"
+  },
+  "social": {
+    "users": "happy users",
+    "join": "Join our growing community today! 🌟"
+  },
+  "main": {
+    "title": "Checklist",
+    "subtitle": "Organize checklist here using drag and drop to order your items.",
+    "addItem": "Add item or search templates...",
+    "addButton": "Add item",
+    "loading": "Loading your checklists...",
+    "error": "Error loading checklists",
+    "empty": "No checklists yet. Create your first one!"
+  },
+  "footer": {
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy"
+  },
+  "header": {
+    "title": "#1 list app in Estonia",
+    "subtitle": "Keep shopping lists, books and movies always at hand!"
+  },
+  "auth": {
+    "signIn": "Sign in with Google",
+    "signOut": "Sign out",
+    "hello": "Hello",
+    "welcome": "Welcome to",
+    "appName": "Checklist",
+    "tagline": "Keep your lists always at hand",
+    "joinUsers": "Join",
+    "thousands": "thousands of users",
+    "keepLists": "who smartly keep track of their shopping lists, books and other things",
+    "shoppingLists": "Shopping lists and food menus",
+    "booksMovies": "Books and movies you want",
+    "markCompleted": "Mark bought/read/watched",
+    "startFree": "Start keeping lists for FREE!",
+    "oneClick": "Just one click and start right away!",
+    "happyUsers": "happy users",
+    "joinCommunity": "Join our growing community today!"
+  },
+  "languages": {
+    "et": "Estonian",
+    "en": "English", 
+    "es": "Spanish"
+  }
+}
