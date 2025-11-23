@@ -36,6 +36,11 @@ export async function GET(request: NextRequest) {
       }),
     })
 
+    if (!tokenResponse.ok) {
+      console.error('Token exchange failed with status:', tokenResponse.status)
+      return NextResponse.redirect(new URL('/login?error=token_exchange_failed', request.url))
+    }
+
     const tokens = await tokenResponse.json()
 
     if (!tokens.id_token) {
