@@ -21,7 +21,7 @@ const GoogleIcon = () => (
 );
 
 const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
-  const { t, ready } = useTranslation();
+  const { t } = useTranslation();
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
