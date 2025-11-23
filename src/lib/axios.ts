@@ -73,6 +73,13 @@ function isTokenExpired(token: string): boolean {
   return true; // If can't decode, assume expired
 }
 
+// Redirect to login page with session expired error
+function redirectToLogin(): void {
+  if (typeof window !== 'undefined') {
+    window.location.href = '/login?error=session_expired';
+  }
+}
+
 // Refresh token
 async function refreshToken(): Promise<boolean> {
   try {
@@ -92,9 +99,7 @@ async function refreshToken(): Promise<boolean> {
       console.error('[Axios] Refresh token expired or invalid:', data);
       
       // Redirect to login page
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login?error=session_expired';
-      }
+      redirectToLogin();
       return false;
     }
 
@@ -159,16 +164,12 @@ export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> 
             return data;
           } else {
             // Refresh failed, redirect to login
-            if (typeof window !== 'undefined') {
-              window.location.href = '/login?error=session_expired';
-            }
+            redirectToLogin();
             throw error;
           }
         } catch (retryError) {
           // If retry fails, redirect to login
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login?error=session_expired';
-          }
+          redirectToLogin();
           throw error;
         }
       }
