@@ -57,14 +57,14 @@ export function getUserIdFromRequest(request: Request): string | null {
     return null;
   }
   
-  // Parse auth_token from cookie string
+  // Parse user_token from cookie string
   const cookies = cookieHeader.split(';').map(c => c.trim());
-  const authCookie = cookies.find(c => c.startsWith('auth_token='));
+  const authCookie = cookies.find(c => c.startsWith('user_token='));
   if (!authCookie) {
     return null;
   }
   
-  const token = authCookie.substring(11); // Remove "auth_token=" prefix
+  const token = authCookie.substring(11); // Remove "user_token=" prefix
   const result = verifyUserJWT(token);
   return result ? result.userId : null;
 }
