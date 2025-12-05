@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 
     // Additional validation: check if user email is verified
     if (!userInfo.verified_email) {
-      console.error('User email not verified:', userInfo.email)
+      console.error('User email not verified')
       return NextResponse.redirect(new URL('/login?error=email_not_verified', request.url))
     }
 
