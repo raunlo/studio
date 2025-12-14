@@ -70,7 +70,7 @@ export function ChecklistManager() {
     <div className="space-y-6">
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="space-y-6">
-          {checklists.map((checklist: any) => (
+          {checklists.map((checklist) => (
             <ChecklistCard
               ref={(ref) => {
                 if (ref) {

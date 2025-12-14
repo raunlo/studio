@@ -3,6 +3,9 @@ import { getClientId } from '@/lib/axios';
 import { useEffect, useRef } from 'react';
 import { NEXT_PUBLIC_API_BASE_URL } from '@/lib/axios';
 import { EventSource } from 'eventsource';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('SSE');
 
 export type MessageHandlers = {
   itemUpdated: (data: ChecklistItemResponse) => void;
@@ -14,7 +17,7 @@ export type MessageHandlers = {
 }
 
 
-export function useSSE(messageHandlers: MessageHandlers, checklistId: number, deps: any[] = []) {
+export function useSSE(messageHandlers: MessageHandlers, checklistId: number, deps: unknown[] = []) {
   const esRef = useRef<EventSource | null>(null);
   // allow duplicate ids; do not dedupe by id on client
 
@@ -26,13 +29,12 @@ export function useSSE(messageHandlers: MessageHandlers, checklistId: number, de
   const url = `${base}?clientId=${encodeURIComponent(clientId)}`;
       // Only log connection attempts when debugging is enabled
       // Helps reduce console noise in normal runs
-      // eslint-disable-next-line no-console
-      console.debug('SSE connecting to', url);
+      logger.debug('SSE connecting to', url);
 
     // ⭐ Cookies are sent automatically with credentials: 'include'
     const es = new EventSource(url, {
       fetch: (input: RequestInfo | URL, init?: RequestInit) => {
-        console.log('SSE fetch with credentials');
+        logger.info('SSE fetch with credentials');
         return fetch(input, {
           ...init,
           credentials: 'include', // ⭐ Automatically sends httpOnly cookies
@@ -46,17 +48,17 @@ export function useSSE(messageHandlers: MessageHandlers, checklistId: number, de
     esRef.current = es;
 
     es.onopen = () => {
-      console.log('SSE connection opened');
+      logger.info('SSE connection opened');
     };
 
     es.onmessage = (ev) => {
-      console.log('SSE message received:', ev.data);
+      logger.info('SSE message received:', ev.data);
       try {
         const data = JSON.parse(ev.data) as EventEnvelope;
         onMessage(data);
         return true;
       } catch (err) {
-        console.error('SSE parse error', err);
+        logger.error('SSE parse error', err);
       }
     };
 
@@ -74,12 +76,12 @@ export function useSSE(messageHandlers: MessageHandlers, checklistId: number, de
       } else if (data.type === EventEnvelopeType.checklistItemRowDeleted) {
         messageHandlers.itemRowDeleted(data.payload as ChecklistItemRowDeletedEventPayload);
       } else {
-        console.error('Unknown SSE event type', data.type);
+        logger.error('Unknown SSE event type', data.type);
       }
     };
 
     es.onerror = (err) => {
-      console.error('SSE error', err);
+      logger.error('SSE error', err);
       // EventSource will auto-reconnect by default
     };
 

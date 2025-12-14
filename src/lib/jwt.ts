@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
+import { createLogger } from './logger';
 
+const logger = createLogger('JWT');
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 export interface UserPayload {
@@ -17,6 +19,11 @@ export interface JWTPayload {
 }
 
 export function generateUserJWT(user: UserPayload): string {
+  // Validate JWT_SECRET is configured
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not configured');
+  }
+  
   // Validate that user has required Google fields before generating JWT
   if (!user.id || !user.email || !user.name) {
     throw new Error('Invalid user data: missing required Google fields');
@@ -45,7 +52,7 @@ export function verifyUserJWT(token: string): { userId: string } | null {
       userId: decoded.sub, // Only return user ID
     };
   } catch (error) {
-    console.error('JWT verification failed:', error);
+    logger.error('JWT verification failed:', error);
     return null;
   }
 }

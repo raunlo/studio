@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserIdFromRequest } from '@/lib/jwt';
+import { createLogger } from './logger';
+
+const logger = createLogger('UserValidation');
 
 // Validate Google user exists and is authentic
 export async function validateGoogleUser(googleUserId: string): Promise<boolean> {
@@ -18,7 +21,7 @@ export async function validateGoogleUser(googleUserId: string): Promise<boolean>
     
     return false;
   } catch (error) {
-    console.error('Google user validation failed:', error);
+    logger.error('Google user validation failed:', error);
     return false;
   }
 }
@@ -104,7 +107,7 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('Error fetching user data:', error);
+    logger.error('Error fetching user data:', error);
     return NextResponse.json(
       { error: 'Internal server error' }, 
       { status: 500 }
@@ -122,7 +125,7 @@ export async function checkUserInDatabase(userId: string): Promise<boolean> {
     // For now, return true - implement your database logic
     return true;
   } catch (error) {
-    console.error('Database user check failed:', error);
+    logger.error('Database user check failed:', error);
     return false;
   }
 }
