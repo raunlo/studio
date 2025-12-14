@@ -1,0 +1,77 @@
+{
+  "welcome": "Tere tulemast",
+  "appName": "Daily Chexly",
+  "tagline": "Hoia oma nimekirjad alati käepärast",
+  "subtitle": "Liitu tuhandete kasutajatega, kes hoiavad oma ostunimekirju, raamatuid ja muid asju nutikalt meeles",
+  "benefits": {
+    "shopping": "Ostunimekirjad ja toidumenüüd",
+    "books": "Raamatud ja filmid mida tahad",
+    "tracking": "Märgi ostetud/loetud/vaadatud"
+  },
+  "cta": {
+    "button": "Alusta nimekirjade pidamist TASUTA!",
+    "subtitle": "Lihtsalt üks klõps ja saad kohe alustada!"
+  },
+  "social": {
+    "users": "rahulolev kasutaja",
+    "join": "Liitu meie kasvava kogukonnaga täna! 🌟"
+  },
+  "main": {
+    "title": "Nimekiri",
+    "subtitle": "Korralda nimekiri siin lohistamise abil, et järjestada oma esemeid.",
+    "addItem": "Lisa ese või otsi malle...",
+    "addButton": "Lisa ese",
+    "loading": "Laadin sinu nimekirju...",
+    "error": "Viga nimekirjade laadimisel",
+    "empty": "Nimekirju pole veel. Loo oma esimene!"
+  },
+  "footer": {
+    "terms": "Kasutustingimused",
+    "privacy": "Privaatsuspoliitika"
+  },
+  "header": {
+    "title": "#1 nimekirjade äpp Eestis",
+    "subtitle": "Hoia ostunimekirjad, raamatud ja filmid alati käepärast!"
+  },
+  "subtitle": "Liitu tuhandete kasutajatega, kes hoiavad oma ostunimekirju, raamatuid ja muid asju nutikalt meeles",
+  "benefits": {
+    "shopping": "Ostunimekirjad ja toidumenüüd",
+    "books": "Raamatud ja filmid mida tahad",
+    "tracking": "Märgi ostetud/loetud/vaadatud"
+  },
+  "cta": {
+    "button": "Hakka nimekirju pidama TASUTA!",
+    "subtitle": "Lihtsalt üks klikk ja alusta kohe!"
+  },
+  "social": {
+    "users": "rahul kasutajat",
+    "join": "Liitu meie kasvava kogukonnaga juba täna! 🌟"
+  },
+  "header": {
+    "title": "Nr.1 nimekirjade rakendus Eestis",
+    "subtitle": "Hoia ostunimekirju, raamatuid ja filme alati käepärast!"
+  },
+  "auth": {
+    "signIn": "Logi sisse Google'ga",
+    "signOut": "Logi välja",
+    "hello": "Tere",
+    "welcome": "Tere tulemast",
+    "appName": "Checklist",
+    "tagline": "Hoia oma nimekirjad alati käepärast",
+    "joinUsers": "Liitu",
+    "thousands": "tuhandete kasutajatega",
+    "keepLists": "kes hoiavad oma ostunimekirju, raamatuid ja muid asju nutikalt meeles",
+    "shoppingLists": "Ostunimekirjad ja toidumenüüd",
+    "booksMovies": "Raamatud ja filmid mida tahad",
+    "markCompleted": "Märgi ostetud/loetud/vaadatud",
+    "startFree": "Hakka nimekirju pidama TASUTA!",
+    "oneClick": "Lihtsalt üks klikk ja alusta kohe!",
+    "happyUsers": "rahul kasutajat",
+    "joinCommunity": "Liitu meie kasvava kogukonnaga juba täna!"
+  },
+  "languages": {
+    "et": "Eesti keel",
+    "en": "English", 
+    "es": "Español"
+  }
+}

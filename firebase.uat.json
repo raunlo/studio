@@ -1,0 +1,21 @@
+{
+  "hosting": {
+    "source": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "build": {
+      "env": {
+        "NEXT_PUBLIC_BACKEND_URL": "https://uat-api.dailychexly.com",
+        "NEXTAUTH_URL": "https://uat.dailychexly.com",
+        "GOOGLE_CLIENT_ID": "${secret:GOOGLE_CLIENT_ID_UAT}",
+        "GOOGLE_CLIENT_SECRET": "${secret:GOOGLE_CLIENT_SECRET_UAT}"
+      }
+    },
+    "frameworksBackend": {
+      "region": "europe-west1"
+    }
+  }
+}

@@ -453,12 +453,25 @@ export function useChecklist(
 
   const deleteRow = async (itemId: number | null, rowId: number | null) => {
     if (!checklistId) return;
+    
+    // Find the item to update
+    const targetItem = items.find((item) => item.id === itemId);
+    if (!targetItem) return;
+    
+    // Calculate remaining rows after deletion
+    const remainingRows = targetItem.rows?.filter((row) => row.id !== rowId) ?? [];
+    
+    // Check if all remaining rows are completed
+    const allRemainingRowsCompleted = remainingRows.length > 0 && remainingRows.every((row) => row.completed);
+    
     mutateItems(
       items.map((item) =>
         item.id === itemId
           ? {
               ...item,
-              rows: item.rows?.filter((row) => row.id !== rowId) ?? null,
+              rows: remainingRows,
+              // Auto-complete parent item if all remaining sub-items are completed
+              completed: allRemainingRowsCompleted ? true : item.completed,
             }
           : item,
       ),

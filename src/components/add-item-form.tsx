@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
@@ -12,6 +13,7 @@ type AddItemFormProps = {
 };
 
 export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
+  const { t, ready } = useTranslation();
   const [itemText, setItemText] = useState("");
   const [filteredItems, setFilteredItems] = useState<PredefinedChecklistItem[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -89,7 +91,7 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
             // NB: dropdowni li onMouseDown preventib blur’i, nii et see ei sulge valimisel
             setIsInputFocused(false);
           }}
-          placeholder="Add item or search templates..."
+          placeholder={ready ? t('main.addItem') : 'Add item...'}
           className="h-9 w-full"
           autoComplete="off"
         />
@@ -102,7 +104,7 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
         size="sm"
         className="h-9"
         disabled={!itemText.trim()}
-        aria-label="Add item"
+        aria-label={ready ? t('main.addButton') : 'Add item'}
       >
         <Plus className="h-4 w-4" />
       </Button>

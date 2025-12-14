@@ -2,6 +2,7 @@ import { EventEnvelopeType, EventEnvelope, ChecklistItemResponse, ChecklistItemR
 import { getClientId } from '@/lib/axios';
 import { useEffect, useRef } from 'react';
 import { NEXT_PUBLIC_API_BASE_URL } from '@/lib/axios';
+import { EventSource } from 'eventsource';
 
 export type MessageHandlers = {
   itemUpdated: (data: ChecklistItemResponse) => void;
@@ -20,16 +21,36 @@ export function useSSE(messageHandlers: MessageHandlers, checklistId: number, de
   useEffect(() => {
   const base = `${NEXT_PUBLIC_API_BASE_URL|| ''}/v1/events/checklist-item-updates/${checklistId}`;
   const clientId = getClientId();
+  
+  // ⭐ SECURE: Authentication via httpOnly cookie, sent automatically by browser
   const url = `${base}?clientId=${encodeURIComponent(clientId)}`;
       // Only log connection attempts when debugging is enabled
       // Helps reduce console noise in normal runs
       // eslint-disable-next-line no-console
       console.debug('SSE connecting to', url);
-    
-    const es = new EventSource(url);
+
+    // ⭐ Cookies are sent automatically with credentials: 'include'
+    const es = new EventSource(url, {
+      fetch: (input: RequestInfo | URL, init?: RequestInit) => {
+        console.log('SSE fetch with credentials');
+        return fetch(input, {
+          ...init,
+          credentials: 'include', // ⭐ Automatically sends httpOnly cookies
+          headers: {
+            ...init?.headers,
+            'X-Client-Id': clientId,
+          },
+        });
+      },
+    });
     esRef.current = es;
 
+    es.onopen = () => {
+      console.log('SSE connection opened');
+    };
+
     es.onmessage = (ev) => {
+      console.log('SSE message received:', ev.data);
       try {
         const data = JSON.parse(ev.data) as EventEnvelope;
         onMessage(data);

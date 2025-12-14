@@ -1,0 +1,59 @@
+{
+  "welcome": "Bienvenido a",
+  "appName": "Daily Chexly",
+  "tagline": "Mantén tus listas siempre a mano",
+  "subtitle": "Únete a miles de usuarios que mantienen sus listas de compras, libros y otras cosas de manera inteligente",
+  "benefits": {
+    "shopping": "Listas de compras y menús de comida",
+    "books": "Libros y películas que quieres",
+    "tracking": "Marca comprado/leído/visto"
+  },
+  "cta": {
+    "button": "¡Empieza a llevar listas GRATIS!",
+    "subtitle": "¡Solo un clic y comienza ahora mismo!"
+  },
+  "social": {
+    "users": "usuarios felices",
+    "join": "¡Únete a nuestra creciente comunidad hoy! 🌟"
+  },
+  "main": {
+    "title": "Lista de verificación",
+    "subtitle": "Organiza la lista aquí usando arrastrar y soltar para ordenar tus elementos.",
+    "addItem": "Agregar elemento o buscar plantillas...",
+    "addButton": "Agregar elemento",
+    "loading": "Cargando tus listas...",
+    "error": "Error al cargar las listas",
+    "empty": "¡Aún no hay listas! Crea tu primera lista para comenzar."
+  },
+  "footer": {
+    "terms": "Términos de Servicio",
+    "privacy": "Política de Privacidad"
+  },
+  "header": {
+    "title": "App de listas #1 en Estonia",
+    "subtitle": "¡Mantén listas de compras, libros y películas siempre a mano!"
+  },
+  "auth": {
+    "signIn": "Iniciar sesión con Google",
+    "signOut": "Cerrar sesión",
+    "hello": "Hola",
+    "welcome": "Bienvenido a",
+    "appName": "Checklist",
+    "tagline": "Mantén tus listas siempre a mano",
+    "joinUsers": "Únete a",
+    "thousands": "miles de usuarios",
+    "keepLists": "que mantienen inteligentemente sus listas de compras, libros y otras cosas",
+    "shoppingLists": "Listas de compras y menús de comida",
+    "booksMovies": "Libros y películas que quieres",
+    "markCompleted": "Marcar comprado/leído/visto",
+    "startFree": "¡Comienza a mantener listas GRATIS!",
+    "oneClick": "¡Solo un clic y comienza de inmediato!",
+    "happyUsers": "usuarios felices",
+    "joinCommunity": "¡Únete a nuestra creciente comunidad hoy!"
+  },
+  "languages": {
+    "et": "Eesti keel",
+    "en": "English", 
+    "es": "Español"
+  }
+}
