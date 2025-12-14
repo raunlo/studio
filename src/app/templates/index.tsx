@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { getPredefinedItems } from '@/lib/knowledge-base';
+import { getPredefinedItems, PredefinedChecklistItem } from '@/lib/knowledge-base';
 
 export default function TemplatesPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,7 +22,7 @@ export default function TemplatesPage() {
     template.subItems.some(item => item.text.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const renderTemplateCard = (template: any) => (
+  const renderTemplateCard = (template: PredefinedChecklistItem) => (
     <Card key={template.key} className="group hover:shadow-lg transition-all duration-200 border-slate-200 hover:border-blue-300 bg-white/80 backdrop-blur-sm">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
