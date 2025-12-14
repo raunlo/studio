@@ -113,7 +113,7 @@ async function refreshToken(): Promise<boolean> {
   }
 }
 
-// Add Authorization header with JWT token
+// Token refresh and client ID interceptor
 axiosInstance.interceptors.request.use(async (cfg) => {
   try {
     cfg.headers = cfg.headers ?? {} as Record<string, string>;
@@ -121,27 +121,21 @@ axiosInstance.interceptors.request.use(async (cfg) => {
     // Add client ID header
     (cfg.headers as Record<string, string>)['X-Client-Id'] = getClientId();
     
-    // Get token
-    let token = getUserToken();
+    // Check token expiration and refresh if needed
+    // Note: Token is sent via httpOnly cookies automatically (withCredentials: true)
+    // No need to add Authorization header as backend reads from cookies
+    const token = getUserToken();
     
     // If token exists but expired, refresh it
     if (token && isTokenExpired(token)) {
       logger.info('Token expired, attempting refresh...');
       const refreshSuccess = await refreshToken();
       if (refreshSuccess) {
-        // Get new token after refresh
-        token = getUserToken();
-        logger.info('Using refreshed token');
+        logger.info('Token refreshed successfully');
       } else {
         // Refresh failed, user will be redirected to login by refreshToken()
         logger.info('Refresh failed, request will be aborted');
-        token = null;
       }
-    }
-    
-    // Add Authorization header with Google ID token
-    if (token) {
-      (cfg.headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
     }
   } catch (e) {
     logger.error('Request interceptor error:', e);
