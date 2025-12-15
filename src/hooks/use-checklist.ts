@@ -24,9 +24,12 @@ import {
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 import { useSSE } from './use-checklist-item-updates';
 import type { MessageHandlers } from './use-checklist-item-updates';
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger('UseChecklist');
 // SSE used for realtime updates
 
-const inFlightRequests = new Map<string, Promise<any>>();
+const inFlightRequests = new Map<string, Promise<unknown>>();
 
 async function dedupeRequest<T>(key: string, fn: () => Promise<T>): Promise<T> {
   if (inFlightRequests.has(key)) {
@@ -84,7 +87,7 @@ export function useChecklist(
         completed: i.completed,
         orderNumber: i.orderNumber,
         rows:
-          i.rows?.map((r: any) => ({
+          i.rows?.map((r: ChecklistItemRowResponse) => ({
             id: r.id,
             name: r.name,
             completed: r.completed,
@@ -97,7 +100,7 @@ export function useChecklist(
   // Handlers for checklist items real time updates via SSE
   const scheduleRefetch = useCallback((options: { updatedItems?: Array<ChecklistItem>} = {}) => {
     const { updatedItems: items  } = options;
-    console.debug('scheduleRefetch called with options:', options);
+    logger.debug('scheduleRefetch called with options:', options);
 
     // Update the UI immediately
     if (items) {
@@ -115,7 +118,7 @@ export function useChecklist(
         try {
           mutateItems(); // Fetch fresh data from API
         } catch (e) {
-          console.error('Error during API call:', e);
+          logger.error('Error during API call:', e);
         }
       })();
     }, 1500);
@@ -258,7 +261,7 @@ export function useChecklist(
     
       
     } catch (error) {
-      console.error('❌ Failed to add item:', error);
+      logger.error('❌ Failed to add item:', error);
     }
   };
 

@@ -3,6 +3,7 @@ import Axios, { AxiosError, AxiosRequestConfig, CreateAxiosDefaults } from 'axio
 import http from 'http';
 import https from 'https';
 import jwt from 'jsonwebtoken';
+import { createLogger } from './logger';
 
 // lightweight client id generator
 function newId() {
@@ -45,6 +46,8 @@ export function getClientId(): string {
   }
 }
 
+const logger = createLogger('Axios');
+
 // Get Google ID token from cookie
 export function getUserToken(): string | null {
   try {
@@ -55,7 +58,7 @@ export function getUserToken(): string | null {
       }
     }
   } catch (e) {
-    console.error('[Axios] Error reading user_token:', e);
+    logger.error('Error reading user_token:', e);
   }
   return null;
 }
@@ -63,12 +66,12 @@ export function getUserToken(): string | null {
 // Check if token is expired
 function isTokenExpired(token: string): boolean {
   try {
-    const decoded = jwt.decode(token) as any;
+    const decoded = jwt.decode(token) as { exp?: number } | null;
     if (decoded && decoded.exp) {
       return Date.now() >= decoded.exp * 1000;
     }
   } catch (e) {
-    console.error('[Axios] Error decoding token:', e);
+    logger.error('Error decoding token:', e);
   }
   return true; // If can't decode, assume expired
 }
@@ -89,14 +92,14 @@ async function refreshToken(): Promise<boolean> {
     });
 
     if (response.ok) {
-      console.log('[Axios] Token refreshed successfully');
+      logger.info('Token refreshed successfully');
       return true;
     }
 
     // If refresh fails with 401, redirect to login
     if (response.status === 401) {
       const data = await response.json().catch(() => ({}));
-      console.error('[Axios] Refresh token expired or invalid:', data);
+      logger.error('Refresh token expired or invalid:', data);
       
       // Redirect to login page
       redirectToLogin();
@@ -105,46 +108,44 @@ async function refreshToken(): Promise<boolean> {
 
     throw new Error(`Token refresh failed: ${response.status}`);
   } catch (e) {
-    console.error('[Axios] Error refreshing token:', e);
+    logger.error('Error refreshing token:', e);
     return false;
   }
 }
 
-// Add Authorization header with JWT token
+// Token refresh and client ID interceptor
 axiosInstance.interceptors.request.use(async (cfg) => {
   try {
-    cfg.headers = cfg.headers ?? {} as Record<string, any>;
+    cfg.headers = cfg.headers ?? {} as Record<string, string>;
     
     // Add client ID header
-    (cfg.headers as Record<string, any>)['X-Client-Id'] = getClientId();
+    (cfg.headers as Record<string, string>)['X-Client-Id'] = getClientId();
     
-    // Get token
-    let token = getUserToken();
+    // Check token expiration and refresh if needed
+    // Note: Token is sent via httpOnly cookies automatically (withCredentials: true)
+    // No need to add Authorization header as backend reads from cookies
+    const token = getUserToken();
     
     // If token exists but expired, refresh it
     if (token && isTokenExpired(token)) {
-      console.log('[Axios] Token expired, attempting refresh...');
+      logger.info('Token expired, attempting refresh...');
       const refreshSuccess = await refreshToken();
       if (refreshSuccess) {
-        // Get new token after refresh
-        token = getUserToken();
-        console.log('[Axios] Using refreshed token');
+        logger.info('Token refreshed successfully');
       } else {
         // Refresh failed, user will be redirected to login by refreshToken()
-        console.log('[Axios] Refresh failed, request will be aborted');
-        token = null;
+        logger.info('Refresh failed, request will be aborted');
       }
     }
-    
-    // Add Authorization header with Google ID token
-    if (token) {
-      (cfg.headers as Record<string, any>)['Authorization'] = `Bearer ${token}`;
-    }
   } catch (e) {
-    console.error('[Axios] Request interceptor error:', e);
+    logger.error('Request interceptor error:', e);
   }
   return cfg;
 });
+
+interface RetryableConfig extends AxiosRequestConfig {
+  _retry?: boolean;
+}
 
 export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> => {
   try {
@@ -152,10 +153,11 @@ export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> 
     return data;
   } catch (error) {
     if (error instanceof AxiosError) {
-      console.error('API Error:', error.response?.data || error.message);
+      logger.error('API Error:', error.response?.data || error.message);
       // If 401, try refresh and retry once
-      if (error.response?.status === 401 && !(config as any)._retry) {
-        (config as any)._retry = true;
+      const retryableConfig = config as RetryableConfig;
+      if (error.response?.status === 401 && !retryableConfig._retry) {
+        retryableConfig._retry = true;
         try {
           const refreshSuccess = await refreshToken();
           if (refreshSuccess) {
