@@ -28,7 +28,7 @@ env:
       - RUNTIME
       - BUILD
   - variable: NEXT_PUBLIC_DIRECT_BACKEND_URL
-    value: https://uat.dailychexly.com
+    value: https://uat-api.dailychexly.com
     availability:
       - BUILD
       - RUNTIME
