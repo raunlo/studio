@@ -10,8 +10,8 @@
       "env": {
         "NEXT_PUBLIC_BACKEND_URL": "https://uat-api.dailychexly.com",
         "NEXTAUTH_URL": "https://uat.dailychexly.com",
-        "GOOGLE_CLIENT_ID": "${secret:GOOGLE_CLIENT_ID_UAT}",
-        "GOOGLE_CLIENT_SECRET": "${secret:GOOGLE_CLIENT_SECRET_UAT}"
+        "GOOGLE_CLIENT_ID": "${secret:UAT-Google-SSO-ID}",
+        "GOOGLE_CLIENT_SECRET": "${secret:DailyChexly-GoogleSSO-Secret-UAT}"
       }
     },
     "frameworksBackend": {
