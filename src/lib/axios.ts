@@ -48,6 +48,32 @@ export function getClientId(): string {
 
 const logger = createLogger('Axios');
 
+const LOGOUT_GUARD_KEY = 'checklist_is_logging_out_until';
+
+export function markLoggingOut(ttlMs: number = 5000) {
+  try {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LOGOUT_GUARD_KEY, String(Date.now() + ttlMs));
+    }
+  } catch {
+    // ignore
+  }
+}
+
+function isLoggingOut(): boolean {
+  try {
+    if (typeof window === 'undefined') return false;
+    const raw = window.localStorage.getItem(LOGOUT_GUARD_KEY);
+    const until = raw ? Number(raw) : 0;
+    if (!Number.isFinite(until)) return false;
+    if (Date.now() <= until) return true;
+    window.localStorage.removeItem(LOGOUT_GUARD_KEY);
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 // Get Google ID token from cookie
 export function getUserToken(): string | null {
   try {
@@ -76,10 +102,13 @@ function isTokenExpired(token: string): boolean {
   return true; // If can't decode, assume expired
 }
 
-// Redirect to login page with session expired error
-function redirectToLogin(): void {
+// Redirect to home with session expired error (login page is not used)
+function redirectToSessionExpired(): void {
   if (typeof window !== 'undefined') {
-    window.location.href = '/login?error=session_expired';
+    // If user is intentionally logging out, don't hijack navigation.
+    if (isLoggingOut()) return;
+    // Use a hard navigation to fully reset any client state.
+    window.location.href = '/?error=session_expired';
   }
 }
 
@@ -96,13 +125,12 @@ async function refreshToken(): Promise<boolean> {
       return true;
     }
 
-    // If refresh fails with 401, redirect to login
+    // If refresh fails with 401, redirect to session-expired flow
     if (response.status === 401) {
       const data = await response.json().catch(() => ({}));
       logger.error('Refresh token expired or invalid:', data);
       
-      // Redirect to login page
-      redirectToLogin();
+      redirectToSessionExpired();
       return false;
     }
 
@@ -165,13 +193,13 @@ export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> 
             const { data } = await axiosInstance.request<T>(config);
             return data;
           } else {
-            // Refresh failed, redirect to login
-            redirectToLogin();
+            // Refresh failed, redirect to session-expired flow
+            redirectToSessionExpired();
             throw error;
           }
         } catch (retryError) {
-          // If retry fails, redirect to login
-          redirectToLogin();
+          // If retry fails, redirect to session-expired flow
+          redirectToSessionExpired();
           throw error;
         }
       }

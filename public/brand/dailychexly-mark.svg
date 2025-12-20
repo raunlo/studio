@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <linearGradient id="g" x1="40" y1="32" x2="216" y2="224" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <clipPath id="r">
+      <rect x="24" y="24" width="208" height="208" rx="56"/>
+    </clipPath>
+  </defs>
+
+  <rect x="24" y="24" width="208" height="208" rx="56" fill="url(#g)"/>
+
+  <!-- subtle sun/day arc (top-left) -->
+  <g clip-path="url(#r)">
+    <circle cx="78" cy="78" r="50" fill="#FFFFFF" opacity="0.16"/>
+    <circle cx="78" cy="78" r="34" fill="#FFFFFF" opacity="0.12"/>
+  </g>
+
+  <!-- checkmark -->
+  <path d="M78 132.5L110.5 164.5L178.5 96.5" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { HeaderWrapper } from "@/components/ui/HeaderWrapper";
-import LoginPage from "@/app/login/page";
+import { LoginPage } from "@/components/LoginPage";
 
 interface User {
   id: string;
@@ -80,7 +80,7 @@ export const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!session?.user) {
-    return <LoginPage onLogin={() => {}} />;
+  return <LoginPage />;
   }
 
   return (
