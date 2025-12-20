@@ -8,11 +8,11 @@ export async function GET(request: NextRequest) {
   // Handle OAuth errors
   if (error) {
     console.error('OAuth error:', error)
-    return NextResponse.redirect(new URL('/login?error=oauth_error', request.url))
+  return NextResponse.redirect(new URL('/?error=oauth_error', request.url))
   }
 
   if (!code) {
-    return NextResponse.redirect(new URL('/login?error=no_code', request.url))
+  return NextResponse.redirect(new URL('/?error=no_code', request.url))
   }
 
   try {
@@ -37,14 +37,14 @@ export async function GET(request: NextRequest) {
 
     if (!tokenResponse.ok) {
       console.error('Token exchange failed with status:', tokenResponse.status)
-      return NextResponse.redirect(new URL('/login?error=token_exchange_failed', request.url))
+  return NextResponse.redirect(new URL('/?error=token_exchange_failed', request.url))
     }
 
     const tokens = await tokenResponse.json()
 
     if (!tokens.id_token) {
       console.error('No ID token received:', tokens)
-      return NextResponse.redirect(new URL('/login?error=token_error', request.url))
+  return NextResponse.redirect(new URL('/?error=token_error', request.url))
     }
 
     // Get user info from Google using access token (for additional data)
@@ -59,19 +59,19 @@ export async function GET(request: NextRequest) {
     // Validate Google user data
     if (!userInfo.id || !userInfo.email || !userInfo.name) {
       console.error('Incomplete user info received:', userInfo)
-      return NextResponse.redirect(new URL('/login?error=invalid_user_data', request.url))
+  return NextResponse.redirect(new URL('/?error=invalid_user_data', request.url))
     }
 
     // Validate Google user ID format
     if (!userInfo.id.match(/^[0-9]{15,25}$/)) {
       console.error('Invalid Google user ID format:', userInfo.id)
-      return NextResponse.redirect(new URL('/login?error=invalid_user_id', request.url))
+  return NextResponse.redirect(new URL('/?error=invalid_user_id', request.url))
     }
 
     // Additional validation: check if user email is verified
     if (!userInfo.verified_email) {
       console.error('User email not verified')
-      return NextResponse.redirect(new URL('/login?error=email_not_verified', request.url))
+  return NextResponse.redirect(new URL('/?error=email_not_verified', request.url))
     }
 
     // Create session data
@@ -126,7 +126,10 @@ export async function GET(request: NextRequest) {
             // ⭐ SECURE: No localStorage - tokens are in httpOnly cookies
             // Browser automatically sends them with every request
             console.log('✅ Authentication successful - redirecting...');
-            window.location.href = '/';
+            // Force a hard navigation so the app and any cached client state
+            // (e.g. checklist SWR cache) is fully refreshed with the new cookies.
+            // Use replace to avoid leaving this intermediate page in history.
+            window.location.replace('/?auth=success');
           </script>
         </body>
       </html>
@@ -192,6 +195,6 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('OAuth callback error:', error)
-    return NextResponse.redirect(new URL('/login?error=callback_error', request.url))
+  return NextResponse.redirect(new URL('/?error=callback_error', request.url))
   }
 }
