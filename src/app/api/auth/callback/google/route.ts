@@ -165,13 +165,14 @@ export async function GET(request: NextRequest) {
 
     // ⭐ Build Set-Cookie headers manually for better domain control
     const isProduction = process.env.NODE_ENV === 'production'
+    console.log('Environment is production:', isProduction)
     const secure = isProduction ? 'Secure; ' : ''
     const domainAttr = cookieDomain ? `Domain=${cookieDomain}; ` : ''
     
     // ⭐ Set cookies using Set-Cookie header directly (gives us full control)
     const setCookieHeaders = [
       `session=${encodeURIComponent(JSON.stringify(sessionData))}; ${domainAttr}Path=/; Max-Age=${24 * 60 * 60}; HttpOnly; ${secure}SameSite=Lax`,
-      `user_token=${tokens.id_token}; ${domainAttr}Path=/; Max-Age=${60 * 60}; HttpOnly; ${secure}SameSite=Lax`,
+      `user_token=${tokens.id_token}; ${domainAttr}Path=/; Max-Age=${60 * 60}; HttpOnly; ${secure}SameSite=none`,
     ]
     
     if (tokens.refresh_token) {
