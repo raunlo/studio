@@ -148,11 +148,14 @@ export async function GET(request: NextRequest) {
     let cookieDomain: string | undefined = undefined
     
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      const parts = hostname.split('.')
-      if (parts.length >= 2) {
-        // For subdomains: take last 3 parts (dailychexly.local.com)
-        const rootDomainParts = parts.length >= 3 ? 3 : 2
-        cookieDomain = '.' + parts.slice(-rootDomainParts).join('.')
+      const parts = hostname.toLowerCase().split('.')
+
+      // app.dailychexly.local.com  -> dailychexly.local.com (no leading dot)
+      if (parts.length >= 3 && parts.slice(-2).join('.') === 'local.com') {
+      cookieDomain = parts.slice(-3).join('.')
+      } else if (parts.length >= 2) {
+      // uat.dailychexly.com -> .dailychexly.com (leading dot for subdomain sharing)
+      cookieDomain = '.' + parts.slice(-2).join('.')
       }
     }
 
