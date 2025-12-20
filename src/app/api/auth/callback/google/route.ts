@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
     // ⭐ Set cookies using Set-Cookie header directly (gives us full control)
     const setCookieHeaders = [
       `session=${encodeURIComponent(JSON.stringify(sessionData))}; ${domainAttr}Path=/; Max-Age=${24 * 60 * 60}; HttpOnly; ${secure}SameSite=Lax`,
-      `user_token=${tokens.id_token}; ${domainAttr}Path=/; Max-Age=${60 * 60}; HttpOnly; ${secure}SameSite=none`,
+      `user_token=${tokens.id_token}; ${domainAttr}Path=/; Max-Age=${60 * 60}; HttpOnly; ${secure}SameSite=Lax`,
     ]
     
     if (tokens.refresh_token) {
