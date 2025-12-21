@@ -2,13 +2,16 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { ChecklistManager } from "@/components/checklist-manager";
+import { HeaderWrapper } from "@/components/ui/HeaderWrapper";
 import Link from 'next/link';
 
 export const MainContent = () => {
   const { t, ready } = useTranslation();
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <>
+      <HeaderWrapper />
+      <div className="flex flex-col min-h-screen">
       <main className="flex-grow min-h-screen bg-background font-body text-foreground overflow-x-hidden">
         <div className="container mx-auto max-w-2xl p-2 sm:p-6 md:p-8">
           <header className="text-center mb-8 md:mb-12">
@@ -35,5 +38,6 @@ export const MainContent = () => {
         </div>
       </footer>
     </div>
+    </>
   );
 };

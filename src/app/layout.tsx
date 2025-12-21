@@ -1,8 +1,6 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { HeaderWrapper } from "@/components/ui/HeaderWrapper";
-import { AuthWrapper } from "@/components/ui/AuthWrapper";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
@@ -30,7 +28,7 @@ export default function RootLayout({
       <body className="font-body antialiased min-h-screen h-full flex flex-col">
         <Providers>
           <main className="flex-1 flex flex-col w-full">
-            <AuthWrapper>{children}</AuthWrapper>
+            {children}
           </main>
         </Providers>
         <Toaster />

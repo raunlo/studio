@@ -104,19 +104,20 @@ function isTokenExpired(token: string): boolean {
 }
 
 // Clear all auth cookies to prevent loop on 401
-function clearAuthCookies(): void {
-  if (typeof document !== 'undefined') {
-    // Delete all auth-related cookies
-    const cookiesToDelete = ['user_token', 'refresh_token', 'session'];
-    cookiesToDelete.forEach(name => {
-      document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax`;
-      // Also try without domain (fallback for different domain scenarios)
-      document.cookie = `${name}=; Max-Age=0; path=/; Domain=; SameSite=Lax`;
+async function clearAuthCookies(): Promise<void> {
+  // HttpOnly cookies can only be deleted by the server
+  // So we call the backend API to clear them
+  try {
+    await fetch('/api/auth/clear-cookies', {
+      method: 'POST',
+      credentials: 'include',
     });
-    logger.info('🗑️ Cleared all auth cookies');
+    logger.info('🗑️ Requested server to clear auth cookies');
+  } catch (e) {
+    logger.error('Failed to clear auth cookies via server:', e);
   }
   
-  // Clear related localStorage entries
+  // Clear related localStorage entries (these we CAN clear from frontend)
   try {
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(LOGOUT_GUARD_KEY);
@@ -129,7 +130,7 @@ function clearAuthCookies(): void {
 }
 
 // Redirect to home with session expired error (login page is not used)
-function redirectToSessionExpired(): void {
+async function redirectToSessionExpired(): Promise<void> {
   if (typeof window !== 'undefined') {
     // Prevent multiple redirects
     if (isRedirectingToSessionExpired) {
@@ -144,7 +145,7 @@ function redirectToSessionExpired(): void {
     isRedirectingToSessionExpired = true;
     
     // Clear all auth cookies before redirecting to prevent loop
-    clearAuthCookies();
+    await clearAuthCookies();
     
     // Use a hard navigation to fully reset any client state.
     window.location.href = '/?error=session_expired';
@@ -168,8 +169,8 @@ async function refreshToken(): Promise<boolean> {
     if (response.status === 401) {
       const data = await response.json().catch(() => ({}));
       logger.error('Refresh token expired or invalid:', data);
-      clearAuthCookies();
-      redirectToSessionExpired();
+      await clearAuthCookies();
+      await redirectToSessionExpired();
       return false;
     }
 
@@ -233,12 +234,13 @@ export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> 
             return data;
           } else {
             // Refresh failed, redirect to session-expired flow
-            redirectToSessionExpired();
+            await redirectToSessionExpired();
             throw error;
           }
         } catch (retryError) {
           // If retry fails, redirect to session-expired flow
-          redirectToSessionExpired();
+          console.error('Retry after refresh failed:', retryError);
+          await redirectToSessionExpired();
           throw error;
         }
       }
