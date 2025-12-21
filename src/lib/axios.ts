@@ -103,33 +103,8 @@ function isTokenExpired(token: string): boolean {
   return true; // If can't decode, assume expired
 }
 
-// Clear all auth cookies to prevent loop on 401
-function clearAuthCookies(): void {
-  if (typeof document !== 'undefined') {
-    // Delete all auth-related cookies
-    const cookiesToDelete = ['user_token', 'refresh_token', 'session'];
-    cookiesToDelete.forEach(name => {
-      document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax`;
-      // Also try without domain (fallback for different domain scenarios)
-      document.cookie = `${name}=; Max-Age=0; path=/; Domain=; SameSite=Lax`;
-    });
-    logger.info('🗑️ Cleared all auth cookies');
-  }
-  
-  // Clear related localStorage entries
-  try {
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem(LOGOUT_GUARD_KEY);
-      window.localStorage.removeItem('checklist_client_id');
-      logger.info('🗑️ Cleared localStorage auth entries');
-    }
-  } catch (e) {
-    logger.warn('Could not clear localStorage:', e);
-  }
-}
-
 // Redirect to home with session expired error (login page is not used)
-function redirectToSessionExpired(): void {
+async function redirectToSessionExpired(): Promise<void> {
   if (typeof window !== 'undefined') {
     // Prevent multiple redirects
     if (isRedirectingToSessionExpired) {
@@ -142,9 +117,6 @@ function redirectToSessionExpired(): void {
     
     // Mark that we're redirecting
     isRedirectingToSessionExpired = true;
-    
-    // Clear all auth cookies before redirecting to prevent loop
-    clearAuthCookies();
     
     // Use a hard navigation to fully reset any client state.
     window.location.href = '/?error=session_expired';
@@ -168,8 +140,7 @@ async function refreshToken(): Promise<boolean> {
     if (response.status === 401) {
       const data = await response.json().catch(() => ({}));
       logger.error('Refresh token expired or invalid:', data);
-      clearAuthCookies();
-      redirectToSessionExpired();
+      await redirectToSessionExpired();
       return false;
     }
 
@@ -233,12 +204,13 @@ export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> 
             return data;
           } else {
             // Refresh failed, redirect to session-expired flow
-            redirectToSessionExpired();
+            await redirectToSessionExpired();
             throw error;
           }
         } catch (retryError) {
           // If retry fails, redirect to session-expired flow
-          redirectToSessionExpired();
+          console.error('Retry after refresh failed:', retryError);
+          await redirectToSessionExpired();
           throw error;
         }
       }

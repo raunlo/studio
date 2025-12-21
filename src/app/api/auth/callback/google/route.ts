@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
             // Force a hard navigation so the app and any cached client state
             // (e.g. checklist SWR cache) is fully refreshed with the new cookies.
             // Use replace to avoid leaving this intermediate page in history.
-            window.location.replace('/?auth=success');
+            window.location.replace('/checklist');
           </script>
         </body>
       </html>
