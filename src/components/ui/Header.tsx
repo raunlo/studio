@@ -15,7 +15,7 @@ export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   return (
-    <header className="flex items-center justify-between gap-2 px-3 sm:px-6 py-2.5 sm:py-3 bg-white/95 shadow-lg backdrop-blur-lg border-b border-gray-100 animate-fade-in relative">
+    <header className="sticky top-0 z-50 flex items-center justify-between gap-2 px-3 sm:px-6 py-2.5 sm:py-3 bg-white/95 shadow-lg backdrop-blur-lg border-b border-gray-100 animate-fade-in">
       {/* Left side - Brand */}
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         <div className="relative flex-shrink-0">
@@ -103,7 +103,7 @@ export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
 
             {/* Mobile dropdown menu */}
             {isMobileMenuOpen && (
-              <div className="absolute top-full right-0 mt-2 mr-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-fade-in">
+              <div className="absolute top-full right-0 mt-2 mr-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-[60] animate-fade-in">
                 <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
                   <div className="flex items-center gap-3 mb-4">
                     {user.avatarUrl && (
