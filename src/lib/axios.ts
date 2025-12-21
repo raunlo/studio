@@ -49,6 +49,7 @@ export function getClientId(): string {
 const logger = createLogger('Axios');
 
 const LOGOUT_GUARD_KEY = 'checklist_is_logging_out_until';
+let isRedirectingToSessionExpired = false; // Prevent multiple redirects
 
 export function markLoggingOut(ttlMs: number = 5000) {
   try {
@@ -130,10 +131,21 @@ function clearAuthCookies(): void {
 // Redirect to home with session expired error (login page is not used)
 function redirectToSessionExpired(): void {
   if (typeof window !== 'undefined') {
+    // Prevent multiple redirects
+    if (isRedirectingToSessionExpired) {
+      logger.warn('Session expired redirect already in progress, skipping duplicate');
+      return;
+    }
+    
     // If user is intentionally logging out, don't hijack navigation.
     if (isLoggingOut()) return;
+    
+    // Mark that we're redirecting
+    isRedirectingToSessionExpired = true;
+    
     // Clear all auth cookies before redirecting to prevent loop
     clearAuthCookies();
+    
     // Use a hard navigation to fully reset any client state.
     window.location.href = '/?error=session_expired';
   }
