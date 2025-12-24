@@ -53,7 +53,41 @@
   },
   "languages": {
     "et": "Estonian",
-    "en": "English", 
+    "en": "English",
     "es": "Spanish"
+  },
+  "overview": {
+    "title": "My Checklists",
+    "subtitle": "Manage and organize your checklists",
+    "newChecklist": "New Checklist",
+    "createTitle": "New checklist",
+    "createDescription": "Give your checklist a name and start",
+    "renameTitle": "Rename checklist",
+    "renameDescription": "Give your checklist a new name",
+    "save": "Save",
+    "saving": "Saving...",
+    "checklistNameLabel": "Checklist name",
+    "checklistNamePlaceholder": "e.g., Shopping list",
+    "cancel": "Cancel",
+    "create": "Create",
+    "creating": "Creating...",
+    "empty": "No checklists yet",
+    "emptyDescription": "Create your first checklist to get started organizing your tasks.",
+    "createFirst": "Create Your First Checklist",
+    "completed": "completed",
+    "emptyList": "Empty list",
+    "myChecklists": "My Checklists",
+    "sharedWithMe": "Shared with me"
+  },
+  "detail": {
+    "back": "Back to checklists",
+    "delete": "Delete",
+    "deleteTitle": "Delete Checklist?",
+    "deleteDescription": "This action cannot be undone. This will permanently delete the checklist and all its items.",
+    "cancel": "Cancel",
+    "deleteConfirm": "Delete Checklist",
+    "error": "Error loading checklist",
+    "errorDescription": "Could not load this checklist. It may have been deleted or you don't have access.",
+    "backToOverview": "Back to Overview"
   }
 }

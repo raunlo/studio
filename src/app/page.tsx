@@ -26,8 +26,17 @@ export default function Home() {
       const data = await response.json();
       
       if (data.user) {
-        // Already authenticated, redirect to checklist
-        router.replace('/checklist');
+        // Already authenticated, check for returnUrl parameter
+        const params = new URLSearchParams(window.location.search);
+        const returnUrl = params.get('returnUrl');
+        
+        if (returnUrl) {
+          // Decode and redirect to the return URL
+          router.replace(decodeURIComponent(returnUrl));
+        } else {
+          // Default redirect to checklist
+          router.replace('/checklist');
+        }
       } else {
         setIsAuthenticated(false);
       }

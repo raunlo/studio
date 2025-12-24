@@ -33,24 +33,6 @@
     "title": "#1 nimekirjade äpp Eestis",
     "subtitle": "Hoia ostunimekirjad, raamatud ja filmid alati käepärast!"
   },
-  "subtitle": "Liitu tuhandete kasutajatega, kes hoiavad oma ostunimekirju, raamatuid ja muid asju nutikalt meeles",
-  "benefits": {
-    "shopping": "Ostunimekirjad ja toidumenüüd",
-    "books": "Raamatud ja filmid mida tahad",
-    "tracking": "Märgi ostetud/loetud/vaadatud"
-  },
-  "cta": {
-    "button": "Hakka nimekirju pidama TASUTA!",
-    "subtitle": "Lihtsalt üks klikk ja alusta kohe!"
-  },
-  "social": {
-    "users": "rahul kasutajat",
-    "join": "Liitu meie kasvava kogukonnaga juba täna! 🌟"
-  },
-  "header": {
-    "title": "Nr.1 nimekirjade rakendus Eestis",
-    "subtitle": "Hoia ostunimekirju, raamatuid ja filme alati käepärast!"
-  },
   "auth": {
     "signIn": "Logi sisse Google'ga",
     "signOut": "Logi välja",
@@ -71,7 +53,41 @@
   },
   "languages": {
     "et": "Eesti keel",
-    "en": "English", 
+    "en": "English",
     "es": "Español"
+  },
+  "overview": {
+    "title": "Minu Nimekirjad",
+    "subtitle": "Halda ja organiseeri oma nimekirju",
+    "newChecklist": "Uus Nimekiri",
+    "createTitle": "Uus nimekiri",
+    "createDescription": "Anna nimekirjale nimi ja alusta",
+    "renameTitle": "Muuda nime",
+    "renameDescription": "Anna nimekirjale uus nimi",
+    "save": "Salvesta",
+    "saving": "Muudan...",
+    "checklistNameLabel": "Nimekirja nimi",
+    "checklistNamePlaceholder": "Näiteks: Ostunimekiri",
+    "cancel": "Tühista",
+    "create": "Loo",
+    "creating": "Loon...",
+    "empty": "Nimekirju pole veel",
+    "emptyDescription": "Loo oma esimene nimekiri, et alustada ülesannete korraldamist.",
+    "createFirst": "Loo Oma Esimene Nimekiri",
+    "completed": "tehtud",
+    "emptyList": "Tühi nimekiri",
+    "myChecklists": "Minu Nimekirjad",
+    "sharedWithMe": "Minuga jagatud"
+  },
+  "detail": {
+    "back": "Tagasi nimekirjade juurde",
+    "delete": "Kustuta",
+    "deleteTitle": "Kustuta Nimekiri?",
+    "deleteDescription": "Seda toimingut ei saa tagasi võtta. See kustutab nimekirja ja kõik selle elemendid jäädavalt.",
+    "cancel": "Tühista",
+    "deleteConfirm": "Kustuta Nimekiri",
+    "error": "Viga nimekirja laadimisel",
+    "errorDescription": "Ei saanud seda nimekirja laadida. See võib olla kustutatud või sul ei ole sellele juurdepääsu.",
+    "backToOverview": "Tagasi Ülevaatele"
   }
 }

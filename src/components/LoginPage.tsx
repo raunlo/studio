@@ -62,7 +62,17 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
   const handleGoogleLogin = () => {
     setErrorMessage(null);
     onLogin?.();
-    window.location.href = '/api/auth/google';
+    
+    // Check if there's a returnUrl parameter to pass along
+    const params = new URLSearchParams(window.location.search);
+    const returnUrl = params.get('returnUrl');
+    
+    if (returnUrl) {
+      // Pass returnUrl to the OAuth flow
+      window.location.href = `/api/auth/google?returnUrl=${encodeURIComponent(returnUrl)}`;
+    } else {
+      window.location.href = '/api/auth/google';
+    }
   };
 
   return (
