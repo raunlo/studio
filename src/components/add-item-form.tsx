@@ -88,11 +88,11 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
             if (filteredItems.length > 0) setIsDropdownOpen(true);
           }}
           onBlur={() => {
-            // NB: dropdowni li onMouseDown preventib blur’i, nii et see ei sulge valimisel
+            // NB: dropdowni li onMouseDown preventib blur'i, nii et see ei sulge valimisel
             setIsInputFocused(false);
           }}
           placeholder={ready ? t('main.addItem') : 'Add item...'}
-          className="h-9 w-full"
+          className="h-12 sm:h-10 w-full text-base touch-manipulation"
           autoComplete="off"
         />
         {isDropdownOpen && (
@@ -102,11 +102,11 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
       <Button
         type="submit"
         size="sm"
-        className="h-9"
+        className="h-12 w-12 sm:h-10 sm:w-10 touch-manipulation shrink-0"
         disabled={!itemText.trim()}
         aria-label={ready ? t('main.addButton') : 'Add item'}
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
       </Button>
     </form>
   );

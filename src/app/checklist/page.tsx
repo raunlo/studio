@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { HeaderWrapper } from "@/components/ui/HeaderWrapper";
 import { ChecklistOverview } from "@/components/checklist-overview";
 
 export default function ChecklistPage() {
@@ -46,7 +45,6 @@ export default function ChecklistPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <HeaderWrapper />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl">
         <ChecklistOverview />
       </main>

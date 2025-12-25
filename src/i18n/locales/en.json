@@ -88,6 +88,11 @@
     "deleteConfirm": "Delete Checklist",
     "error": "Error loading checklist",
     "errorDescription": "Could not load this checklist. It may have been deleted or you don't have access.",
-    "backToOverview": "Back to Overview"
+    "backToOverview": "Back to Overview",
+    "clearCompleted": "Clear completed",
+    "itemDeleted": "Item deleted",
+    "undo": "Undo",
+    "emptyListTitle": "Your list is empty",
+    "emptyListDescription": "Quick add common items or type your own above ↑"
   }
 }

@@ -88,6 +88,11 @@
     "deleteConfirm": "Kustuta Nimekiri",
     "error": "Viga nimekirja laadimisel",
     "errorDescription": "Ei saanud seda nimekirja laadida. See võib olla kustutatud või sul ei ole sellele juurdepääsu.",
-    "backToOverview": "Tagasi Ülevaatele"
+    "backToOverview": "Tagasi Ülevaatele",
+    "clearCompleted": "Eemalda tehtud",
+    "itemDeleted": "Element kustutatud",
+    "undo": "Võta tagasi",
+    "emptyListTitle": "Nimekiri on tühi",
+    "emptyListDescription": "Lisa kiirvalikust või kirjuta oma ülal ↑"
   }
 }

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { HeaderWrapper } from "@/components/ui/HeaderWrapper";
 import { ChecklistCard } from "@/components/checklist-card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -68,17 +67,16 @@ export default function ChecklistDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <HeaderWrapper />
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header with back button */}
-        <div className="mb-6 flex items-center justify-between gap-4">
+    <div className="min-h-screen bg-background">
+      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 w-full sm:max-w-2xl">
+        {/* Header with back button - Mobile optimized */}
+        <div className="mb-4 sm:mb-6 flex items-center justify-between gap-4">
           <Button
             variant="ghost"
             onClick={() => router.push('/checklist')}
-            className="gap-2"
+            className="gap-2 h-11 px-3 sm:px-4 touch-manipulation"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5" />
             {t('detail.back')}
           </Button>
         </div>

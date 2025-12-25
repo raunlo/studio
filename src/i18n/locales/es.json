@@ -88,6 +88,11 @@
     "deleteConfirm": "Eliminar Lista",
     "error": "Error al cargar la lista",
     "errorDescription": "No se pudo cargar esta lista. Puede haber sido eliminada o no tienes acceso.",
-    "backToOverview": "Volver al Resumen"
+    "backToOverview": "Volver al Resumen",
+    "clearCompleted": "Limpiar completados",
+    "itemDeleted": "Elemento eliminado",
+    "undo": "Deshacer",
+    "emptyListTitle": "Tu lista está vacía",
+    "emptyListDescription": "Agrega rápidamente elementos comunes o escribe los tuyos arriba ↑"
   }
 }

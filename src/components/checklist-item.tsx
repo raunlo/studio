@@ -173,205 +173,213 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
   };
 
   return (
-    <div className="flex items-start gap-3 w-full">
-  {/* Drag handle + Checkbox */}
-  <div className="flex items-center pt-1">
-    <Checkbox
-      id={String(item.id ?? "temp")}
-      checked={item.completed}
-      onCheckedChange={(checked) => handleItemCompleted(checked as boolean)}
-      className="h-5 w-5 shrink-0"
-      aria-label={`Mark item ${item.name} as complete`}
-    />
-  </div>
-
-  {/* Collapsible Container */}
-  <Collapsible
-    open={expanded}
-    onOpenChange={(checkedState) => setExpanded(checkedState as boolean)}
-    className="flex-grow"
-  >
-    {/* Title Row with trigger and delete button */}
-    <div className="flex items-start justify-between gap-2">
-      <div className="flex items-start gap-2 flex-grow">
-        {/* Expand/Collapse Button */}
-        <CollapsibleTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0 mt-0.5"
-            aria-label={expanded ? "Collapse checklist item" : "Expand checklist item"}
-          >
-            <ChevronRight className={cn("h-4 w-4 transition-transform duration-200", expanded && "rotate-90")} />
-          </Button>
-        </CollapsibleTrigger>
-        
-        {/* Title content */}
-        <div className="flex flex-col items-start gap-2 text-left flex-grow pt-0.5">
-          {/* Editable title */}
-          {isEditingTitle ? (
-            /* Prevent event bubbling so the collapsible trigger does not fire when interacting with edit controls */
-            <div className="flex items-center gap-2 w-full" onClick={(e) => e.stopPropagation()}>
-              <Input
-                ref={titleInputRef}
-                value={titleEditValue}
-                onChange={(e) => setTitleEditValue(e.target.value)}
-                onKeyDown={handleTitleKeyDown}
-                onBlur={saveTitleEdit}
-                className="h-8 text-sm flex-grow border-none shadow-none bg-transparent px-0 focus-visible:ring-1 focus-visible:ring-primary"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={saveTitleEdit}
-                className="h-7 w-7 shrink-0"
-                aria-label="Save edit"
-              >
-                <Check className="h-4 w-4 text-green-600" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={cancelTitleEdit}
-                className="h-7 w-7 shrink-0"
-                aria-label="Cancel edit"
-              >
-                <X className="h-4 w-4 text-muted-foreground" />
-              </Button>
-            </div>
-          ) : (
-            <span 
-              className={cn("cursor-pointer hover:text-primary transition-colors", item.completed && "line-through text-muted-foreground")}
-              onClick={(e) => {
-                // Prevent event bubbling so the collapsible trigger does not fire when clicking to edit
-                e.stopPropagation();
-                startTitleEdit();
-              }}
-              title="Click to edit"
-            >
-              {item.name}
-            </span>
-          )}
-
-          {/* Subitems preview (collapsed state only) */}
-            {!expanded && item.rows && item.rows.length > 0 && (
-              <div className="flex flex-wrap gap-x-2 text-sm italic text-muted-foreground pointer-events-none">
-                {item.rows.map((row, index) => (
-                <span key={row.id ? `checklistItem-row-${row.id}` : `checklistItem-row-temp-${index}`} className={cn(row.completed && "line-through")}>
-                  {row.name}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+    <div className="flex items-start gap-2 sm:gap-3 w-full min-h-[44px]">
+      {/* Checkbox - Mobile-optimized (24px) */}
+      <div className="flex items-center pt-1">
+        <Checkbox
+          id={String(item.id ?? "temp")}
+          checked={item.completed}
+          onCheckedChange={(checked) => handleItemCompleted(checked as boolean)}
+          className="h-6 w-6 shrink-0 touch-manipulation"
+          aria-label={`Mark item ${item.name} as complete`}
+        />
       </div>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => deleteItem(item.id)}
-        aria-label="Delete item"
-        className="h-8 w-8 shrink-0"
+      {/* Collapsible Container */}
+      <Collapsible
+        open={expanded}
+        onOpenChange={(checkedState) => setExpanded(checkedState as boolean)}
+        className="flex-grow"
       >
-        <Trash2 className="h-4 w-4 text-muted-foreground" />
-      </Button>
-    </div>
+        {/* Title Row with trigger and delete button */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start gap-1 sm:gap-2 flex-grow">
+            {/* Expand/Collapse Button - Always visible to allow adding sub-items */}
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 sm:h-9 sm:w-9 shrink-0 touch-manipulation"
+                aria-label={expanded ? "Collapse checklist item" : "Expand checklist item"}
+              >
+                <ChevronRight className={cn("h-5 w-5 sm:h-4 sm:w-4 transition-transform duration-200", expanded && "rotate-90")} />
+              </Button>
+            </CollapsibleTrigger>
 
-    {/* Expanded subitems content */}
-    <CollapsibleContent>
-      <div className="pl-1 pt-2 space-y-2">
-          {item.rows?.map((row, index) => (
-          <div key={row.id ?? `temp-${index}`} className="flex items-center justify-between group">
-            <div className="flex items-center gap-3 flex-grow">
-              <Checkbox
-                id={String(row.id ?? `temp-${index}`)}
-                checked={row.completed as CheckedState}
-                onCheckedChange={(checked) => handleRowCompleted(row, checked as boolean)}
-                className="h-4 w-4 shrink-0"
-                aria-label={`Mark sub-item ${row.name} as complete`}
-              />
-              
-              {/* Editable row name */}
-              {editingRowId === row.id ? (
-                <div className="flex items-center gap-2 flex-grow">
+            {/* Title content */}
+            <div className="flex flex-col items-start gap-2 text-left flex-grow pt-1.5 sm:pt-1">
+              {/* Editable title */}
+              {isEditingTitle ? (
+                <div className="flex items-center gap-2 w-full" onClick={(e) => e.stopPropagation()}>
                   <Input
-                    ref={rowInputRef}
-                    value={rowEditValue}
-                    onChange={(e) => setRowEditValue(e.target.value)}
-                    onKeyDown={handleRowKeyDown}
-                    onBlur={saveRowEdit}
-                    className="h-7 text-sm flex-grow border-none shadow-none bg-transparent px-0 focus-visible:ring-1 focus-visible:ring-primary"
+                    ref={titleInputRef}
+                    value={titleEditValue}
+                    onChange={(e) => setTitleEditValue(e.target.value)}
+                    onKeyDown={handleTitleKeyDown}
+                    onBlur={saveTitleEdit}
+                    className="h-10 sm:h-9 text-base flex-grow border-none shadow-none bg-transparent px-0 focus-visible:ring-1 focus-visible:ring-primary"
                   />
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={saveRowEdit}
-                    className="h-6 w-6 shrink-0"
+                    onClick={saveTitleEdit}
+                    className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 touch-manipulation"
                     aria-label="Save edit"
                   >
-                    <Check className="h-3 w-3 text-green-600" />
+                    <Check className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={cancelRowEdit}
-                    className="h-6 w-6 shrink-0"
+                    onClick={cancelTitleEdit}
+                    className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 touch-manipulation"
                     aria-label="Cancel edit"
                   >
-                    <X className="h-3 w-3 text-muted-foreground" />
+                    <X className="h-5 w-5 sm:h-4 sm:w-4 text-muted-foreground" />
                   </Button>
                 </div>
               ) : (
                 <span
-                  className={cn("text-sm cursor-pointer hover:text-primary transition-colors", row.completed && "line-through text-muted-foreground")}
-                  onClick={() => startRowEdit(row)}
+                  className={cn(
+                    "cursor-pointer hover:text-primary transition-colors text-base leading-relaxed",
+                    item.completed && "line-through text-muted-foreground opacity-60"
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startTitleEdit();
+                  }}
                   title="Click to edit"
                 >
-                  {row.name}
+                  {item.name}
                 </span>
               )}
-            </div>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => deleteRow(item.id, row.id!)}
-              className="h-7 w-7 shrink-0"
-              aria-label="Delete sub-item"
-            >
-              <Trash2 className="h-4 w-4 text-muted-foreground" />
-            </Button>
-          </div>
-        ))}
 
-        {/* New sub-item form */}
-        <form onSubmit={handleAddRowItem} className="flex gap-2 pt-2">
-          <Input
-            value={newSubItemText}
-            onChange={(e) => setNewSubItemText(e.target.value)}
-            placeholder="Add a sub-item..."
-            className="h-8 text-sm flex-grow"
-          />
-          <Input
-            type="number"
-            value={newSubItemQuantity}
-            onChange={(e) => setNewSubItemQuantity(e.target.value)}
-            placeholder="Qty."
-            className="h-8 text-sm w-20"
-          />
+              {/* Subitems preview (collapsed state only) */}
+              {!expanded && item.rows && item.rows.length > 0 && (
+                <div className="flex flex-wrap gap-x-2 text-sm leading-relaxed italic text-muted-foreground pointer-events-none">
+                  {item.rows.map((row, index) => (
+                    <span
+                      key={row.id ? `checklistItem-row-${row.id}` : `checklistItem-row-temp-${index}`}
+                      className={cn(row.completed && "line-through opacity-60")}
+                    >
+                      {row.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Delete button - Mobile optimized */}
           <Button
-            type="submit"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 shrink-0"
-            aria-label="Add sub-item"
+            onClick={() => deleteItem(item.id)}
+            aria-label="Delete item"
+            className="h-10 w-10 sm:h-9 sm:w-9 shrink-0 touch-manipulation"
           >
-            <Plus className="h-4 w-4" />
+            <Trash2 className="h-5 w-5 sm:h-4 sm:w-4 text-muted-foreground hover:text-destructive" />
           </Button>
-        </form>
-      </div>
-    </CollapsibleContent>
-  </Collapsible>
-</div>
+        </div>
+
+        {/* Expanded subitems content - Mobile optimized */}
+        <CollapsibleContent>
+          <div className="pl-1 pt-3 space-y-3">
+            {item.rows?.map((row, index) => (
+              <div key={row.id ?? `temp-${index}`} className="flex items-center justify-between group min-h-[44px]">
+                <div className="flex items-center gap-2 sm:gap-3 flex-grow">
+                  <Checkbox
+                    id={String(row.id ?? `temp-${index}`)}
+                    checked={row.completed as CheckedState}
+                    onCheckedChange={(checked) => handleRowCompleted(row, checked as boolean)}
+                    className="h-5 w-5 shrink-0 touch-manipulation"
+                    aria-label={`Mark sub-item ${row.name} as complete`}
+                  />
+
+                  {/* Editable row name */}
+                  {editingRowId === row.id ? (
+                    <div className="flex items-center gap-2 flex-grow">
+                      <Input
+                        ref={rowInputRef}
+                        value={rowEditValue}
+                        onChange={(e) => setRowEditValue(e.target.value)}
+                        onKeyDown={handleRowKeyDown}
+                        onBlur={saveRowEdit}
+                        className="h-10 sm:h-9 text-sm sm:text-base flex-grow border-none shadow-none bg-transparent px-0 focus-visible:ring-1 focus-visible:ring-primary"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={saveRowEdit}
+                        className="h-9 w-9 sm:h-8 sm:w-8 shrink-0 touch-manipulation"
+                        aria-label="Save edit"
+                      >
+                        <Check className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-green-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={cancelRowEdit}
+                        className="h-9 w-9 sm:h-8 sm:w-8 shrink-0 touch-manipulation"
+                        aria-label="Cancel edit"
+                      >
+                        <X className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-muted-foreground" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <span
+                      className={cn(
+                        "text-sm sm:text-base cursor-pointer hover:text-primary transition-colors leading-relaxed",
+                        row.completed && "line-through text-muted-foreground opacity-60"
+                      )}
+                      onClick={() => startRowEdit(row)}
+                      title="Click to edit"
+                    >
+                      {row.name}
+                    </span>
+                  )}
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deleteRow(item.id, row.id!)}
+                  className="h-9 w-9 sm:h-8 sm:w-8 shrink-0 touch-manipulation"
+                  aria-label="Delete sub-item"
+                >
+                  <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                </Button>
+              </div>
+            ))}
+
+            {/* New sub-item form - Mobile optimized */}
+            <form onSubmit={handleAddRowItem} className="flex gap-2 pt-2">
+              <Input
+                value={newSubItemText}
+                onChange={(e) => setNewSubItemText(e.target.value)}
+                placeholder="Add a sub-item..."
+                className="h-11 sm:h-10 text-sm sm:text-base flex-grow touch-manipulation"
+              />
+              <Input
+                type="number"
+                value={newSubItemQuantity}
+                onChange={(e) => setNewSubItemQuantity(e.target.value)}
+                placeholder="Qty."
+                className="h-11 sm:h-10 text-sm sm:text-base w-20 touch-manipulation"
+              />
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon"
+                className="h-11 w-11 sm:h-10 sm:w-10 shrink-0 touch-manipulation"
+                aria-label="Add sub-item"
+              >
+                <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
+              </Button>
+            </form>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
   );
 }
