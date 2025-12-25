@@ -53,7 +53,46 @@
   },
   "languages": {
     "et": "Eesti keel",
-    "en": "English", 
+    "en": "English",
     "es": "Español"
+  },
+  "overview": {
+    "title": "Mis Listas",
+    "subtitle": "Gestiona y organiza tus listas",
+    "newChecklist": "Nueva Lista",
+    "createTitle": "Nueva lista",
+    "createDescription": "Dale un nombre a tu lista y comienza",
+    "renameTitle": "Cambiar nombre",
+    "renameDescription": "Dale un nuevo nombre a tu lista",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "checklistNameLabel": "Nombre de la lista",
+    "checklistNamePlaceholder": "ej., Lista de compras",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "creating": "Creando...",
+    "empty": "Aún no hay listas",
+    "emptyDescription": "Crea tu primera lista para comenzar a organizar tus tareas.",
+    "createFirst": "Crea Tu Primera Lista",
+    "completed": "completados",
+    "emptyList": "Lista vacía",
+    "myChecklists": "Mis Listas",
+    "sharedWithMe": "Compartidas conmigo"
+  },
+  "detail": {
+    "back": "Volver a las listas",
+    "delete": "Eliminar",
+    "deleteTitle": "¿Eliminar Lista?",
+    "deleteDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente la lista y todos sus elementos.",
+    "cancel": "Cancelar",
+    "deleteConfirm": "Eliminar Lista",
+    "error": "Error al cargar la lista",
+    "errorDescription": "No se pudo cargar esta lista. Puede haber sido eliminada o no tienes acceso.",
+    "backToOverview": "Volver al Resumen",
+    "clearCompleted": "Limpiar completados",
+    "itemDeleted": "Elemento eliminado",
+    "undo": "Deshacer",
+    "emptyListTitle": "Tu lista está vacía",
+    "emptyListDescription": "Agrega rápidamente elementos comunes o escribe los tuyos arriba ↑"
   }
 }

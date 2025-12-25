@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Providers } from "@/components/providers";
+import { HeaderWrapper } from "@/components/ui/HeaderWrapper";
 
 export const metadata: Metadata = {
   title: 'DailyChexly',
@@ -27,6 +28,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased min-h-screen h-full flex flex-col">
         <Providers>
+          <HeaderWrapper />
           <main className="flex-1 flex flex-col w-full">
             {children}
           </main>

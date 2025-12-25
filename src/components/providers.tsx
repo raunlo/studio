@@ -20,7 +20,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }
 
   if (!i18nReady) {
-    return <div>Loading translations...</div>;
+    return null; // Don't show anything while loading
   }
   return <>{children}</>;
 }

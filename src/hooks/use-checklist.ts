@@ -274,11 +274,13 @@ export function useChecklist(
         name: item.name,
         completed: item.completed,
         rows:
-          item.rows?.map((r) => ({
-            id: r.id ?? 0,
-            name: r.name,
-            completed: r.completed ?? null,
-          })) ?? [],
+          item.rows
+            ?.filter((r) => r.id !== null && r.id !== undefined && r.id > 0)
+            .map((r) => ({
+              id: r.id!,
+              name: r.name,
+              completed: r.completed ?? null,
+            })) ?? [],
       };
       await dedupeRequest(
         `update-item-${checklistId}-${item.id}`,

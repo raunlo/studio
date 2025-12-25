@@ -98,6 +98,22 @@ export type CreateChecklistRequest = ChecklistUpdateAndCreateRequest;
 
 export type UpdateChecklistRequest = ChecklistUpdateAndCreateRequest;
 
+/**
+ * Statistics about checklist items
+ */
+export type ChecklistResponseStats = {
+  /**
+   * Total number of items in the checklist
+   * @minimum 0
+   */
+  totalItems: number;
+  /**
+   * Number of completed items
+   * @minimum 0
+   */
+  completedItems: number;
+};
+
 export interface ChecklistResponse {
   /**
    * @minimum 1
@@ -107,6 +123,23 @@ export interface ChecklistResponse {
    * @minLength 1
    */
   name: string;
+  /**
+   * User ID of the checklist owner
+   */
+  owner: string;
+  /**
+   * Whether the current user is the owner
+   */
+  isOwner: boolean;
+  /**
+   * Whether this checklist is shared with others (only true for owners)
+   */
+  isShared: boolean;
+  /** List of user IDs this checklist is shared with (only included for owners) */
+  sharedWith?: string[];
+  /** Statistics about checklist items */
+  stats: ChecklistResponseStats;
+  /** Full list of items (only included in detail view) */
   items?: ChecklistItemResponse[];
 }
 
@@ -205,6 +238,71 @@ export interface ChecklistItemReorderedEventPayload {
   orderChanged: boolean;
 }
 
+export interface CreateInviteRequest {
+  /**
+   * Optional friendly name for the invite (e.g., "For John", "Team members")
+   * @maxLength 100
+   * @nullable
+   */
+  name?: string | null;
+  /**
+   * Hours until invite expires (null = never expires)
+   * @minimum 1
+   * @maximum 8760
+   * @nullable
+   */
+  expiresInHours?: number | null;
+  /**
+   * If true, invite can only be claimed once
+   */
+  isSingleUse: boolean;
+}
+
+export interface InviteResponse {
+  /** @minimum 1 */
+  id: number;
+  /** @minimum 1 */
+  checklistId: number;
+  /**
+   * Optional friendly name for the invite
+   * @nullable
+   */
+  name?: string | null;
+  /**
+   * @minLength 64
+   * @maxLength 64
+   */
+  inviteToken: string;
+  /** Full URL for sharing */
+  inviteUrl: string;
+  createdAt: string;
+  /** @nullable */
+  expiresAt?: string | null;
+  /**
+   * User ID who claimed (for backend use only, don't display)
+   * @nullable
+   */
+  claimedBy?: string | null;
+  /** @nullable */
+  claimedAt?: string | null;
+  isSingleUse: boolean;
+  /** Computed field indicating if invite is expired */
+  isExpired: boolean;
+  /** Computed field indicating if invite is claimed */
+  isClaimed: boolean;
+}
+
+export interface ClaimInviteResponse {
+  /** @minimum 1 */
+  checklistId: number;
+  message: string;
+}
+
+/**
+ * Client identifier sent by frontend in headers
+ */
+export type XClientIdParameter = string;
+
 export type Get200 = {
   status?: string;
 };
@@ -257,5 +355,12 @@ export type ChangeChecklistItemOrderNumber200 = {
   oldOrderNumber?: number;
   /** @minimum 1 */
   newOrderNumber?: number;
+};
+
+export type GetEventsStreamForChecklistItemsParams = {
+/**
+ * Client identifier passed by frontend
+ */
+clientId?: string;
 };
 

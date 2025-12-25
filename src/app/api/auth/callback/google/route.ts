@@ -4,15 +4,29 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const error = searchParams.get('error')
+  const stateParam = searchParams.get('state')
+
+  // Decode returnUrl from state parameter if present
+  let returnUrl = '/checklist' // default
+  if (stateParam) {
+    try {
+      const stateData = JSON.parse(Buffer.from(stateParam, 'base64').toString('utf-8'))
+      if (stateData.returnUrl) {
+        returnUrl = stateData.returnUrl
+      }
+    } catch (err) {
+      console.error('Failed to decode state parameter:', err)
+    }
+  }
 
   // Handle OAuth errors
   if (error) {
     console.error('OAuth error:', error)
-  return NextResponse.redirect(new URL('/?error=oauth_error', request.url))
+    return NextResponse.redirect(new URL('/?error=oauth_error', request.url))
   }
 
   if (!code) {
-  return NextResponse.redirect(new URL('/?error=no_code', request.url))
+    return NextResponse.redirect(new URL('/?error=no_code', request.url))
   }
 
   try {
@@ -89,7 +103,7 @@ export async function GET(request: NextRequest) {
     
     // Create an HTML page that:
     // 1. Stores the token in localStorage for axios interceptor to find
-    // 2. Then redirects to home
+    // 2. Then redirects to the returnUrl or home
     const htmlResponse = `
       <!DOCTYPE html>
       <html>
@@ -129,7 +143,7 @@ export async function GET(request: NextRequest) {
             // Force a hard navigation so the app and any cached client state
             // (e.g. checklist SWR cache) is fully refreshed with the new cookies.
             // Use replace to avoid leaving this intermediate page in history.
-            window.location.replace('/checklist');
+            window.location.replace('${returnUrl}');
           </script>
         </body>
       </html>

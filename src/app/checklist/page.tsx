@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MainContent } from "@/components/MainContent";
+import { ChecklistOverview } from "@/components/checklist-overview";
 
 export default function ChecklistPage() {
   const [isChecking, setIsChecking] = useState(true);
@@ -16,7 +16,7 @@ export default function ChecklistPage() {
     try {
       const response = await fetch('/api/auth/session');
       const data = await response.json();
-      
+
       if (data.user) {
         setIsAuthenticated(true);
       } else {
@@ -43,5 +43,11 @@ export default function ChecklistPage() {
     return null; // Will redirect
   }
 
-  return <MainContent />;
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl">
+        <ChecklistOverview />
+      </main>
+    </div>
+  );
 }
