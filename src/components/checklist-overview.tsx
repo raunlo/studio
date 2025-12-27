@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { leaveSharedChecklist } from "@/api/checklist/checklist";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { useChecklists } from "@/hooks/use-checklists";
+import { AxiosError } from "axios";
 
 export function ChecklistOverview() {
   const { t } = useTranslation();
@@ -153,7 +154,41 @@ export function ChecklistOverview() {
     );
   }
 
+  // Redirect to home page on authentication errors
+  useEffect(() => {
+    if (error) {
+      // Check if error is an authentication error (401 or 403)
+      if (error instanceof AxiosError) {
+        const status = error.response?.status;
+        if (status === 401 || status === 403) {
+          // Redirect to home page with session expired error
+          window.location.href = '/?error=session_expired';
+          return;
+        }
+      }
+    }
+  }, [error]);
+
   if (error) {
+    // Check if it's an auth error (will redirect via useEffect above)
+    const isAuthError = error instanceof AxiosError &&
+      (error.response?.status === 401 || error.response?.status === 403);
+
+    if (isAuthError) {
+      // Show loading while redirecting
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Show error for non-auth errors
     return (
       <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg border-destructive">
         <h3 className="text-xl font-semibold text-destructive">{t('main.error')}</h3>
