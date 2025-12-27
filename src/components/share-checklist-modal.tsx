@@ -211,7 +211,10 @@ export function ShareChecklistModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[95vh] sm:max-h-[90vh] flex flex-col gap-0 p-0">
+      <DialogContent
+        className="max-h-[95vh] sm:max-h-[90vh] flex flex-col gap-0 p-0"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 sm:p-6 border-b sticky top-0 bg-background z-10">
             <DialogHeader>

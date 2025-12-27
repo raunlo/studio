@@ -73,7 +73,7 @@ export const HeaderWrapper = () => {
     avatarUrl: user.image || undefined
   } : undefined;
 
-  if (isLoggingOut) {
+  if (isLoggingOut || !user) {
     return null;
   }
 

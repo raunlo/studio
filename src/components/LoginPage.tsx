@@ -75,91 +75,91 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 animate-fade-in relative overflow-x-hidden py-8">
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 animate-fade-in overflow-hidden z-[100] py-4 sm:py-6 lg:py-8">
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
         <div className="absolute top-10 left-10 w-20 h-20 bg-blue-200 rounded-full opacity-20 animate-pulse"></div>
         <div className="absolute top-1/3 right-20 w-32 h-32 bg-indigo-200 rounded-full opacity-15 animate-bounce"></div>
         <div className="absolute bottom-20 left-1/4 w-16 h-16 bg-blue-300 rounded-full opacity-25 animate-ping"></div>
       </div>
 
-      <div className="bg-white/95 px-5 py-6 sm:px-10 sm:py-8 lg:px-12 lg:py-10 rounded-3xl shadow-2xl w-full max-w-lg mx-4 flex flex-col items-center backdrop-blur-lg border border-gray-100 animate-slide-in relative z-10 h-auto max-h-screen overflow-hidden">
+      <div className="bg-white/95 px-4 py-3 sm:px-6 sm:py-4 md:px-8 md:py-5 lg:px-12 lg:py-8 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-lg mx-3 sm:mx-4 flex flex-col items-center backdrop-blur-lg border border-gray-100 animate-slide-in relative z-10 overflow-y-auto overflow-x-hidden max-h-full [-webkit-overflow-scrolling:touch]">
         {/* Language selector in top right corner of modal */}
         <div className="absolute top-4 right-4">
           <LanguageSelector />
         </div>
         
-        <div className="mb-3 sm:mb-4 lg:mb-5 animate-fade-in relative">
+        <div className="mb-1.5 sm:mb-2 md:mb-3 lg:mb-4 animate-fade-in relative">
           <div className="relative">
             <img
               src="/brand/dailychexly-mark.svg"
               alt="DailyChexly"
               width={56}
               height={56}
-              className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 drop-shadow-lg select-none"
+              className="w-9 h-9 sm:w-11 sm:h-11 md:w-13 md:h-13 lg:w-16 lg:h-16 drop-shadow-lg select-none"
               draggable={false}
             />
-            <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4 bg-green-400 rounded-full animate-pulse"></div>
+            <div className="absolute -top-0.5 -right-0.5 w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 lg:w-4 lg:h-4 bg-green-400 rounded-full animate-pulse"></div>
           </div>
         </div>
 
-        <div className="text-center mb-3 sm:mb-5 lg:mb-6">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black mb-1.5 sm:mb-2 text-gray-900 tracking-tight">
+        <div className="text-center mb-1.5 sm:mb-2 md:mb-3 lg:mb-5">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black mb-0.5 sm:mb-1 md:mb-1.5 text-gray-900 tracking-tight leading-tight">
             {t('auth.welcome')} <span className="text-blue-600">{t('appName')}</span>!
           </h1>
-          <p className="text-sm sm:text-base lg:text-xl text-gray-700 mb-1.5 sm:mb-3 font-medium">🧾 {t('auth.keepLists')}</p>
-          <p className="text-xs sm:text-sm lg:text-base text-gray-600 leading-relaxed">
+          <p className="text-[11px] sm:text-xs md:text-sm lg:text-base text-gray-700 mb-0.5 sm:mb-1 md:mb-1.5 font-medium">🧾 {t('auth.keepLists')}</p>
+          <p className="text-[10px] sm:text-[11px] md:text-xs lg:text-sm text-gray-600 leading-snug">
             {t('auth.joinUsers')} <span className="font-bold text-blue-600">{t('auth.thousands')}</span>, {t('tagline')}
           </p>
         </div>
 
-        <div className="w-full space-y-2 sm:space-y-2.5 mb-3 sm:mb-5 lg:mb-6">
-          <div className="flex items-center gap-3 sm:gap-3.5 lg:gap-4 w-full px-4 sm:px-5 lg:px-6 py-2.5 sm:py-3 lg:py-4 rounded-xl sm:rounded-xl lg:rounded-2xl bg-emerald-50/80 border border-emerald-100 shadow-sm hover:shadow-md transition-all">
-            <div className="text-2xl sm:text-3xl lg:text-4xl flex-shrink-0">🛒</div>
-            <span className="text-sm sm:text-sm lg:text-base text-gray-900 font-bold">{t('auth.shoppingLists')}</span>
+        <div className="w-full space-y-1 sm:space-y-1.5 md:space-y-2 mb-1.5 sm:mb-2 md:mb-3 lg:mb-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3 w-full px-2.5 sm:px-3 md:px-4 lg:px-5 py-1.5 sm:py-2 md:py-2.5 lg:py-3 rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl bg-emerald-50/80 border border-emerald-100 shadow-sm hover:shadow-md transition-all">
+            <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl flex-shrink-0">🛒</div>
+            <span className="text-[11px] sm:text-xs md:text-sm lg:text-base text-gray-900 font-bold">{t('auth.shoppingLists')}</span>
           </div>
-          <div className="flex items-center gap-3 sm:gap-3.5 lg:gap-4 w-full px-4 sm:px-5 lg:px-6 py-2.5 sm:py-3 lg:py-4 rounded-xl sm:rounded-xl lg:rounded-2xl bg-amber-50/80 border border-amber-100 shadow-sm hover:shadow-md transition-all">
-            <div className="text-2xl sm:text-3xl lg:text-4xl flex-shrink-0">📚</div>
-            <span className="text-sm sm:text-sm lg:text-base text-gray-900 font-bold">{t('auth.booksMovies')}</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3 w-full px-2.5 sm:px-3 md:px-4 lg:px-5 py-1.5 sm:py-2 md:py-2.5 lg:py-3 rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl bg-amber-50/80 border border-amber-100 shadow-sm hover:shadow-md transition-all">
+            <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl flex-shrink-0">📚</div>
+            <span className="text-[11px] sm:text-xs md:text-sm lg:text-base text-gray-900 font-bold">{t('auth.booksMovies')}</span>
           </div>
-          <div className="flex items-center gap-3 sm:gap-3.5 lg:gap-4 w-full px-4 sm:px-5 lg:px-6 py-2.5 sm:py-3 lg:py-4 rounded-xl sm:rounded-xl lg:rounded-2xl bg-purple-50/80 border border-purple-100 shadow-sm hover:shadow-md transition-all">
-            <div className="text-2xl sm:text-3xl lg:text-4xl flex-shrink-0">✅</div>
-            <span className="text-sm sm:text-sm lg:text-base text-gray-900 font-bold">{t('auth.markCompleted')}</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-2.5 lg:gap-3 w-full px-2.5 sm:px-3 md:px-4 lg:px-5 py-1.5 sm:py-2 md:py-2.5 lg:py-3 rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl bg-purple-50/80 border border-purple-100 shadow-sm hover:shadow-md transition-all">
+            <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl flex-shrink-0">✅</div>
+            <span className="text-[11px] sm:text-xs md:text-sm lg:text-base text-gray-900 font-bold">{t('auth.markCompleted')}</span>
           </div>
         </div>
 
         {errorMessage && (
-          <div className="w-full mb-3 sm:mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-xl">
-            <p className="text-red-700 text-sm font-medium text-center">⚠️ {errorMessage}</p>
+          <div className="w-full mb-1.5 sm:mb-2 md:mb-3 p-2 sm:p-2.5 md:p-3 bg-red-50 border border-red-200 rounded-lg sm:rounded-xl">
+            <p className="text-red-700 text-[10px] sm:text-xs md:text-sm font-medium text-center">⚠️ {errorMessage}</p>
           </div>
         )}
 
         <div className="w-full">
           <button
-            className="group relative flex items-center justify-center w-full px-6 sm:px-7 lg:px-8 py-3 sm:py-3.5 lg:py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl sm:rounded-xl lg:rounded-2xl shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 font-bold text-sm sm:text-base lg:text-lg overflow-hidden"
+            className="group relative flex items-center justify-center w-full px-3 sm:px-4 md:px-5 lg:px-7 py-2 sm:py-2.5 md:py-3 lg:py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg sm:rounded-xl md:rounded-xl lg:rounded-2xl shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 font-bold text-[11px] sm:text-xs md:text-sm lg:text-base overflow-hidden"
             onClick={handleGoogleLogin}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <GoogleIcon />
             <span className="relative z-10">{t('auth.startFree')}</span>
-            <div className="absolute right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <span className="text-xl">→</span>
+            <div className="absolute right-2 sm:right-3 md:right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <span className="text-sm sm:text-base md:text-lg">→</span>
             </div>
           </button>
 
-          <p className="text-center text-xs sm:text-sm text-gray-500 mt-2">{t('auth.oneClick')}</p>
+          <p className="text-center text-[9px] sm:text-[10px] md:text-xs text-gray-500 mt-1 sm:mt-1.5">{t('auth.oneClick')}</p>
         </div>
 
-        <div className="mt-3 sm:mt-4 lg:mt-5 flex flex-col items-center text-center">
-          <div className="flex items-center gap-2.5 sm:gap-3 px-3.5 sm:px-4 py-2 bg-gradient-to-r from-emerald-50 via-amber-50 to-purple-50 rounded-full border border-gray-200 shadow-sm">
+        <div className="mt-1.5 sm:mt-2 md:mt-3 lg:mt-4 flex flex-col items-center text-center">
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-2.5 px-2 sm:px-2.5 md:px-3 lg:px-4 py-1 sm:py-1.5 md:py-2 bg-gradient-to-r from-emerald-50 via-amber-50 to-purple-50 rounded-full border border-gray-200 shadow-sm">
             <span className="inline-flex items-center">
-              <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold shadow-md">JK</span>
-              <span className="-ml-1.5 sm:-ml-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold shadow-md">TM</span>
-              <span className="-ml-1.5 sm:-ml-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold shadow-md">LR</span>
-              <span className="-ml-1.5 sm:-ml-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold shadow-md">+1K</span>
+              <span className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs font-bold shadow-md">JK</span>
+              <span className="-ml-1 sm:-ml-1.5 md:-ml-1.5 lg:-ml-2 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs font-bold shadow-md">TM</span>
+              <span className="-ml-1 sm:-ml-1.5 md:-ml-1.5 lg:-ml-2 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs font-bold shadow-md">LR</span>
+              <span className="-ml-1 sm:-ml-1.5 md:-ml-1.5 lg:-ml-2 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs font-bold shadow-md">+1K</span>
             </span>
             <div className="text-left">
-              <p className="text-sm sm:text-base font-bold text-gray-900">{t('auth.happyUsers')}</p>
-              <p className="text-[10px] sm:text-xs text-gray-600">{t('auth.joinCommunity')}</p>
+              <p className="text-[11px] sm:text-xs md:text-sm lg:text-base font-bold text-gray-900">{t('auth.happyUsers')}</p>
+              <p className="text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs text-gray-600">{t('auth.joinCommunity')}</p>
             </div>
           </div>
         </div>

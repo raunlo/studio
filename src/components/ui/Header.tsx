@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import Link from "next/link";
 import { UserInfo, UserInfoProps } from "./UserInfo";
 import { LanguageSelector } from "./LanguageSelector";
 
@@ -17,7 +18,7 @@ export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between gap-2 px-3 sm:px-6 py-2.5 sm:py-3 bg-white/95 shadow-lg backdrop-blur-lg border-b border-gray-100 animate-fade-in">
       {/* Left side - Brand */}
-      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+      <Link href="/checklist" className="flex items-center gap-2 sm:gap-3 flex-shrink-0 cursor-pointer">
         <div className="relative flex-shrink-0">
           <img
             src="/brand/dailychexly-mark.svg"
@@ -32,7 +33,7 @@ export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
         <span className="text-lg sm:text-xl md:text-2xl font-black text-gray-900 tracking-tight whitespace-nowrap">
           DailyChexly
         </span>
-      </div>
+      </Link>
 
       {/* Right side - Desktop view */}
       <div className="hidden sm:flex items-center gap-4 flex-shrink-0" suppressHydrationWarning>
