@@ -169,21 +169,6 @@ export function ChecklistOverview() {
     );
   }
 
-  // Redirect to home page on authentication errors
-  useEffect(() => {
-    if (error) {
-      // Check if error is an authentication error (401 or 403)
-      if (error instanceof AxiosError) {
-        const status = error.response?.status;
-        if (status === 401 || status === 403) {
-          // Redirect to home page with session expired error
-          window.location.href = '/?error=session_expired';
-          return;
-        }
-      }
-    }
-  }, [error]);
-
   if (error) {
     // Check if it's an auth error (will redirect via useEffect above)
     const isAuthError = error instanceof AxiosError &&
@@ -216,7 +201,7 @@ export function ChecklistOverview() {
 
   return (
     <>
-      <div className="space-y-6 pb-24">
+      <div className={`space-y-6 ${checklists.length > 0 ? 'pb-20 sm:pb-4' : 'pb-4'}`}>
         {/* Header Section - without button */}
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('overview.title')}</h1>
