@@ -82,6 +82,21 @@ export default function ChecklistDetailPage() {
     return null;
   }
 
+  // Redirect to home page on authentication errors
+  useEffect(() => {
+    if (error) {
+      // Check if error is an authentication error (401 or 403)
+      if (error instanceof AxiosError) {
+        const status = error.response?.status;
+        if (status === 401 || status === 403) {
+          // Redirect to home page with session expired error
+          window.location.href = '/?error=session_expired';
+          return;
+        }
+      }
+    }
+  }, [error]);
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 w-full sm:max-w-2xl">
