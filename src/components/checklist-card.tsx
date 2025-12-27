@@ -2,7 +2,7 @@
 "use client";
 
 import {cn} from "@/lib/utils"
-import { forwardRef, useImperativeHandle, useMemo } from "react";
+import { forwardRef, useImperativeHandle, useMemo, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
@@ -37,8 +37,17 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
     toggleCompletion
    } = useChecklist(checklist.id, { refreshInterval: 10000 });
 
+  // Track items pending deletion (for undo functionality)
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<number>>(new Set());
+  const deleteTimeoutsRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
+
   // Mobile detection for swipe gestures
   const isMobile = useIsMobile();
+
+  // Filter out items pending deletion from display
+  const displayedItems = useMemo(() =>
+    items.filter(item => item.id === null || !pendingDeleteIds.has(item.id))
+  , [items, pendingDeleteIds]);
 
   useImperativeHandle(ref, () => ({
       async handleReorder(from, to) {
@@ -46,10 +55,10 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
       },
     }));
 
-  // Calculate completed items count
-  const completedCount = useMemo(() => 
-    items.filter(item => item.completed).length
-  , [items]);
+  // Calculate completed items count (from displayed items)
+  const completedCount = useMemo(() =>
+    displayedItems.filter(item => item.completed).length
+  , [displayedItems]);
 
   const handleAddItem = async (checklistItem: ChecklistItem) => {
     await addItem(checklistItem);
@@ -68,9 +77,9 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
 
   // Clear completed items
   const handleClearCompleted = async () => {
-    const completedItems = items.filter(item => item.completed);
+    const completedItems = displayedItems.filter(item => item.completed);
     if (completedItems.length === 0) return;
-    
+
     for (const item of completedItems) {
       if (item.id) {
         await deleteItemFn(item.id);
@@ -81,14 +90,21 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
   // Delete with undo functionality
   const handleDeleteItem = async (itemId: number | null) => {
     if (!itemId) return;
-    
+
     // Find the item to save for undo
     const deletedItem = items.find(i => i.id === itemId);
     if (!deletedItem) return;
-    
-    // Delete the item
-    await deleteItemFn(itemId);
-    
+
+    // Cancel any existing timeout for this item
+    const existingTimeout = deleteTimeoutsRef.current.get(itemId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+      deleteTimeoutsRef.current.delete(itemId);
+    }
+
+    // Add to pending deletes (hides from UI immediately)
+    setPendingDeleteIds(prev => new Set(prev).add(itemId));
+
     // Show toast with undo action
     toast({
       title: `🗑️ ${t('detail.itemDeleted')}`,
@@ -96,15 +112,42 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
       action: (
         <ToastAction
           altText={t('detail.undo')}
-          onClick={async () => {
-            // Restore the item by adding it back
-            await addItem(deletedItem);
+          onClick={() => {
+            // Cancel the scheduled deletion
+            const timeout = deleteTimeoutsRef.current.get(itemId);
+            if (timeout) {
+              clearTimeout(timeout);
+              deleteTimeoutsRef.current.delete(itemId);
+            }
+            // Restore item to UI by removing from pending deletes
+            setPendingDeleteIds(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(itemId);
+              return newSet;
+            });
           }}
         >
           {t('detail.undo')}
         </ToastAction>
       ),
     });
+
+    // Schedule actual deletion after toast duration
+    const timeout = setTimeout(async () => {
+      // Remove from pending deletes
+      setPendingDeleteIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
+      // Actually delete from backend
+      await deleteItemFn(itemId);
+      // Clean up timeout ref
+      deleteTimeoutsRef.current.delete(itemId);
+    }, 5000); // Default toast duration is 5 seconds
+
+    // Store timeout ref
+    deleteTimeoutsRef.current.set(itemId, timeout);
   };
 
   return (
@@ -144,7 +187,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                   ref={provided.innerRef}
                   className="space-y-3 sm:space-y-4 min-h-[10px] w-full pt-4"
                 >
-                  {items.map((item: ChecklistItem, index: number) => (
+                  {displayedItems.map((item: ChecklistItem, index: number) => (
                     <Draggable
                       key={item.id ? `checklistItem-${item.id}` :`checklistItem-temp-${index}`}
                       draggableId={item.id ? String(item.id) : `temp-${index}`}
@@ -183,7 +226,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                   {provided.placeholder}
 
                   {/* Empty states */}
-                  {items.length === 0 && (
+                  {displayedItems.length === 0 && (
                     <div className="text-center py-12 px-4">
                       <div className="mb-6">
                         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
@@ -200,7 +243,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
             </Droppable>
           ) : (
             <div className="space-y-3 sm:space-y-4 min-h-[10px] w-full pt-4">
-              {items.map((item: ChecklistItem, index: number) => (
+              {displayedItems.map((item: ChecklistItem, index: number) => (
                 <SwipeableItem
                   key={item.id ? `checklistItem-${item.id}` :`checklistItem-temp-${index}`}
                   onSwipeComplete={() => toggleCompletion(item.id)}
@@ -222,7 +265,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
               ))}
 
               {/* Empty state */}
-              {items.length === 0 && (
+              {displayedItems.length === 0 && (
                 <div className="text-center py-12 px-4">
                   <div className="mb-6">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">

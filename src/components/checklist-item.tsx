@@ -90,14 +90,21 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
   };
 
   const handleRowCompleted = async (rowItem: ChecklistItemRow, checked: boolean) => {
+    // Guard: Prevent toggling rows that don't have a valid ID yet
+    // This prevents race conditions when marking newly created sub-items as complete
+    if (!rowItem.id || rowItem.id <= 0) {
+      console.warn('Cannot toggle completion for row without valid ID:', rowItem);
+      return;
+    }
+
     const updatedRow = { ...rowItem, completed: checked };
     const updatedRows = (item.rows ?? [])
       .map((row) => (row.id === updatedRow.id ? updatedRow : row));
-    
+
     // Check if all sub-items are completed to auto-complete the main item
     const allRowsAreDone = updatedRows.filter((rows) => !rows.completed).length === 0;
     const anyRowsUndone = updatedRows.some((rows) => !rows.completed);
-    
+
     const updatedChecklistItem: ChecklistItem = {
       ...item,
       // Auto-complete main item if all sub-items are done
@@ -292,6 +299,7 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
                     id={String(row.id ?? `temp-${index}`)}
                     checked={row.completed as CheckedState}
                     onCheckedChange={(checked) => handleRowCompleted(row, checked as boolean)}
+                    disabled={!row.id || row.id <= 0}
                     className="h-5 w-5 shrink-0 touch-manipulation"
                     aria-label={`Mark sub-item ${row.name} as complete`}
                   />

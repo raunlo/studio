@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { ChecklistCardHandle } from "@/components/shared/types";
+import { AxiosError } from "axios";
 
 export default function ChecklistDetailPage() {
   const [isChecking, setIsChecking] = useState(true);
@@ -66,6 +67,21 @@ export default function ChecklistDetailPage() {
     return null;
   }
 
+  // Redirect to home page on authentication errors
+  useEffect(() => {
+    if (error) {
+      // Check if error is an authentication error (401 or 403)
+      if (error instanceof AxiosError) {
+        const status = error.response?.status;
+        if (status === 401 || status === 403) {
+          // Redirect to home page with session expired error
+          window.location.href = '/?error=session_expired';
+          return;
+        }
+      }
+    }
+  }, [error]);
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 w-full sm:max-w-2xl">
@@ -89,20 +105,37 @@ export default function ChecklistDetailPage() {
           </div>
         )}
 
-        {error && (
-          <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg border-destructive">
-            <h3 className="text-xl font-semibold text-destructive">{t('detail.error')}</h3>
-            <p className="text-muted-foreground mt-2">
-              {t('detail.errorDescription')}
-            </p>
-            <Button
-              onClick={() => router.push('/checklist')}
-              className="mt-4"
-            >
-              {t('detail.backToOverview')}
-            </Button>
-          </div>
-        )}
+        {error && (() => {
+          // Check if it's an auth error (will redirect via useEffect above)
+          const isAuthError = error instanceof AxiosError &&
+            (error.response?.status === 401 || error.response?.status === 403);
+
+          if (isAuthError) {
+            // Show loading while redirecting
+            return (
+              <div className="space-y-4">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-96 w-full" />
+              </div>
+            );
+          }
+
+          // Show error for non-auth errors
+          return (
+            <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg border-destructive">
+              <h3 className="text-xl font-semibold text-destructive">{t('detail.error')}</h3>
+              <p className="text-muted-foreground mt-2">
+                {t('detail.errorDescription')}
+              </p>
+              <Button
+                onClick={() => router.push('/checklist')}
+                className="mt-4"
+              >
+                {t('detail.backToOverview')}
+              </Button>
+            </div>
+          );
+        })()}
 
         {checklist && (
           <div className="space-y-6">
