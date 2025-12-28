@@ -82,13 +82,13 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
         <div className="absolute bottom-20 left-1/4 w-16 h-16 bg-blue-300 rounded-full opacity-25 animate-ping"></div>
       </div>
 
-      <div className="bg-white/95 px-5 py-6 lg:px-8 lg:py-9 2xl:px-12 2xl:py-12 rounded-3xl shadow-2xl w-full max-w-md lg:max-w-lg 2xl:max-w-xl flex flex-col items-center backdrop-blur-lg border border-gray-100 animate-slide-in relative z-10">
+      <div className="bg-white/95 px-6 py-8 lg:px-10 lg:py-11 2xl:px-14 2xl:py-14 rounded-3xl shadow-2xl w-full max-w-md lg:max-w-lg 2xl:max-w-xl flex flex-col items-center backdrop-blur-lg border border-gray-100 animate-slide-in relative z-10">
         {/* Language selector in top right corner of modal */}
         <div className="absolute top-4 right-4">
           <LanguageSelector />
         </div>
 
-        <div className="mb-4 lg:mb-5 2xl:mb-6 animate-fade-in relative">
+        <div className="mb-5 lg:mb-6 2xl:mb-7 animate-fade-in relative">
           <div className="relative">
             <img
               src="/brand/dailychexly-mark.svg"
@@ -102,7 +102,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
           </div>
         </div>
 
-        <div className="text-center mb-5 lg:mb-6 2xl:mb-7">
+        <div className="text-center mb-6 lg:mb-7 2xl:mb-8">
           <h1 className="text-xl lg:text-3xl 2xl:text-4xl font-black mb-1 lg:mb-2 2xl:mb-3 text-gray-900 tracking-tight leading-tight">
             {t('auth.welcome')} <span className="text-blue-600">{t('appName')}</span>!
           </h1>
@@ -112,7 +112,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
           </p>
         </div>
 
-        <div className="w-full space-y-2 lg:space-y-2.5 2xl:space-y-3 mb-5 lg:mb-6 2xl:mb-7">
+        <div className="w-full space-y-3 lg:space-y-3 2xl:space-y-4 mb-6 lg:mb-7 2xl:mb-8">
           <div className="flex items-center gap-2.5 lg:gap-3 2xl:gap-4 w-full px-3 py-2.5 lg:px-4 lg:py-3 2xl:px-5 2xl:py-4 rounded-xl bg-emerald-50 border border-emerald-200 shadow-sm hover:shadow-md transition-all">
             <div className="text-xl lg:text-2xl 2xl:text-3xl flex-shrink-0">🛒</div>
             <span className="text-sm lg:text-base 2xl:text-lg text-gray-900 font-bold">{t('auth.shoppingLists')}</span>
@@ -149,7 +149,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
           <p className="text-center text-xs lg:text-xs 2xl:text-sm text-gray-500 mt-2">{t('auth.oneClick')}</p>
         </div>
 
-        <div className="mt-4 lg:mt-5 2xl:mt-6 flex flex-col items-center text-center">
+        <div className="mt-6 lg:mt-7 2xl:mt-8 flex flex-col items-center text-center">
           <div className="flex items-center gap-2.5 lg:gap-3 2xl:gap-4 px-3 py-2 lg:px-4 lg:py-2.5 2xl:px-5 2xl:py-3 bg-gradient-to-r from-emerald-50 via-amber-50 to-purple-50 rounded-full border border-gray-200 shadow-sm">
             <span className="inline-flex items-center">
               <span className="w-7 h-7 lg:w-8 lg:h-8 2xl:w-10 2xl:h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-[10px] lg:text-[11px] 2xl:text-xs font-bold shadow-md">JK</span>
