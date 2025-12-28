@@ -113,15 +113,15 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
         </div>
 
         <div className="w-full space-y-2 lg:space-y-2.5 2xl:space-y-3 mb-5 lg:mb-6 2xl:mb-7">
-          <div className="flex items-center gap-2.5 lg:gap-3 2xl:gap-4 w-full px-3 py-2.5 lg:px-4 lg:py-3 2xl:px-5 2xl:py-4 rounded-xl bg-emerald-50/80 border border-emerald-100 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center gap-2.5 lg:gap-3 2xl:gap-4 w-full px-3 py-2.5 lg:px-4 lg:py-3 2xl:px-5 2xl:py-4 rounded-xl bg-emerald-50 border border-emerald-200 shadow-sm hover:shadow-md transition-all">
             <div className="text-xl lg:text-2xl 2xl:text-3xl flex-shrink-0">🛒</div>
             <span className="text-sm lg:text-base 2xl:text-lg text-gray-900 font-bold">{t('auth.shoppingLists')}</span>
           </div>
-          <div className="flex items-center gap-2.5 lg:gap-3 2xl:gap-4 w-full px-3 py-2.5 lg:px-4 lg:py-3 2xl:px-5 2xl:py-4 rounded-xl bg-amber-50/80 border border-amber-100 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center gap-2.5 lg:gap-3 2xl:gap-4 w-full px-3 py-2.5 lg:px-4 lg:py-3 2xl:px-5 2xl:py-4 rounded-xl bg-amber-50 border border-amber-200 shadow-sm hover:shadow-md transition-all">
             <div className="text-xl lg:text-2xl 2xl:text-3xl flex-shrink-0">📚</div>
             <span className="text-sm lg:text-base 2xl:text-lg text-gray-900 font-bold">{t('auth.booksMovies')}</span>
           </div>
-          <div className="flex items-center gap-2.5 lg:gap-3 2xl:gap-4 w-full px-3 py-2.5 lg:px-4 lg:py-3 2xl:px-5 2xl:py-4 rounded-xl bg-purple-50/80 border border-purple-100 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center gap-2.5 lg:gap-3 2xl:gap-4 w-full px-3 py-2.5 lg:px-4 lg:py-3 2xl:px-5 2xl:py-4 rounded-xl bg-purple-50 border border-purple-200 shadow-sm hover:shadow-md transition-all">
             <div className="text-xl lg:text-2xl 2xl:text-3xl flex-shrink-0">✅</div>
             <span className="text-sm lg:text-base 2xl:text-lg text-gray-900 font-bold">{t('auth.markCompleted')}</span>
           </div>
