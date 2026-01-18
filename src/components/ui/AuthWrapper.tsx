@@ -2,17 +2,11 @@
 import React, { useEffect, useState } from "react";
 import { HeaderWrapper } from "@/components/ui/HeaderWrapper";
 import { LoginPage } from "@/components/LoginPage";
+import { NEXT_PUBLIC_API_BASE_URL } from "@/lib/axios";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  image?: string;
-}
-
+// Simplified - no PII needed
 interface Session {
-  user: User | null;
-  expires?: string;
+  authenticated: boolean;
 }
 
 export const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -35,37 +29,24 @@ export const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
 
   const checkSession = async () => {
     try {
-      const response = await fetch('/api/auth/session');
-      const sessionData = await response.json();
-      console.log('Session check result:', sessionData);
-      
-      // If session needs token refresh, try to refresh the token
-      if (sessionData.needsTokenRefresh) {
-        console.log('Token needs refresh, attempting refresh...');
-        try {
-          const refreshResponse = await fetch('/api/auth/refresh', {
-            method: 'POST',
-            credentials: 'include',
-          });
-          if (refreshResponse.ok) {
-            // Refresh successful, re-check session
-            const refreshedResponse = await fetch('/api/auth/session');
-            const refreshedSession = await refreshedResponse.json();
-            setSession(refreshedSession);
-          } else {
-            // Refresh failed, user needs to re-authenticate
-            setSession({ user: null });
-          }
-        } catch (refreshError) {
-          console.error('Token refresh failed:', refreshError);
-          setSession({ user: null });
-        }
+      // Call backend session endpoint
+      // Backend handles session validation and token refresh automatically
+      const response = await fetch(`${NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/session`, {
+        method: 'GET',
+        credentials: 'include', // Include session cookie
+      });
+
+      if (response.ok) {
+        const sessionData = await response.json();
+        console.log('Session check result:', sessionData);
+        setSession({ authenticated: sessionData.authenticated || false });
       } else {
-        setSession(sessionData);
+        // Session is invalid or expired
+        setSession({ authenticated: false });
       }
     } catch (error) {
       console.error('Session check failed:', error);
-      setSession({ user: null });
+      setSession({ authenticated: false });
     } finally {
       setLoading(false);
     }
@@ -79,8 +60,8 @@ export const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!session?.user) {
-  return <LoginPage />;
+  if (!session?.authenticated) {
+    return <LoginPage />;
   }
 
   return (

@@ -5,9 +5,7 @@ interface DebugInfo {
   apiCallCount: number;
   lastError: string | null;
   lastErrorTime: number | null;
-  userToken: boolean;
-  refreshToken: boolean;
-  sessionCookie: boolean;
+  sessionId: boolean;
   url: string;
 }
 
@@ -16,9 +14,7 @@ export const DebugPanel = () => {
     apiCallCount: 0,
     lastError: null,
     lastErrorTime: null,
-    userToken: false,
-    refreshToken: false,
-    sessionCookie: false,
+    sessionId: false,
     url: '',
   });
 
@@ -40,9 +36,7 @@ export const DebugPanel = () => {
 
       setDebugInfo(prev => ({
         ...prev,
-        userToken: !!cookies['user_token'],
-        refreshToken: !!cookies['refresh_token'],
-        sessionCookie: !!cookies['session'],
+        sessionId: !!cookies['session_id'],
         url: window.location.href,
       }));
     };
@@ -103,14 +97,8 @@ export const DebugPanel = () => {
         </div>
         <div className="border-t border-gray-600 pt-1 mt-1">
           <span className="text-cyan-400">Cookies:</span>
-          <div className={debugInfo.userToken ? 'text-green-400' : 'text-red-400'}>
-            user_token: {debugInfo.userToken ? '✓' : '✗'}
-          </div>
-          <div className={debugInfo.refreshToken ? 'text-green-400' : 'text-red-400'}>
-            refresh_token: {debugInfo.refreshToken ? '✓' : '✗'}
-          </div>
-          <div className={debugInfo.sessionCookie ? 'text-green-400' : 'text-red-400'}>
-            session: {debugInfo.sessionCookie ? '✓' : '✗'}
+          <div className={debugInfo.sessionId ? 'text-green-400' : 'text-red-400'}>
+            session_id: {debugInfo.sessionId ? '✓' : '✗'}
           </div>
         </div>
         <div className="border-t border-gray-600 pt-1 mt-1 text-gray-500 text-[10px]">

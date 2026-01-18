@@ -11,10 +11,13 @@ import { useTranslation } from "react-i18next";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { ChecklistCardHandle } from "@/components/shared/types";
 import { AxiosError } from "axios";
+import { NEXT_PUBLIC_API_BASE_URL } from "@/lib/axios";
+import { ChecklistFilterBar, FilterType } from "@/components/checklist-filter-bar";
 
 export default function ChecklistDetailPage() {
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const router = useRouter();
   const params = useParams();
   const { t } = useTranslation();
@@ -44,10 +47,13 @@ export default function ChecklistDetailPage() {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('/api/auth/session');
+      // Call backend directly to include session cookie
+      const response = await fetch(`${NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/session`, {
+        credentials: 'include',
+      });
       const data = await response.json();
 
-      if (data.user) {
+      if (data.authenticated) {
         setIsAuthenticated(true);
       } else {
         router.replace('/');
@@ -72,8 +78,8 @@ export default function ChecklistDetailPage() {
 
   if (isChecking) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -98,7 +104,7 @@ export default function ChecklistDetailPage() {
         </div>
 
         {/* Checklist content */}
-        {isLoading && (
+        {(isLoading || (!checklist && !error)) && (
           <div className="space-y-4">
             <Skeleton className="h-16 w-full" />
             <Skeleton className="h-96 w-full" />
@@ -140,7 +146,12 @@ export default function ChecklistDetailPage() {
         {checklist && (
           <div className="space-y-6">
             <DragDropContext onDragEnd={onDragEnd}>
-              <ChecklistCard ref={checklistCardRef} checklist={checklist} />
+              <ChecklistCard
+                ref={checklistCardRef}
+                checklist={checklist}
+                activeFilter={activeFilter}
+                onFilterChange={setActiveFilter}
+              />
             </DragDropContext>
           </div>
         )}

@@ -26,7 +26,7 @@ export function ChecklistEmptyState({ variant, searchQuery }: ChecklistEmptyStat
     'all-completed': {
       icon: CheckCircle,
       title: 'All done!',
-      description: 'You've completed all items in this checklist.',
+      description: "You've completed all items in this checklist.",
     },
   };
 

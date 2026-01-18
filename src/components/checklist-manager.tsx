@@ -43,7 +43,7 @@ export function ChecklistManager() {
 
   // SSE for real-time updates: subscribe and refresh SWR keys when relevant
 
-  const checklists = data ?? [];
+  const checklists = data?.checklists ?? [];
 
 
 

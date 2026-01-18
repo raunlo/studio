@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { useRef, useCallback } from "react";
 import { AxiosError } from "axios";
-import type { ChecklistResponse, CreateChecklistRequest } from "@/api/checklistServiceV1.schemas";
+import type { ChecklistResponse, ChecklistWithStats, CreateChecklistRequest } from "@/api/checklistServiceV1.schemas";
 import {
   getAllChecklists,
   createChecklist as createChecklistAPI,
@@ -65,7 +65,7 @@ async function retryableRequest<T>(
 }
 
 interface ChecklistsHookResult {
-  checklists: ChecklistResponse[];
+  checklists: ChecklistWithStats[] | undefined;
   isLoading: boolean;
   error: Error | null;
   createChecklist: (name: string) => Promise<ChecklistResponse | void>;
@@ -83,7 +83,7 @@ export function useChecklists(
   const { refreshInterval = 10000 } = options;
 
   // Refs to track checklists and recent operations to prevent duplicates
-  const checklistsRef = useRef<ChecklistResponse[]>([]);
+  const checklistsRef = useRef<ChecklistWithStats[]>([]);
   const recentlyCreatedChecklistsRef = useRef<Set<number>>(new Set());
   const recentlyDeletedChecklistsRef = useRef<Set<number>>(new Set());
   const recentlyRenamedChecklistsRef = useRef<Map<number, string>>(new Map());
@@ -91,12 +91,15 @@ export function useChecklists(
   // Ref to track rapid operations and debounce refetching
   const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { data: checklists = [], mutate: mutateChecklists, isLoading, error } = useSWR<ChecklistResponse[]>(
+  const { data: checklists, mutate: mutateChecklists, isLoading, error } = useSWR<ChecklistWithStats[]>(
     ['checklists'],
-    async (): Promise<ChecklistResponse[]> => {
-      const res = await dedupeRequest<ChecklistResponse[]>(
+    async (): Promise<ChecklistWithStats[]> => {
+      const res = await dedupeRequest<ChecklistWithStats[]>(
         'get-all-checklists',
-        () => getAllChecklists()
+        async () => {
+          const response = await getAllChecklists();
+          return response.checklists;
+        }
       );
       return res;
     },
@@ -109,14 +112,14 @@ export function useChecklists(
 
   // Keep ref in sync with SWR data
   useEffect(() => {
-    checklistsRef.current = checklists;
+    checklistsRef.current = checklists ?? [];
   }, [checklists]);
 
   /**
    * Schedule a debounced refetch
    * Optionally update UI immediately, then refetch after 1500ms
    */
-  const scheduleRefetch = useCallback((options: { updatedChecklists?: ChecklistResponse[] } = {}) => {
+  const scheduleRefetch = useCallback((options: { updatedChecklists?: ChecklistWithStats[] } = {}) => {
     const { updatedChecklists } = options;
 
     logger.debug('scheduleRefetch called with options:', options);
@@ -156,13 +159,11 @@ export function useChecklists(
     const tempId = -Date.now() - Math.random() * 1000;
 
     // Create optimistic checklist
-    const optimisticChecklist: ChecklistResponse = {
+    const optimisticChecklist: ChecklistWithStats = {
       id: tempId,
       name: name.trim(),
-      owner: '', // Will be filled by backend
       isOwner: true,
       isShared: false,
-      sharedWith: [],
       stats: { totalItems: 0, completedItems: 0 },
     };
 

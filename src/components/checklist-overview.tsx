@@ -48,6 +48,16 @@ export function ChecklistOverview() {
   const ownedChecklists = checklists.filter(c => c.isOwner);
   const sharedChecklists = checklists.filter(c => !c.isOwner);
 
+  // Time-based emoji for a touch of warmth
+  const getTimeEmoji = () => {
+    const hour = new Date().getHours();
+    if (hour < 6) return "🌙";
+    if (hour < 12) return "☀️";
+    if (hour < 18) return "🌤️";
+    if (hour < 21) return "🌅";
+    return "🌙";
+  };
+
   // Redirect to home page on authentication errors - MUST be before any conditional returns
   useEffect(() => {
     if (error) {
@@ -204,22 +214,22 @@ export function ChecklistOverview() {
       <div className={`space-y-6 ${checklists.length > 0 ? 'pb-20 sm:pb-4' : 'pb-4'}`}>
         {/* Header Section - without button */}
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('overview.title')}</h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">{t('overview.subtitle')}</p>
+          <h1 className="text-2xl sm:text-3xl font-headline text-foreground">{t('overview.title')} {getTimeEmoji()}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">{t('overview.subtitle')}</p>
         </div>
 
         {/* Checklists Grid */}
         {checklists.length === 0 ? (
-          <div className="text-center py-20 px-4 border-2 border-dashed rounded-lg bg-gray-50">
+          <div className="text-center py-20 px-4 border-2 border-dashed border-border rounded-xl bg-card">
             <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
-                <Plus className="w-8 h-8 text-blue-600" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Plus className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900">{t('overview.empty')}</h3>
-              <p className="text-gray-600 mt-2 mb-6">{t('overview.emptyDescription')}</p>
+              <h3 className="text-xl font-headline text-foreground">{t('overview.empty')}</h3>
+              <p className="text-muted-foreground mt-2 mb-6">{t('overview.emptyDescription')}</p>
               <Button
                 onClick={() => setDialogOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 {t('overview.createFirst')}
@@ -231,7 +241,10 @@ export function ChecklistOverview() {
             {/* My Checklists Section */}
             {ownedChecklists.length > 0 && (
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('overview.myChecklists')}</h2>
+                {/* Only show section header if there are also shared checklists */}
+                {sharedChecklists.length > 0 && (
+                  <h2 className="text-xl font-headline text-foreground mb-4">{t('overview.myChecklists')}</h2>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                   {ownedChecklists.map((checklist) => (
                     <ChecklistOverviewCard
@@ -242,7 +255,7 @@ export function ChecklistOverview() {
                       completedItems={checklist.stats.completedItems}
                       isOwner={checklist.isOwner}
                       isShared={checklist.isShared}
-                      sharedWith={checklist.sharedWith || []}
+                      numberOfSharedUsers={checklist.numberOfSharedUsers}
                       onShare={handleShare}
                       onEdit={handleEdit}
                       onDelete={handleDelete}
@@ -255,7 +268,7 @@ export function ChecklistOverview() {
             {/* Shared with me Section */}
             {sharedChecklists.length > 0 && (
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('overview.sharedWithMe')}</h2>
+                <h2 className="text-xl font-headline text-foreground mb-4">{t('overview.sharedWithMe')}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                   {sharedChecklists.map((checklist) => (
                     <ChecklistOverviewCard
@@ -266,7 +279,6 @@ export function ChecklistOverview() {
                       completedItems={checklist.stats.completedItems}
                       isOwner={checklist.isOwner}
                       isShared={checklist.isShared}
-                      sharedWith={checklist.sharedWith || []}
                       onEdit={handleEdit}
                       onLeave={handleLeave}
                     />
@@ -282,7 +294,7 @@ export function ChecklistOverview() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
           <button
-            className="fixed bottom-6 right-6 w-14 h-14 sm:w-16 sm:h-16 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center z-50 group"
+            className="fixed bottom-6 right-6 w-14 h-14 sm:w-16 sm:h-16 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-[var(--shadow-elevated)] hover:shadow-xl transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center z-50 group"
             aria-label={t('overview.newChecklist')}
           >
             <Plus className="w-6 h-6 sm:w-7 sm:h-7 group-hover:rotate-90 transition-transform duration-200" />
@@ -290,12 +302,12 @@ export function ChecklistOverview() {
         </DialogTrigger>
         <DialogContent className="sm:max-w-[450px] p-6">
           <DialogHeader className="space-y-3">
-            <DialogTitle className="text-2xl font-semibold">{t('overview.createTitle')}</DialogTitle>
-            <DialogDescription className="text-base text-gray-600">{t('overview.createDescription')}</DialogDescription>
+            <DialogTitle className="text-2xl font-headline">{t('overview.createTitle')}</DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground">{t('overview.createDescription')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-6">
             <div className="space-y-3">
-              <label htmlFor="checklist-name" className="text-sm font-medium text-gray-900 block">
+              <label htmlFor="checklist-name" className="text-sm font-medium text-foreground block">
                 {t('overview.checklistNameLabel')}
               </label>
               <Input
@@ -328,7 +340,7 @@ export function ChecklistOverview() {
             <Button
               onClick={handleCreateChecklist}
               disabled={!newChecklistName.trim() || isCreating}
-              className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-6 min-w-[100px]"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground h-10 px-6 min-w-[100px]"
             >
               {isCreating ? t('overview.creating') : t('overview.create')}
             </Button>
@@ -353,14 +365,14 @@ export function ChecklistOverview() {
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
         <DialogContent className="sm:max-w-[450px] p-6">
           <DialogHeader className="space-y-3">
-            <DialogTitle className="text-2xl font-semibold">{t('overview.renameTitle')}</DialogTitle>
-            <DialogDescription className="text-base text-gray-600">
+            <DialogTitle className="text-2xl font-headline">{t('overview.renameTitle')}</DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground">
               {t('overview.renameDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-6">
             <div className="space-y-3">
-              <label htmlFor="rename-checklist-name" className="text-sm font-medium text-gray-900 block">
+              <label htmlFor="rename-checklist-name" className="text-sm font-medium text-foreground block">
                 {t('overview.checklistNameLabel')}
               </label>
               <Input
@@ -394,7 +406,7 @@ export function ChecklistOverview() {
             <Button
               onClick={handleRenameSubmit}
               disabled={!newName.trim() || isRenaming || newName.trim() === renamingChecklist?.name}
-              className="bg-blue-600 hover:bg-blue-700 text-white h-10 px-6 min-w-[100px]"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground h-10 px-6 min-w-[100px]"
             >
               {isRenaming ? t('overview.saving') : t('overview.save')}
             </Button>

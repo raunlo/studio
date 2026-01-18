@@ -23,24 +23,22 @@ export function SwipeableItem({
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
 
   const bind = useGesture({
-    onDrag: ({ offset: [ox], direction: [dx], cancel, velocity: [vx] }) => {
+    onDrag: async ({ offset: [ox], direction: [dx], cancel, velocity: [vx] }) => {
       // Right swipe (complete/uncomplete)
       if (ox > swipeThreshold && dx > 0) {
         cancel();
         // Animate to the edge before triggering action
-        api.start({ x: 200 }).then(() => {
-          onSwipeComplete();
-          api.set({ x: 0 });
-        });
+        await api.start({ x: 200 });
+        onSwipeComplete();
+        api.set({ x: 0 });
       }
       // Left swipe (delete)
       else if (ox < -swipeThreshold && dx < 0) {
         cancel();
         // Animate to the edge before triggering action
-        api.start({ x: -200 }).then(() => {
-          onSwipeDelete();
-          api.set({ x: 0 });
-        });
+        await api.start({ x: -200 });
+        onSwipeDelete();
+        api.set({ x: 0 });
       }
       // Normal drag
       else {
@@ -62,7 +60,7 @@ export function SwipeableItem({
   });
 
   return (
-    <div className="relative overflow-hidden rounded-lg touch-manipulation">
+    <div className="relative overflow-hidden touch-manipulation flex-1">
       {/* Background actions (revealed on swipe) */}
       <div className="absolute inset-0 flex justify-between items-center pointer-events-none">
         {/* Left side - Complete/Uncomplete (green) */}

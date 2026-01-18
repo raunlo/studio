@@ -14,7 +14,7 @@
   },
   "social": {
     "users": "happy users",
-    "join": "Join our growing community today! 🌟"
+    "join": "Join our growing community today!"
   },
   "main": {
     "title": "Checklist",
@@ -46,10 +46,19 @@
     "shoppingLists": "Shopping lists and food menus",
     "booksMovies": "Books and movies you want",
     "markCompleted": "Mark bought/read/watched",
-    "startFree": "Start keeping lists for FREE!",
+    "startFree": "Start creating lists for FREE",
     "oneClick": "Just one click and start right away!",
+    "featureLists": "Nested lists",
+    "featureShare": "Share with family",
+    "featureNestedDesc": "Organize with nested sub-items",
+    "featureTrackDesc": "Track your progress easily",
+    "featureShareDesc": "Share with family & friends",
+    "featureSell1": "Shopping lists",
+    "featureSell2": "Create any lists",
+    "featureSell3": "Share & edit together",
     "happyUsers": "1000+ happy users",
-    "joinCommunity": "Start free today!"
+    "secure": "Secure",
+    "privacy": "Private"
   },
   "languages": {
     "et": "Estonian",
@@ -90,9 +99,15 @@
     "errorDescription": "Could not load this checklist. It may have been deleted or you don't have access.",
     "backToOverview": "Back to Overview",
     "clearCompleted": "Clear completed",
+    "clearCompletedConfirm": "Delete {{count}} completed items?",
+    "clearAll": "Clear all",
     "itemDeleted": "Item deleted",
     "undo": "Undo",
     "emptyListTitle": "Your list is empty",
-    "emptyListDescription": "Quick add common items or type your own above ↑"
+    "emptyListDescription": "Quick add common items or type your own above",
+    "noCompletedItems": "No completed items",
+    "noCompletedDescription": "Items you complete will appear here",
+    "noActiveItems": "All done!",
+    "noActiveDescription": "You've completed all items in this list"
   }
 }

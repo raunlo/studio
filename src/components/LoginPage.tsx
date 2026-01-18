@@ -2,9 +2,10 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
+import { NEXT_PUBLIC_API_BASE_URL } from "@/lib/axios";
 
 const GoogleIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2">
     <g clipPath="url(#clip0_17_40)">
       <path d="M23.04 12.261c0-.81-.073-1.593-.209-2.348H12v4.448h6.24a5.34 5.34 0 01-2.316 3.51v2.908h3.744c2.19-2.02 3.432-5.002 3.432-8.518z" fill="#4285F4" />
       <path d="M12 24c3.24 0 5.963-1.073 7.95-2.91l-3.744-2.908c-1.04.7-2.37 1.12-4.206 1.12-3.23 0-5.97-2.18-6.95-5.11H1.197v3.073A11.997 11.997 0 0012 24z" fill="#34A853" />
@@ -16,6 +17,34 @@ const GoogleIcon = () => (
         <rect width="24" height="24" fill="white" />
       </clipPath>
     </defs>
+  </svg>
+);
+
+// Feature icons optimized for general list management
+const ShoppingCartIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="9" cy="21" r="1" />
+    <circle cx="20" cy="21" r="1" />
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+  </svg>
+);
+
+const DocumentIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+    <line x1="10" y1="9" x2="8" y2="9" />
+  </svg>
+);
+
+const UsersIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
   </svg>
 );
 
@@ -39,7 +68,6 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
       setErrorMessage('An error occurred. Please try signing in again.');
     }
 
-    // Clear the error parameter from URL to prevent it from persisting
     if (error) {
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete('error');
@@ -47,13 +75,10 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
     }
   }, []);
 
-  // Lock body scroll while the login modal/page is visible to prevent background scroll
   React.useEffect(() => {
     const previousOverflow = document.body.style.overflow;
-    // Prevent background scrolling
     document.body.style.overflow = 'hidden';
     return () => {
-      // Restore previous overflow
       document.body.style.overflow = previousOverflow || '';
     };
   }, []);
@@ -61,105 +86,153 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
   const handleGoogleLogin = () => {
     setErrorMessage(null);
     onLogin?.();
-    
-    // Check if there's a returnUrl parameter to pass along
-    const params = new URLSearchParams(window.location.search);
-    const returnUrl = params.get('returnUrl');
-    
-    if (returnUrl) {
-      // Pass returnUrl to the OAuth flow
-      window.location.href = `/api/auth/google?returnUrl=${encodeURIComponent(returnUrl)}`;
-    } else {
-      window.location.href = '/api/auth/google';
-    }
+    window.location.href = `${NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/google/login`;
   };
 
+  const handleDevLogin = () => {
+    setErrorMessage(null);
+    onLogin?.();
+    window.location.href = `${NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/dev/login`;
+  };
+
+  // Check if dev mode is enabled (localhost or DEV_AUTH_BYPASS env)
+  const isDevMode = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname.includes('.local.com') ||
+    process.env.NODE_ENV === 'development'
+  );
+
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 animate-fade-in overflow-hidden z-[100] p-4">
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden">
-        <div className="absolute top-10 left-10 w-20 h-20 bg-blue-200 rounded-full opacity-20 animate-pulse"></div>
-        <div className="absolute top-1/3 right-20 w-32 h-32 bg-indigo-200 rounded-full opacity-15 animate-bounce"></div>
-        <div className="absolute bottom-20 left-1/4 w-16 h-16 bg-blue-300 rounded-full opacity-25 animate-ping"></div>
+    <div className="min-h-dvh w-full flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 paper-texture overflow-hidden p-4 pb-safe">
+      {/* Animated decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-16 -left-16 w-64 h-64 border border-primary/20 rounded-full animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute top-1/3 right-8 w-32 h-32 border border-accent/20 rounded-full animate-pulse" style={{ animationDuration: '6s' }} />
+        <div className="absolute -bottom-24 -right-24 w-80 h-80 border border-primary/10 rounded-full animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute top-20 left-1/4 w-2 h-2 bg-primary/40 rounded-full animate-ping" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-32 right-1/3 w-2 h-2 bg-accent/40 rounded-full animate-ping" style={{ animationDelay: '2s' }} />
       </div>
 
-      <div className="bg-white/95 px-6 py-8 lg:px-10 lg:py-11 2xl:px-14 2xl:py-14 rounded-3xl shadow-2xl w-full max-w-md lg:max-w-lg 2xl:max-w-xl flex flex-col items-center backdrop-blur-lg border border-gray-100 animate-slide-in relative z-10">
-        {/* Language selector in top right corner of modal */}
-        <div className="absolute top-4 right-4">
-          <LanguageSelector />
-        </div>
-
-        <div className="mb-5 lg:mb-6 2xl:mb-7 animate-fade-in relative">
-          <div className="relative">
-            <img
-              src="/brand/dailychexly-mark.svg"
-              alt="DailyChexly"
-              width={56}
-              height={56}
-              className="w-14 h-14 lg:w-16 lg:h-16 2xl:w-20 2xl:h-20 drop-shadow-lg select-none"
-              draggable={false}
-            />
-            <div className="absolute -top-0.5 -right-0.5 w-3 h-3 lg:w-3.5 lg:h-3.5 2xl:w-4 2xl:h-4 bg-green-400 rounded-full animate-pulse"></div>
-          </div>
-        </div>
-
-        <div className="text-center mb-6 lg:mb-7 2xl:mb-8">
-          <h1 className="text-xl lg:text-3xl 2xl:text-4xl font-black mb-1 lg:mb-2 2xl:mb-3 text-gray-900 tracking-tight leading-tight">
-            {t('auth.welcome')} <span className="text-blue-600">{t('appName')}</span>!
-          </h1>
-          <p className="text-sm lg:text-base 2xl:text-lg text-gray-700 mb-1 lg:mb-1.5 2xl:mb-2 font-medium">🧾 {t('auth.keepLists')}</p>
-          <p className="text-xs lg:text-sm 2xl:text-base text-gray-600 leading-snug">
-            {t('auth.joinUsers')} <span className="font-bold text-blue-600">{t('auth.thousands')}</span>, {t('tagline')}
-          </p>
-        </div>
-
-        <div className="w-full space-y-3 lg:space-y-3 2xl:space-y-4 mb-6 lg:mb-7 2xl:mb-8">
-          <div className="flex items-center gap-2.5 lg:gap-3 2xl:gap-4 w-full px-3 py-2.5 lg:px-4 lg:py-3 2xl:px-5 2xl:py-4 rounded-xl bg-emerald-50 border border-emerald-200 shadow-sm hover:shadow-md transition-all">
-            <div className="text-xl lg:text-2xl 2xl:text-3xl flex-shrink-0">🛒</div>
-            <span className="text-sm lg:text-base 2xl:text-lg text-gray-900 font-bold">{t('auth.shoppingLists')}</span>
-          </div>
-          <div className="flex items-center gap-2.5 lg:gap-3 2xl:gap-4 w-full px-3 py-2.5 lg:px-4 lg:py-3 2xl:px-5 2xl:py-4 rounded-xl bg-amber-50 border border-amber-200 shadow-sm hover:shadow-md transition-all">
-            <div className="text-xl lg:text-2xl 2xl:text-3xl flex-shrink-0">📚</div>
-            <span className="text-sm lg:text-base 2xl:text-lg text-gray-900 font-bold">{t('auth.booksMovies')}</span>
-          </div>
-          <div className="flex items-center gap-2.5 lg:gap-3 2xl:gap-4 w-full px-3 py-2.5 lg:px-4 lg:py-3 2xl:px-5 2xl:py-4 rounded-xl bg-purple-50 border border-purple-200 shadow-sm hover:shadow-md transition-all">
-            <div className="text-xl lg:text-2xl 2xl:text-3xl flex-shrink-0">✅</div>
-            <span className="text-sm lg:text-base 2xl:text-lg text-gray-900 font-bold">{t('auth.markCompleted')}</span>
-          </div>
-        </div>
-
-        {errorMessage && (
-          <div className="w-full mb-4 lg:mb-5 2xl:mb-6 p-3 lg:p-3.5 2xl:p-4 bg-red-50 border border-red-200 rounded-xl">
-            <p className="text-red-700 text-sm lg:text-sm 2xl:text-base font-medium text-center">⚠️ {errorMessage}</p>
-          </div>
-        )}
-
-        <div className="w-full">
-          <button
-            className="group relative flex items-center justify-center w-full px-6 py-3 lg:px-7 lg:py-3.5 2xl:px-8 2xl:py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:shadow-xl transform transition-all duration-300 hover:scale-105 font-bold text-base lg:text-base 2xl:text-lg overflow-hidden"
-            onClick={handleGoogleLogin}
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <GoogleIcon />
-            <span className="relative z-10">{t('auth.startFree')}</span>
-            <div className="absolute right-4 lg:right-5 2xl:right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <span className="text-lg lg:text-lg 2xl:text-xl">→</span>
+      <div className="relative z-10 w-full max-w-md animate-slide-in">
+        {/* Main card - enhanced */}
+        <div className="bg-card/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-border/50 overflow-hidden">
+          {/* Header section - improved */}
+          <div className="px-8 pt-8 pb-6 text-center relative">
+            {/* Language selector */}
+            <div className="absolute top-4 right-4">
+              <LanguageSelector />
             </div>
-          </button>
+            
+            {/* Logo with glow effect */}
+            <div className="inline-flex items-center justify-center mb-4 relative">
+              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full animate-pulse" style={{ animationDuration: '3s' }} />
+              <img
+                src="/brand/dailychexly-mark.svg"
+                alt="DailyChexly"
+                width={56}
+                height={56}
+                className="w-14 h-14 select-none relative z-10 drop-shadow-lg"
+                draggable={false}
+              />
+            </div>
 
-          <p className="text-center text-xs lg:text-xs 2xl:text-sm text-gray-500 mt-2">{t('auth.oneClick')}</p>
-        </div>
+            <h1 className="text-3xl font-headline text-foreground mb-2 tracking-tight leading-tight">
+              {t('auth.welcome')} <span className="text-primary bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{t('appName')}</span>
+            </h1>
+            <p className="text-muted-foreground text-sm font-medium">
+              {t('tagline')}
+            </p>
+          </div>
 
-        <div className="mt-6 lg:mt-7 2xl:mt-8 flex flex-col items-center text-center">
-          <div className="flex items-center gap-2.5 lg:gap-3 2xl:gap-4 px-3 py-2 lg:px-4 lg:py-2.5 2xl:px-5 2xl:py-3 bg-gradient-to-r from-emerald-50 via-amber-50 to-purple-50 rounded-full border border-gray-200 shadow-sm">
-            <span className="inline-flex items-center">
-              <span className="w-7 h-7 lg:w-8 lg:h-8 2xl:w-10 2xl:h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-[10px] lg:text-[11px] 2xl:text-xs font-bold shadow-md">JK</span>
-              <span className="-ml-1.5 lg:-ml-1.5 2xl:-ml-2 w-7 h-7 lg:w-8 lg:h-8 2xl:w-10 2xl:h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-[10px] lg:text-[11px] 2xl:text-xs font-bold shadow-md">TM</span>
-              <span className="-ml-1.5 lg:-ml-1.5 2xl:-ml-2 w-7 h-7 lg:w-8 lg:h-8 2xl:w-10 2xl:h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-[10px] lg:text-[11px] 2xl:text-xs font-bold shadow-md">LR</span>
-              <span className="-ml-1.5 lg:-ml-1.5 2xl:-ml-2 w-7 h-7 lg:w-8 lg:h-8 2xl:w-10 2xl:h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[10px] lg:text-[11px] 2xl:text-xs font-bold shadow-md">+1K</span>
-            </span>
-            <div className="text-left">
-              <p className="text-sm lg:text-sm 2xl:text-base font-bold text-gray-900">{t('auth.happyUsers')}</p>
-              <p className="text-xs lg:text-xs 2xl:text-sm text-gray-600">{t('auth.joinCommunity')}</p>
+          {/* Features section - clean mono-color design */}
+          <div className="px-6 py-6">
+            <div className="grid grid-cols-3 gap-2 mb-6">
+              <div className="group flex flex-col items-center justify-start p-3 rounded-xl border border-border/50 bg-gradient-to-br from-primary/5 to-transparent hover:border-primary/30 transition-all duration-300 hover:shadow-md cursor-default">
+                <div className="w-10 h-10 mb-2 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-300">
+                  <ShoppingCartIcon />
+                </div>
+                <p className="text-[11px] font-medium text-foreground text-center leading-snug">{t('auth.featureSell1')}</p>
+              </div>
+
+              <div className="group flex flex-col items-center justify-start p-3 rounded-xl border border-border/50 bg-gradient-to-br from-primary/5 to-transparent hover:border-primary/30 transition-all duration-300 hover:shadow-md cursor-default">
+                <div className="w-10 h-10 mb-2 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-300">
+                  <DocumentIcon />
+                </div>
+                <p className="text-[11px] font-medium text-foreground text-center leading-snug">{t('auth.featureSell2')}</p>
+              </div>
+
+              <div className="group flex flex-col items-center justify-start p-3 rounded-xl border border-border/50 bg-gradient-to-br from-primary/5 to-transparent hover:border-primary/30 transition-all duration-300 hover:shadow-md cursor-default">
+                <div className="w-10 h-10 mb-2 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-300">
+                  <UsersIcon />
+                </div>
+                <p className="text-[11px] font-medium text-foreground text-center leading-snug">{t('auth.featureSell3')}</p>
+              </div>
+            </div>
+
+            {/* Error message */}
+            {errorMessage && (
+              <div className="mb-5 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-destructive text-xs font-medium text-center">{errorMessage}</p>
+              </div>
+            )}
+
+            {/* CTA Button - Compact */}
+            <button
+              data-testid="google-login-button"
+              className="group relative flex items-center justify-center w-full px-5 py-3 bg-foreground text-card rounded-xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:bg-foreground/90 active:scale-[0.98] overflow-hidden"
+              onClick={handleGoogleLogin}
+            >
+              <GoogleIcon />
+              <span>{t('auth.startFree')}</span>
+              <svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2.5" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className="ml-2 group-hover:translate-x-1 transition-transform duration-300"
+              >
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </button>
+
+            {/* Dev login - only in development */}
+            {isDevMode && (
+              <button
+                data-testid="dev-login-button"
+                onClick={handleDevLogin}
+                className="mt-3 w-full px-5 py-2.5 border border-dashed border-border rounded-xl text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                Dev Login (Skip Auth)
+              </button>
+            )}
+
+            {/* One-click note */}
+            <p className="text-center text-xs text-muted-foreground mt-3">
+              {t('auth.oneClick')}
+            </p>
+
+            {/* Social proof - happy users */}
+            <div className="flex items-center justify-center gap-3 mt-5 pt-5 border-t border-border/50">
+              <div className="flex -space-x-1.5">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-[8px] font-bold text-white ring-2 ring-card">A</div>
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center text-[8px] font-bold text-white ring-2 ring-card">M</div>
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/80 to-primary/50 flex items-center justify-center text-[8px] font-bold text-white ring-2 ring-card">K</div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">{t('auth.happyUsers')}</span>
+              </p>
+            </div>
+
+            {/* Privacy & Terms */}
+            <div className="flex items-center justify-center gap-3 mt-3 text-[11px] text-muted-foreground">
+              <a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a>
+              <span className="text-muted-foreground/30">·</span>
+              <a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a>
             </div>
           </div>
         </div>

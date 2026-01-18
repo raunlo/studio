@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { ListChecks, MoreVertical, Edit, Share2, Trash2, Users, Crown, LogOut } from "lucide-react";
-import { useState } from "react";
+import { MoreVertical, Edit, Share2, Trash2, Users, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +18,7 @@ interface ChecklistOverviewCardProps {
   completedItems?: number;
   isOwner?: boolean;
   isShared?: boolean;
-  sharedWith?: string[];
+  numberOfSharedUsers?: number;
   onShare?: (id: number) => void;
   onDelete?: (id: number) => void;
   onEdit?: (id: number) => void;
@@ -33,7 +32,7 @@ export function ChecklistOverviewCard({
   completedItems = 0,
   isOwner = true,
   isShared = false,
-  sharedWith = [],
+  numberOfSharedUsers = 0,
   onShare,
   onDelete,
   onEdit,
@@ -41,6 +40,8 @@ export function ChecklistOverviewCard({
 }: ChecklistOverviewCardProps) {
   const router = useRouter();
   const { t } = useTranslation();
+
+  const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
 
   const handleClick = () => {
     router.push(`/checklist/${id}`);
@@ -77,84 +78,111 @@ export function ChecklistOverviewCard({
   return (
     <Card
       onClick={handleClick}
-      className="group relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] border-2 hover:border-blue-400 bg-white"
+      className="group relative overflow-hidden cursor-pointer bg-card border border-border/60 hover:border-primary/40 transition-all duration-300 hover:shadow-[var(--shadow-card)] active:scale-[0.98]"
     >
-      <div className="p-4 sm:p-5">
-        {/* Icon and Title */}
-        <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
-            <ListChecks className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-          </div>
+      {/* Progress bar at top */}
+      <div className="h-1 bg-muted">
+        <div
+          className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-500"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      <div className="p-5 sm:p-6">
+        {/* Header with title and menu */}
+        <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-base sm:text-lg text-gray-900 truncate group-hover:text-blue-600 transition-colors">
-                {name}
-              </h3>
-              {/* Owner/Shared badges */}
-              {isOwner && isShared && (
-                <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+            {/* Badges */}
+            <div className="flex items-center gap-2 mb-2">
+              {isOwner && isShared && numberOfSharedUsers > 0 && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-medium">
                   <Users className="w-3 h-3" />
-                  <span>{sharedWith.length}</span>
-                </div>
+                  <span>{numberOfSharedUsers}</span>
+                </span>
               )}
               {!isOwner && (
-                <div className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-medium">
                   <Share2 className="w-3 h-3" />
-                  <span>Jagatud</span>
-                </div>
+                  <span>{t('overview.sharedWithMe')}</span>
+                </span>
               )}
             </div>
-            {totalItems > 0 ? (
-              <p className="text-sm text-gray-500">
-                <span className="font-medium text-blue-600">{completedItems}</span>
-                <span className="text-gray-400 mx-1">/</span>
-                <span>{totalItems}</span>
-                <span className="ml-1 text-gray-400">{t('overview.completed')}</span>
-              </p>
-            ) : (
-              <p className="text-sm text-gray-400">{t('overview.emptyList')}</p>
-            )}
+
+            {/* Title */}
+            <h3 className="font-headline text-lg sm:text-xl text-foreground truncate group-hover:text-primary transition-colors">
+              {name}
+            </h3>
           </div>
-          
+
           {/* Actions dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger 
+            <DropdownMenuTrigger
               onClick={(e) => e.stopPropagation()}
-              className="flex-shrink-0 p-2 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation"
+              className="flex-shrink-0 p-2 -mr-2 -mt-1 hover:bg-muted rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 touch-manipulation"
             >
-              <MoreVertical className="w-5 h-5 text-gray-600" />
+              <MoreVertical className="w-5 h-5 text-muted-foreground" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               {isOwner && (
-                <DropdownMenuItem onClick={handleEdit}>
+                <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
                   <Edit className="w-4 h-4 mr-2" />
-                  Muuda nime
+                  Rename
                 </DropdownMenuItem>
               )}
               {isOwner && (
-                <DropdownMenuItem onClick={handleShare}>
+                <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
                   <Share2 className="w-4 h-4 mr-2" />
-                  Jaga
+                  Share
                 </DropdownMenuItem>
               )}
               {isOwner ? (
-                <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+                <DropdownMenuItem onClick={handleDelete} className="cursor-pointer text-destructive focus:text-destructive">
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Kustuta
+                  Delete
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={handleLeave} className="text-orange-600">
+                <DropdownMenuItem onClick={handleLeave} className="cursor-pointer text-orange-600 focus:text-orange-600">
                   <LogOut className="w-4 h-4 mr-2" />
-                  Lahku
+                  Leave
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
+        {/* Stats */}
+        <div className="flex items-center justify-between">
+          {totalItems > 0 ? (
+            <>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl font-headline text-primary">{completedItems}</span>
+                <span className="text-muted-foreground">/</span>
+                <span className="text-lg text-muted-foreground">{totalItems}</span>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {progress === 100 ? (
+                  <span className="text-accent font-medium">Complete</span>
+                ) : (
+                  `${Math.round(progress)}%`
+                )}
+              </span>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">{t('overview.emptyList')}</p>
+          )}
+        </div>
       </div>
 
-      {/* Gradient overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-blue-600/0 group-hover:from-blue-500/5 group-hover:to-blue-600/5 transition-all pointer-events-none" />
+      {/* Decorative corner element */}
+      <div className="absolute bottom-0 right-0 w-16 h-16 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+        <svg
+          viewBox="0 0 64 64"
+          className="w-full h-full text-primary/5"
+          fill="currentColor"
+        >
+          <path d="M64 64V0C64 35.346 35.346 64 0 64h64z" />
+        </svg>
+      </div>
     </Card>
   );
 }

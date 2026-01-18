@@ -25,6 +25,7 @@ import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 import { useSSE } from './use-checklist-item-updates';
 import type { MessageHandlers } from './use-checklist-item-updates';
 import { createLogger } from "@/lib/logger";
+import { getClientId } from "@/lib/axios";
 
 const logger = createLogger('UseChecklist');
 // SSE used for realtime updates
@@ -65,7 +66,12 @@ export function useChecklist(
   const itemsRef = useRef<ChecklistItem[]>([]);
   const recentlyAddedItemsRef = useRef<Set<number>>(new Set()); // Track recently added item IDs
   const recentlyReorderedItemsRef = useRef<Set<string>>(new Set()); // Track recently reordered items
-  const clientIdRef = useRef<string>(Math.random().toString(36).substring(2, 15)); // Unique client ID
+  const clientIdRef = useRef<string>(''); // Persistent client ID - initialized lazily
+
+  // Initialize client ID lazily to avoid SSR issues
+  if (typeof window !== 'undefined' && !clientIdRef.current) {
+    clientIdRef.current = getClientId();
+  }
   
   // Ref to track rapid operations and debounce refetching
   const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -325,7 +331,7 @@ export function useChecklist(
       return;
     }
 
-    const exectuonFn = async (numberRetries: number) => {
+    const executionFn = async (numberRetries: number) => {
       let retry = false;
       if (!checklistId) return { retry };
       
@@ -400,9 +406,9 @@ export function useChecklist(
       return { retry };
     };
 
-    const res = await exectuonFn(0);
+    const res = await executionFn(0);
     if (res.retry) {
-      await exectuonFn(1);
+      await executionFn(1);
     }
   };
 
@@ -418,7 +424,7 @@ export function useChecklist(
         item.id === itemId
           ? {
               ...item,
-              completed: item.completed ? false : item.completed,
+              completed: false, // Adding a sub-item marks parent as incomplete
               rows: [...(item.rows ?? []), optimisticRow],
             }
           : item,

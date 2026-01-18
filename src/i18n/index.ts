@@ -21,8 +21,10 @@ i18n
       escapeValue: false,
     },
     detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
-      caches: ['localStorage'],
+      // Check cookie first (set by middleware), then localStorage
+      order: ['cookie', 'localStorage'],
+      caches: ['cookie', 'localStorage'],
+      lookupCookie: 'i18nextLng',
       lookupLocalStorage: 'i18nextLng',
     },
     supportedLngs: ['en', 'et', 'es'],
