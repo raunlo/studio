@@ -2,7 +2,6 @@
 import Axios, { AxiosError, AxiosRequestConfig, CreateAxiosDefaults } from 'axios';
 import http from 'http';
 import https from 'https';
-import jwt from 'jsonwebtoken';
 import { createLogger } from './logger';
 
 // lightweight client id generator
@@ -75,32 +74,19 @@ function isLoggingOut(): boolean {
   }
 }
 
-// Get Google ID token from cookie
-export function getUserToken(): string | null {
+// Get CSRF token from cookie
+export function getCsrfToken(): string | null {
   try {
     if (typeof document !== 'undefined') {
-      const match = document.cookie.match(/(?:^|; )user_token=([^;]*)/);
+      const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);
       if (match && match[1]) {
         return decodeURIComponent(match[1]);
       }
     }
   } catch (e) {
-    logger.error('Error reading user_token:', e);
+    logger.error('Error reading csrf_token:', e);
   }
   return null;
-}
-
-// Check if token is expired
-function isTokenExpired(token: string): boolean {
-  try {
-    const decoded = jwt.decode(token) as { exp?: number } | null;
-    if (decoded && decoded.exp) {
-      return Date.now() >= decoded.exp * 1000;
-    }
-  } catch (e) {
-    logger.error('Error decoding token:', e);
-  }
-  return true; // If can't decode, assume expired
 }
 
 // Redirect to home with session expired error (login page is not used)
@@ -111,79 +97,79 @@ async function redirectToSessionExpired(): Promise<void> {
       logger.warn('Session expired redirect already in progress, skipping duplicate');
       return;
     }
-    
+
     // If user is intentionally logging out, don't hijack navigation.
     if (isLoggingOut()) return;
-    
+
     // Mark that we're redirecting
     isRedirectingToSessionExpired = true;
-    
+
     // Use a hard navigation to fully reset any client state.
     window.location.href = '/?error=session_expired';
   }
 }
 
-// Refresh token
-async function refreshToken(): Promise<boolean> {
+// Track if we've already tried to fetch CSRF token
+let csrfTokenFetchAttempted = false;
+
+// Ensure CSRF token is available for non-GET requests
+async function ensureCsrfToken(): Promise<void> {
+  // Only fetch CSRF token if it's not already present and we haven't tried yet
+  if (getCsrfToken() || csrfTokenFetchAttempted) {
+    return;
+  }
+
+  csrfTokenFetchAttempted = true;
+
   try {
-    const response = await fetch('/api/auth/refresh', {
-      method: 'POST',
-      credentials: 'include', // Include httpOnly cookies automatically
+    // Make a lightweight request directly to backend to get CSRF token
+    // Backend sets csrf_token cookie on authenticated requests
+    const response = await fetch(`${NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/session`, {
+      method: 'GET',
+      credentials: 'include',
     });
 
     if (response.ok) {
-      logger.info('Token refreshed successfully');
-      return true;
+      logger.info('CSRF token preflight request completed');
+      // Give browser a moment to process the Set-Cookie header
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
-
-    // If refresh fails with 401, clear cookies and redirect to session-expired flow
-    if (response.status === 401) {
-      const data = await response.json().catch(() => ({}));
-      logger.error('Refresh token expired or invalid:', data);
-      await redirectToSessionExpired();
-      return false;
-    }
-
-    throw new Error(`Token refresh failed: ${response.status}`);
   } catch (e) {
-    logger.error('Error refreshing token:', e);
-    return false;
+    logger.error('Failed to fetch CSRF token via preflight:', e);
   }
 }
 
-// Token refresh and client ID interceptor
+// Client ID and CSRF interceptor
 axiosInstance.interceptors.request.use(async (cfg) => {
   try {
     cfg.headers = cfg.headers ?? {} as Record<string, string>;
-    
+
     // Add client ID header
     (cfg.headers as Record<string, string>)['X-Client-Id'] = getClientId();
-    
-    // Check token expiration and refresh if needed
-    // Note: Token is sent via httpOnly cookies automatically (withCredentials: true)
-    // No need to add Authorization header as backend reads from cookies
-    const token = getUserToken();
-    
-    // If token exists but expired, refresh it
-    if (token && isTokenExpired(token)) {
-      logger.info('Token expired, attempting refresh...');
-      const refreshSuccess = await refreshToken();
-      if (refreshSuccess) {
-        logger.info('Token refreshed successfully');
-      } else {
-        // Refresh failed, user will be redirected to login by refreshToken()
-        logger.info('Refresh failed, request will be aborted');
-      }
+
+    // For non-GET requests, ensure CSRF token is available
+    if (cfg.method && cfg.method.toUpperCase() !== 'GET') {
+      await ensureCsrfToken();
     }
+
+    // Add CSRF token header if available
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      (cfg.headers as Record<string, string>)['X-CSRF-Token'] = csrfToken;
+      logger.debug('CSRF token added to request:', csrfToken.substring(0, 10) + '...');
+    } else {
+      // CSRF token not available - request will proceed without it
+      // Backend should return 403 if CSRF protection is required
+      logger.warn('No CSRF token available for request:', cfg.url, '- proceeding without CSRF header');
+    }
+
+    // Session cookie (session_id) is sent automatically via httpOnly cookies (withCredentials: true)
+    // Backend validates session on every request
   } catch (e) {
     logger.error('Request interceptor error:', e);
   }
   return cfg;
 });
-
-interface RetryableConfig extends AxiosRequestConfig {
-  _retry?: boolean;
-}
 
 export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> => {
   try {
@@ -192,32 +178,39 @@ export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> 
   } catch (error) {
     if (error instanceof AxiosError) {
       logger.error('API Error:', error.response?.data || error.message);
-      // If 401, try refresh and retry once
-      const retryableConfig = config as RetryableConfig;
-      if (error.response?.status === 401 && !retryableConfig._retry) {
-        retryableConfig._retry = true;
-        try {
-          const refreshSuccess = await refreshToken();
-          if (refreshSuccess) {
-            // Retry the request
-            const { data } = await axiosInstance.request<T>(config);
-            return data;
-          } else {
-            // Refresh failed, redirect to session-expired flow
-            await redirectToSessionExpired();
-            throw error;
-          }
-        } catch (retryError) {
-          // If retry fails, redirect to session-expired flow
-          console.error('Retry after refresh failed:', retryError);
-          await redirectToSessionExpired();
-          throw error;
-        }
+      // If 401, session is invalid - redirect to login
+      if (error.response?.status === 401) {
+        await redirectToSessionExpired();
       }
       throw error;
     }
     throw error;
   }
 };
+
+// Fetch wrapper that automatically includes CSRF token
+export async function fetchWithCsrf(
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const csrfToken = getCsrfToken();
+  const headers = new Headers(options.headers || {});
+
+  // Add CSRF token if available
+  if (csrfToken) {
+    headers.set('X-CSRF-Token', csrfToken);
+  }
+
+  // Add Content-Type if not present and body is provided
+  if (options.body && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  return fetch(url, {
+    ...options,
+    headers,
+    credentials: options.credentials || 'include', // Include cookies by default
+  });
+}
 
 export { axiousProps };

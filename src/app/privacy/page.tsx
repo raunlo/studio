@@ -11,7 +11,7 @@ export default function PrivacyPolicyPage() {
         <div className="prose prose-stone dark:prose-invert max-w-none">
           <h2 className="text-2xl font-semibold">1. Introduction</h2>
           <p>
-            Welcome to QuickCheck. We respect your privacy and are committed to protecting it. This Privacy Policy explains how we collect, use, and share your personal information.
+            Welcome to Daily Chexly. We respect your privacy and are committed to protecting it. This Privacy Policy explains how we collect, use, and share your personal information.
           </p>
           <p className="font-bold text-destructive">
             [This is a placeholder. You must replace this content with your own Privacy Policy. 

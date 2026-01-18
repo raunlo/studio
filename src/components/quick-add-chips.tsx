@@ -25,7 +25,7 @@ export function QuickAddChips({ onAdd }: QuickAddChipsProps) {
           variant="outline"
           size="sm"
           onClick={() => onAdd(item.label)}
-          className="text-xs sm:text-sm gap-1 hover:bg-blue-50 hover:border-blue-300"
+          className="text-xs sm:text-sm gap-1 hover:bg-primary/10 hover:border-primary/50"
         >
           <span className="text-base">{item.icon}</span>
           {item.label}

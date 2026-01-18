@@ -2,11 +2,15 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
-import { UserInfo, UserInfoProps } from "./UserInfo";
 import { LanguageSelector } from "./LanguageSelector";
 
 interface HeaderProps {
-  user?: UserInfoProps;
+  user?: {
+    authenticated: boolean;
+    name?: string;
+    photoUrl?: string;
+    email?: string;
+  };
   onLogin: () => void;
   onLogout: () => void;
 }
@@ -14,129 +18,180 @@ interface HeaderProps {
 export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
   const { t } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  return (
-    <header className="sticky top-0 z-50 flex items-center justify-between gap-2 px-3 sm:px-6 py-2.5 sm:py-3 bg-white/95 shadow-lg backdrop-blur-lg border-b border-gray-100 animate-fade-in">
-      {/* Left side - Brand */}
-      <Link href="/checklist" className="flex items-center gap-2 sm:gap-3 flex-shrink-0 cursor-pointer">
-        <div className="relative flex-shrink-0">
-          <img
-            src="/brand/dailychexly-mark.svg"
-            alt="DailyChexly"
-            width={40}
-            height={40}
-            className="h-8 w-8 sm:h-10 sm:w-10 select-none"
-            draggable={false}
-          />
-          <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-        </div>
-        <span className="text-lg sm:text-xl md:text-2xl font-black text-gray-900 tracking-tight whitespace-nowrap">
-          DailyChexly
-        </span>
-      </Link>
 
-      {/* Right side - Desktop view */}
-      <div className="hidden sm:flex items-center gap-4 flex-shrink-0" suppressHydrationWarning>
-        <LanguageSelector />
-        {user ? (
-          <div className="flex items-center gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-2 rounded-xl shadow-sm">
-              {/* Avatar */}
-              <div className="flex-shrink-0">
-                {user.avatarUrl && (
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    className="w-10 h-10 rounded-full border-2 border-white shadow-sm"
-                  />
-                )}
-              </div>
-              
-              {/* Name */}
-              <span className="text-base font-semibold text-gray-900 whitespace-nowrap">
-                {user.name.split(' ')[0]}
-              </span>
-              
-              {/* Logout button */}
+  return (
+    <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border/50 animate-fade-in">
+      <div className="flex items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 max-w-7xl mx-auto">
+        {/* Brand */}
+        <Link
+          href="/checklist"
+          className="flex items-center gap-2.5 sm:gap-3 group"
+        >
+          <div className="relative flex-shrink-0">
+            <img
+              src="/brand/dailychexly-mark.svg"
+              alt="DailyChexly"
+              width={40}
+              height={40}
+              className="h-9 w-9 sm:h-10 sm:w-10 select-none transition-transform group-hover:scale-105"
+              draggable={false}
+            />
+          </div>
+          <span className="text-xl sm:text-2xl font-headline text-foreground tracking-tight">
+            DailyChexly
+          </span>
+        </Link>
+
+        {/* Desktop navigation */}
+        <div className="hidden sm:flex items-center gap-4" suppressHydrationWarning>
+          <LanguageSelector />
+
+          {user && (
+            <div className="flex items-center gap-3 pl-4 border-l border-border/50">
+              {/* User photo/avatar */}
+              {user.photoUrl ? (
+                <img
+                  src={user.photoUrl}
+                  alt={user.name || 'User'}
+                  className="w-9 h-9 rounded-full object-cover shadow-sm"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm">
+                  {user.name ? (
+                    <span className="text-sm font-medium text-primary-foreground">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                  ) : (
+                    <svg
+                      className="w-5 h-5 text-primary-foreground"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                      />
+                    </svg>
+                  )}
+                </div>
+              )}
+
+              {/* User name */}
+              {user.name && (
+                <span className="text-sm font-medium text-foreground hidden lg:block">
+                  {user.name}
+                </span>
+              )}
+
+              {/* Sign out button */}
               <button
-                className="ml-1 px-4 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all font-semibold text-sm whitespace-nowrap"
+                className="px-4 py-2 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
                 onClick={onLogout}
                 title={t('auth.signOut') || 'Sign out'}
               >
                 {t('auth.signOut') || 'Sign out'}
               </button>
             </div>
-          ) : null}
-        </div>
-
-      {/* Right side - Mobile view */}
-      {user && (
-        <div className="flex sm:hidden items-center gap-2" suppressHydrationWarning>
-          <LanguageSelector />
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label="Menu"
-          >
-            <svg
-              className="w-6 h-6 text-gray-700"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              {isMobileMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              )}
-            </svg>
-          </button>
-
-          {/* Mobile dropdown menu */}
-          {isMobileMenuOpen && (
-            <div className="absolute top-full right-0 mt-2 mr-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-[60] animate-fade-in">
-              <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
-                <div className="flex items-center gap-3 mb-4">
-                  {user.avatarUrl && (
-                    <img
-                      src={user.avatarUrl}
-                      alt={user.name}
-                      className="w-12 h-12 rounded-full border-2 border-white shadow-sm"
-                    />
-                  )}
-                  <div>
-                    <div className="font-semibold text-gray-900">
-                      {user.name.split(' ')[0]}
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      {user.name}
-                    </div>
-                  </div>
-                </div>
-                
-                <button
-                  className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-semibold text-sm"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    onLogout();
-                  }}
-                >
-                  {t('auth.signOut') || 'Logi välja'}
-                </button>
-              </div>
-            </div>
           )}
         </div>
-      )}
+
+        {/* Mobile navigation */}
+        {user && (
+          <div className="flex sm:hidden items-center gap-2" suppressHydrationWarning>
+            <LanguageSelector />
+
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 hover:bg-muted rounded-lg transition-colors"
+              aria-label="Menu"
+            >
+              <svg
+                className="w-6 h-6 text-foreground"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+              >
+                {isMobileMenuOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"
+                  />
+                )}
+              </svg>
+            </button>
+
+            {/* Mobile dropdown */}
+            {isMobileMenuOpen && (
+              <div className="absolute top-full right-0 left-0 mt-px bg-card border-b border-border shadow-lg animate-fade-in">
+                <div className="p-4 max-w-7xl mx-auto">
+                  <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border/50">
+                    {user.photoUrl ? (
+                      <img
+                        src={user.photoUrl}
+                        alt={user.name || 'User'}
+                        className="w-12 h-12 rounded-full object-cover shadow-sm"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm">
+                        {user.name ? (
+                          <span className="text-lg font-medium text-primary-foreground">
+                            {user.name.charAt(0).toUpperCase()}
+                          </span>
+                        ) : (
+                          <svg
+                            className="w-7 h-7 text-primary-foreground"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                    )}
+                    <div>
+                      {user.name && (
+                        <p className="font-medium text-foreground">{user.name}</p>
+                      )}
+                      <p className="text-sm text-muted-foreground">
+                        {user.email || t('auth.signedIn') || 'Signed in'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    className="w-full px-4 py-3 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onLogout();
+                    }}
+                  >
+                    {t('auth.signOut') || 'Sign out'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </header>
   );
 };

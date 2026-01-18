@@ -11,7 +11,7 @@ export default function TermsOfServicePage() {
         <div className="prose prose-stone dark:prose-invert max-w-none">
           <h2 className="text-2xl font-semibold">1. Introduction</h2>
           <p>
-            Welcome to QuickCheck! These Terms of Service ("Terms") govern your use of our application. 
+            Welcome to Daily Chexly! These Terms of Service ("Terms") govern your use of our application. 
             By using our service, you agree to these terms.
           </p>
           <p className="font-bold text-destructive">

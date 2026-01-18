@@ -3,9 +3,9 @@
 import React from 'react';
 
 /**
- * Development helper component to test token refresh behavior
+ * Development helper component to test session-based auth behavior
  * Add this to your layout or any page during development
- * 
+ *
  * Usage: <TokenTestHelper />
  */
 export function TokenTestHelper() {
@@ -21,27 +21,25 @@ export function TokenTestHelper() {
     refreshCookies();
   }, []);
 
-  const deleteRefreshToken = () => {
-    document.cookie = 'refresh_token=; Max-Age=0; path=/';
-    console.log('🗑️ Deleted refresh_token cookie');
+  const deleteSession = () => {
+    document.cookie = 'session_id=; Max-Age=0; path=/';
+    console.log('🗑️ Deleted session_id cookie');
     refreshCookies();
-    alert('Refresh token deleted! Now try using the app - it should redirect to login when the user_token expires.');
+    alert('Session deleted! You should be redirected to login on next API call or page refresh.');
   };
 
-  const deleteUserToken = () => {
-    document.cookie = 'user_token=; Max-Age=0; path=/';
-    console.log('🗑️ Deleted user_token cookie');
-    refreshCookies();
-    alert('User token deleted! Next API call will try to refresh (and fail if refresh_token is also deleted).');
-  };
-
-  const deleteAllTokens = () => {
-    document.cookie = 'user_token=; Max-Age=0; path=/';
-    document.cookie = 'refresh_token=; Max-Age=0; path=/';
-    document.cookie = 'session=; Max-Age=0; path=/';
-    console.log('🗑️ Deleted all auth cookies');
-    refreshCookies();
-    alert('All tokens deleted! You should be redirected to login on next API call.');
+  const checkSession = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/session`, {
+        credentials: 'include',
+      });
+      const data = await response.json();
+      alert(`Session status: ${JSON.stringify(data, null, 2)}`);
+      console.log('Session status:', data);
+    } catch (error) {
+      alert(`Session check failed: ${error}`);
+      console.error('Session check failed:', error);
+    }
   };
 
   // Only show in development
@@ -51,26 +49,20 @@ export function TokenTestHelper() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 bg-gray-900 text-white p-4 rounded-lg shadow-xl max-w-sm">
-      <h3 className="font-bold text-sm mb-2">🧪 Token Test Helper</h3>
-      
+      <h3 className="font-bold text-sm mb-2">🧪 Session Test Helper</h3>
+
       <div className="space-y-2 mb-3">
         <button
-          onClick={deleteRefreshToken}
-          className="w-full px-3 py-1 bg-orange-600 hover:bg-orange-700 rounded text-xs"
+          onClick={checkSession}
+          className="w-full px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs"
         >
-          Delete refresh_token
+          Check Session Status
         </button>
         <button
-          onClick={deleteUserToken}
-          className="w-full px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-xs"
-        >
-          Delete user_token
-        </button>
-        <button
-          onClick={deleteAllTokens}
+          onClick={deleteSession}
           className="w-full px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-xs"
         >
-          Delete ALL tokens
+          Delete Session
         </button>
         <button
           onClick={refreshCookies}

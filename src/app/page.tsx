@@ -1,11 +1,13 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { LoginPage } from "@/components/LoginPage";
+import { NEXT_PUBLIC_API_BASE_URL } from "@/lib/axios";
 
 export default function Home() {
+  const { t } = useTranslation();
   const [isChecking, setIsChecking] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -13,23 +15,25 @@ export default function Home() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('error')) {
       setIsChecking(false);
-      setIsAuthenticated(false);
       return;
     }
-    
+
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('/api/auth/session');
+      // Call backend directly to include session cookie
+      const response = await fetch(`${NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/session`, {
+        credentials: 'include',
+      });
       const data = await response.json();
-      
-      if (data.user) {
+
+      if (data.authenticated) {
         // Already authenticated, check for returnUrl parameter
         const params = new URLSearchParams(window.location.search);
         const returnUrl = params.get('returnUrl');
-        
+
         if (returnUrl) {
           // Decode and redirect to the return URL
           router.replace(decodeURIComponent(returnUrl));
@@ -37,27 +41,25 @@ export default function Home() {
           // Default redirect to checklist
           router.replace('/checklist');
         }
-      } else {
-        setIsAuthenticated(false);
+        // Don't set isChecking to false - keep showing loading while redirecting
+        return;
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      setIsAuthenticated(false);
-    } finally {
-      setIsChecking(false);
     }
+    // Only show login page if not authenticated
+    setIsChecking(false);
   };
 
   if (isChecking) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground">{t('main.loading')}</p>
+        </div>
       </div>
     );
-  }
-
-  if (isAuthenticated) {
-    return null; // Will redirect
   }
 
   return <LoginPage />;

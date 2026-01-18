@@ -9,7 +9,6 @@ import type { InviteResponse } from '@/api/checklistServiceV1.schemas';
 import {
   copyToClipboard,
   mapInviteToDisplay,
-  truncateUrl,
   type InviteDisplayData,
 } from '@/lib/invite-utils';
 import { customInstance } from '@/lib/axios';
@@ -135,18 +134,19 @@ export function ShareChecklistModal({
           description: 'Paste it anywhere to share',
         });
       } else {
+        // Show the URL so user can copy manually
         toast({
-          title: 'Copy failed',
-          description: 'Please copy the link manually',
-          variant: 'destructive',
+          title: 'Copy failed - here is your link:',
+          description: url,
+          duration: 10000, // Keep visible longer so user can copy
         });
       }
     } catch (error) {
       console.error('Copy error:', error);
       toast({
-        title: 'Copy failed',
-        description: 'An error occurred',
-        variant: 'destructive',
+        title: 'Copy failed - here is your link:',
+        description: url,
+        duration: 10000,
       });
     }
   };
@@ -308,12 +308,14 @@ export function ShareChecklistModal({
                         )}
                         <div className="flex items-center gap-2 bg-muted rounded p-2">
                           <span className="text-xl shrink-0">🔗</span>
-                          <code
-                            className="flex-1 truncate text-xs font-mono min-w-0"
-                            title={invite.url}
-                          >
-                            {truncateUrl(invite.url, 30)}
-                          </code>
+                          <input
+                            type="text"
+                            readOnly
+                            value={invite.url}
+                            className="flex-1 text-xs font-mono min-w-0 bg-transparent border-none outline-none cursor-text"
+                            onClick={(e) => e.currentTarget.select()}
+                            title="Click to select, then Ctrl+C to copy"
+                          />
                         </div>
                       </div>
 

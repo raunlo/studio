@@ -14,7 +14,7 @@
   },
   "social": {
     "users": "rahulolev kasutaja",
-    "join": "Liitu meie kasvava kogukonnaga täna! 🌟"
+    "join": "Liitu meie kasvava kogukonnaga täna!"
   },
   "main": {
     "title": "Nimekiri",
@@ -46,10 +46,19 @@
     "shoppingLists": "Ostunimekirjad ja toidumenüüd",
     "booksMovies": "Raamatud ja filmid mida tahad",
     "markCompleted": "Märgi ostetud/loetud/vaadatud",
-    "startFree": "Hakka nimekirju pidama TASUTA!",
+    "startFree": "Alusta nimekirjade loomist TASUTA",
     "oneClick": "Lihtsalt üks klikk ja alusta kohe!",
+    "featureLists": "Pesastatud nimekirjad",
+    "featureShare": "Jaga perega",
+    "featureNestedDesc": "Organiseeri pesastatud alamelementidega",
+    "featureTrackDesc": "Jälgi oma edenemist lihtsalt",
+    "featureShareDesc": "Jaga pere ja sõpradega",
+    "featureSell1": "Ostunimekirjad",
+    "featureSell2": "Loo igasuguseid nimekirju",
+    "featureSell3": "Jaga ja muuda koos",
     "happyUsers": "1000+ rahul kasutajat",
-    "joinCommunity": "Alusta juba täna tasuta!"
+    "secure": "Turvaline",
+    "privacy": "Privaatne"
   },
   "languages": {
     "et": "Eesti keel",
@@ -90,9 +99,15 @@
     "errorDescription": "Ei saanud seda nimekirja laadida. See võib olla kustutatud või sul ei ole sellele juurdepääsu.",
     "backToOverview": "Tagasi Ülevaatele",
     "clearCompleted": "Eemalda tehtud",
+    "clearCompletedConfirm": "Kustuta {{count}} tehtud elementi?",
+    "clearAll": "Kustuta kõik",
     "itemDeleted": "Element kustutatud",
     "undo": "Võta tagasi",
     "emptyListTitle": "Nimekiri on tühi",
-    "emptyListDescription": "Lisa kiirvalikust või kirjuta oma ülal ↑"
+    "emptyListDescription": "Lisa kiirvalikust või kirjuta oma ülal",
+    "noCompletedItems": "Tehtud elemente pole",
+    "noCompletedDescription": "Tehtud elemendid ilmuvad siia",
+    "noActiveItems": "Kõik tehtud!",
+    "noActiveDescription": "Oled kõik selles nimekirjas ära teinud"
   }
 }

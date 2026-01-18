@@ -2,35 +2,35 @@
   "welcome": "Bienvenido a",
   "appName": "Daily Chexly",
   "tagline": "Mantén tus listas siempre a mano",
-  "subtitle": "Únete a miles de usuarios que mantienen sus listas de compras, libros y otras cosas de manera inteligente",
+  "subtitle": "Únete a miles de usuarios que mantienen inteligentemente sus listas de compras, libros y otras cosas",
   "benefits": {
     "shopping": "Listas de compras y menús de comida",
     "books": "Libros y películas que quieres",
-    "tracking": "Marca comprado/leído/visto"
+    "tracking": "Marcar comprado/leído/visto"
   },
   "cta": {
-    "button": "¡Empieza a llevar listas GRATIS!",
-    "subtitle": "¡Solo un clic y comienza ahora mismo!"
+    "button": "¡Comienza a mantener listas GRATIS!",
+    "subtitle": "¡Solo un clic y comienza de inmediato!"
   },
   "social": {
     "users": "usuarios felices",
-    "join": "¡Únete a nuestra creciente comunidad hoy! 🌟"
+    "join": "¡Únete a nuestra comunidad hoy!"
   },
   "main": {
-    "title": "Lista de verificación",
-    "subtitle": "Organiza la lista aquí usando arrastrar y soltar para ordenar tus elementos.",
+    "title": "Lista",
+    "subtitle": "Organiza la lista aquí arrastrando y soltando para ordenar tus elementos.",
     "addItem": "Agregar elemento o buscar plantillas...",
     "addButton": "Agregar elemento",
     "loading": "Cargando tus listas...",
-    "error": "Error al cargar las listas",
-    "empty": "¡Aún no hay listas! Crea tu primera lista para comenzar."
+    "error": "Error al cargar listas",
+    "empty": "Aún no hay listas. ¡Crea tu primera!"
   },
   "footer": {
     "terms": "Términos de Servicio",
     "privacy": "Política de Privacidad"
   },
   "header": {
-    "title": "App de listas #1 en Estonia",
+    "title": "#1 app de listas en Estonia",
     "subtitle": "¡Mantén listas de compras, libros y películas siempre a mano!"
   },
   "auth": {
@@ -46,10 +46,19 @@
     "shoppingLists": "Listas de compras y menús de comida",
     "booksMovies": "Libros y películas que quieres",
     "markCompleted": "Marcar comprado/leído/visto",
-    "startFree": "¡Comienza a mantener listas GRATIS!",
+    "startFree": "Comienza a crear listas GRATIS",
     "oneClick": "¡Solo un clic y comienza de inmediato!",
+    "featureLists": "Listas anidadas",
+    "featureShare": "Comparte con familia",
+    "featureNestedDesc": "Organiza con sub-elementos anidados",
+    "featureTrackDesc": "Rastrea tu progreso fácilmente",
+    "featureShareDesc": "Comparte con familia y amigos",
+    "featureSell1": "Listas de compras",
+    "featureSell2": "Crea cualquier lista",
+    "featureSell3": "Comparte y edita juntos",
     "happyUsers": "1000+ usuarios felices",
-    "joinCommunity": "¡Comienza gratis hoy!"
+    "secure": "Seguro",
+    "privacy": "Privado"
   },
   "languages": {
     "et": "Eesti keel",
@@ -62,37 +71,43 @@
     "newChecklist": "Nueva Lista",
     "createTitle": "Nueva lista",
     "createDescription": "Dale un nombre a tu lista y comienza",
-    "renameTitle": "Cambiar nombre",
+    "renameTitle": "Renombrar lista",
     "renameDescription": "Dale un nuevo nombre a tu lista",
     "save": "Guardar",
     "saving": "Guardando...",
     "checklistNameLabel": "Nombre de la lista",
-    "checklistNamePlaceholder": "ej., Lista de compras",
+    "checklistNamePlaceholder": "Ej: Lista de compras",
     "cancel": "Cancelar",
     "create": "Crear",
     "creating": "Creando...",
     "empty": "Aún no hay listas",
     "emptyDescription": "Crea tu primera lista para comenzar a organizar tus tareas.",
     "createFirst": "Crea Tu Primera Lista",
-    "completed": "completados",
+    "completed": "completado",
     "emptyList": "Lista vacía",
     "myChecklists": "Mis Listas",
-    "sharedWithMe": "Compartidas conmigo"
+    "sharedWithMe": "Compartido conmigo"
   },
   "detail": {
-    "back": "Volver a las listas",
+    "back": "Volver a listas",
     "delete": "Eliminar",
     "deleteTitle": "¿Eliminar Lista?",
     "deleteDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente la lista y todos sus elementos.",
     "cancel": "Cancelar",
     "deleteConfirm": "Eliminar Lista",
-    "error": "Error al cargar la lista",
+    "error": "Error al cargar lista",
     "errorDescription": "No se pudo cargar esta lista. Puede haber sido eliminada o no tienes acceso.",
     "backToOverview": "Volver al Resumen",
     "clearCompleted": "Limpiar completados",
+    "clearCompletedConfirm": "¿Eliminar {{count}} elementos completados?",
+    "clearAll": "Limpiar todo",
     "itemDeleted": "Elemento eliminado",
     "undo": "Deshacer",
     "emptyListTitle": "Tu lista está vacía",
-    "emptyListDescription": "Agrega rápidamente elementos comunes o escribe los tuyos arriba ↑"
+    "emptyListDescription": "Agrega elementos rápidamente o escribe arriba",
+    "noCompletedItems": "No hay elementos completados",
+    "noCompletedDescription": "Los elementos completados aparecerán aquí",
+    "noActiveItems": "¡Todo listo!",
+    "noActiveDescription": "Has completado todos los elementos de esta lista"
   }
 }

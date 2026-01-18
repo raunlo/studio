@@ -5,44 +5,63 @@ import { useState, useRef, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Trash2, Edit2, Check, X, ChevronRight } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Plus, Trash2, Check, X, ChevronRight } from "lucide-react";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 import { CheckedState } from "@radix-ui/react-checkbox";
 
 type ChecklistItemProps = {
   item: ChecklistItem;
   checklistId: number;
-  updateItem: (item: ChecklistItem) => Promise<void>
-  addRow: (itemId: number | null, row: ChecklistItemRow) => Promise<void>
-  deleteItem: (itemId: number | null) => Promise<void>
-  deleteRow: (itemId: number | null, rowId: number | null) => Promise<void>
-  toggleCompletion: (itemId: number | null) => Promise<void>
+  updateItem: (item: ChecklistItem) => Promise<void>;
+  addRow: (itemId: number | null, row: ChecklistItemRow) => Promise<void>;
+  deleteItem: (itemId: number | null) => Promise<void>;
+  deleteRow: (itemId: number | null, rowId: number | null) => Promise<void>;
+  toggleCompletion: (itemId: number | null) => Promise<void>;
 };
 
-export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, deleteRow, toggleCompletion }: ChecklistItemProps) {
+export function ChecklistItemComponent({
+  item,
+  addRow,
+  updateItem,
+  deleteItem,
+  deleteRow,
+  toggleCompletion,
+}: ChecklistItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [newSubItemText, setNewSubItemText] = useState("");
   const [newSubItemQuantity, setNewSubItemQuantity] = useState("");
-  
-  // Edit states
+
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingRowId, setEditingRowId] = useState<number | null>(null);
   const [titleEditValue, setTitleEditValue] = useState(item.name);
   const [rowEditValue, setRowEditValue] = useState("");
-  
-  // Refs for auto-focus
+
   const titleInputRef = useRef<HTMLInputElement>(null);
   const rowInputRef = useRef<HTMLInputElement>(null);
-  
-  // Auto-focus when entering edit mode
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressDuration = 500; // ms
+
+  // Cleanup long press timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (isEditingTitle && titleInputRef.current) {
       titleInputRef.current.focus();
       titleInputRef.current.select();
     }
   }, [isEditingTitle]);
-  
+
   useEffect(() => {
     if (editingRowId && rowInputRef.current) {
       rowInputRef.current.focus();
@@ -59,67 +78,78 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
         name: newRowName,
         completed: false,
       };
-      // Clear input immediately for better UX
       setNewSubItemText("");
       setNewSubItemQuantity("");
-      
-      // Add row with optimistic update already handled in hook
       await addRow(item.id, newItemRow);
     }
   };
 
   const handleItemCompleted = async (checked: boolean) => {
     if (!item.id) return;
-    
-    // If checking main item as completed, mark all sub-items as completed
-    // If unchecking main item, mark all sub-items as uncompleted
+
     if (item.rows && item.rows.length > 0) {
-      const updatedRows = item.rows.map(row => ({ ...row, completed: checked }));
+      const updatedRows = item.rows.map((row) => ({ ...row, completed: checked }));
       const updatedItem: ChecklistItem = {
         ...item,
         completed: checked,
-        rows: updatedRows
+        rows: updatedRows,
       };
-      
-      // Update the item with all sub-items synced
       await updateItem(updatedItem);
     } else {
-      // No sub-items, just toggle the main item
       await toggleCompletion(item.id);
     }
   };
 
-  const handleRowCompleted = async (rowItem: ChecklistItemRow, checked: boolean) => {
-    // Guard: Prevent toggling rows that don't have a valid ID yet
-    // This prevents race conditions when marking newly created sub-items as complete
+  const handleRowCompleted = async (
+    rowItem: ChecklistItemRow,
+    checked: boolean
+  ) => {
     if (!rowItem.id || rowItem.id <= 0) {
-      console.warn('Cannot toggle completion for row without valid ID:', rowItem);
+      console.warn("Cannot toggle completion for row without valid ID:", rowItem);
       return;
     }
 
     const updatedRow = { ...rowItem, completed: checked };
-    const updatedRows = (item.rows ?? [])
-      .map((row) => (row.id === updatedRow.id ? updatedRow : row));
+    const updatedRows = (item.rows ?? []).map((row) =>
+      row.id === updatedRow.id ? updatedRow : row
+    );
 
-    // Check if all sub-items are completed to auto-complete the main item
     const allRowsAreDone = updatedRows.filter((rows) => !rows.completed).length === 0;
     const anyRowsUndone = updatedRows.some((rows) => !rows.completed);
 
     const updatedChecklistItem: ChecklistItem = {
       ...item,
-      // Auto-complete main item if all sub-items are done
-      // Auto-uncomplete main item if any sub-item is undone (only if main was completed)
-      completed: allRowsAreDone ? true : (anyRowsUndone && item.completed ? false : item.completed),
+      completed: allRowsAreDone
+        ? true
+        : anyRowsUndone && item.completed
+        ? false
+        : item.completed,
       rows: updatedRows,
     };
 
     await updateItem(updatedChecklistItem);
-  }
+  };
 
-  // Title editing functions
+  const clearLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
   const startTitleEdit = () => {
     setTitleEditValue(item.name);
     setIsEditingTitle(true);
+  };
+
+  const handleTitleTouchStart = () => {
+    longPressTimerRef.current = setTimeout(() => {
+      startTitleEdit();
+    }, longPressDuration);
+  };
+
+  const handleTitleTouchEnd = () => {
+    clearLongPress();
   };
 
   const saveTitleEdit = async () => {
@@ -137,19 +167,28 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
   };
 
   const handleTitleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       saveTitleEdit();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       e.preventDefault();
       cancelTitleEdit();
     }
   };
 
-  // Row editing functions
   const startRowEdit = (row: ChecklistItemRow) => {
     setRowEditValue(row.name);
     setEditingRowId(row.id);
+  };
+
+  const handleRowTouchStart = (row: ChecklistItemRow) => {
+    longPressTimerRef.current = setTimeout(() => {
+      startRowEdit(row);
+    }, longPressDuration);
+  };
+
+  const handleRowTouchEnd = () => {
+    clearLongPress();
   };
 
   const saveRowEdit = async () => {
@@ -170,26 +209,45 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
   };
 
   const handleRowKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       saveRowEdit();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       e.preventDefault();
       cancelRowEdit();
     }
   };
 
   return (
-    <div className="flex items-start gap-2 sm:gap-3 w-full min-h-[44px]">
-      {/* Checkbox - Mobile-optimized (24px) */}
-      <div className="flex items-center pt-1">
-        <Checkbox
-          id={String(item.id ?? "temp")}
-          checked={item.completed}
-          onCheckedChange={(checked) => handleItemCompleted(checked as boolean)}
-          className="h-6 w-6 shrink-0 touch-manipulation"
+    <div className="flex items-start gap-3 w-full min-h-[44px]">
+      {/* Custom checkbox with satisfying animation */}
+      <div className="flex items-center pt-0.5">
+        <button
+          onClick={() => handleItemCompleted(!item.completed)}
+          className={cn(
+            "w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-200 touch-manipulation",
+            item.completed
+              ? "bg-primary border-primary"
+              : "border-border hover:border-primary/50 bg-transparent"
+          )}
           aria-label={`Mark item ${item.name} as complete`}
-        />
+        >
+          {item.completed && (
+            <svg
+              className="w-4 h-4 text-primary-foreground animate-check"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={3}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          )}
+        </button>
       </div>
 
       {/* Collapsible Container */}
@@ -198,76 +256,93 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
         onOpenChange={(checkedState) => setExpanded(checkedState as boolean)}
         className="flex-grow"
       >
-        {/* Title Row with trigger and delete button */}
+        {/* Title Row */}
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-start gap-1 sm:gap-2 flex-grow">
-            {/* Expand/Collapse Button - Always visible to allow adding sub-items */}
+          <div className="flex items-start gap-2 flex-grow">
+            {/* Expand/Collapse Button */}
             <CollapsibleTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 sm:h-9 sm:w-9 shrink-0 touch-manipulation"
-                aria-label={expanded ? "Collapse checklist item" : "Expand checklist item"}
+                className="h-9 w-9 shrink-0 touch-manipulation text-muted-foreground hover:text-foreground"
+                aria-label={
+                  expanded ? "Collapse checklist item" : "Expand checklist item"
+                }
               >
-                <ChevronRight className={cn("h-5 w-5 sm:h-4 sm:w-4 transition-transform duration-200", expanded && "rotate-90")} />
+                <ChevronRight
+                  className={cn(
+                    "h-4 w-4 transition-transform duration-200",
+                    expanded && "rotate-90"
+                  )}
+                />
               </Button>
             </CollapsibleTrigger>
 
             {/* Title content */}
-            <div className="flex flex-col items-start gap-2 text-left flex-grow pt-1.5 sm:pt-1">
-              {/* Editable title */}
+            <div className="flex flex-col items-start gap-1.5 text-left flex-grow pt-1.5">
               {isEditingTitle ? (
-                <div className="flex items-center gap-2 w-full" onClick={(e) => e.stopPropagation()}>
+                <div
+                  className="flex items-center gap-2 w-full"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Input
                     ref={titleInputRef}
                     value={titleEditValue}
                     onChange={(e) => setTitleEditValue(e.target.value)}
                     onKeyDown={handleTitleKeyDown}
                     onBlur={saveTitleEdit}
-                    className="h-10 sm:h-9 text-base flex-grow border-none shadow-none bg-transparent px-0 focus-visible:ring-1 focus-visible:ring-primary"
+                    className="h-9 text-base flex-grow border-none shadow-none bg-transparent px-0 focus-visible:ring-1 focus-visible:ring-primary"
                   />
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={saveTitleEdit}
-                    className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 touch-manipulation"
+                    className="h-8 w-8 shrink-0 touch-manipulation"
                     aria-label="Save edit"
                   >
-                    <Check className="h-5 w-5 sm:h-4 sm:w-4 text-green-600" />
+                    <Check className="h-4 w-4 text-primary" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={cancelTitleEdit}
-                    className="h-10 w-10 sm:h-8 sm:w-8 shrink-0 touch-manipulation"
+                    className="h-8 w-8 shrink-0 touch-manipulation"
                     aria-label="Cancel edit"
                   >
-                    <X className="h-5 w-5 sm:h-4 sm:w-4 text-muted-foreground" />
+                    <X className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </div>
               ) : (
                 <span
                   className={cn(
-                    "cursor-pointer hover:text-primary transition-colors text-base leading-relaxed",
-                    item.completed && "line-through text-muted-foreground opacity-60"
+                    "cursor-pointer sm:hover:text-primary transition-colors text-base leading-relaxed select-none",
+                    item.completed && "line-through text-muted-foreground"
                   )}
                   onClick={(e) => {
                     e.stopPropagation();
                     startTitleEdit();
                   }}
-                  title="Click to edit"
+                  onTouchStart={handleTitleTouchStart}
+                  onTouchEnd={handleTitleTouchEnd}
+                  onTouchMove={clearLongPress}
                 >
                   {item.name}
                 </span>
               )}
 
-              {/* Subitems preview (collapsed state only) */}
+              {/* Subitems preview */}
               {!expanded && item.rows && item.rows.length > 0 && (
-                <div className="flex flex-wrap gap-x-2 text-sm leading-relaxed italic text-muted-foreground pointer-events-none">
+                <div className="flex flex-wrap gap-x-2 text-sm leading-relaxed text-muted-foreground pointer-events-none">
                   {item.rows.map((row, index) => (
                     <span
-                      key={row.id ? `checklistItem-row-${row.id}` : `checklistItem-row-temp-${index}`}
-                      className={cn(row.completed && "line-through opacity-60")}
+                      key={
+                        row.id
+                          ? `checklistItem-row-${row.id}`
+                          : `checklistItem-row-temp-${index}`
+                      }
+                      className={cn(
+                        row.completed && "line-through opacity-60"
+                      )}
                     >
                       {row.name}
                     </span>
@@ -277,32 +352,56 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
             </div>
           </div>
 
-          {/* Delete button - Mobile optimized */}
+          {/* Delete button */}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => deleteItem(item.id)}
             aria-label="Delete item"
-            className="h-10 w-10 sm:h-9 sm:w-9 shrink-0 touch-manipulation"
+            className="h-9 w-9 shrink-0 touch-manipulation text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           >
-            <Trash2 className="h-5 w-5 sm:h-4 sm:w-4 text-muted-foreground hover:text-destructive" />
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Expanded subitems content - Mobile optimized */}
+        {/* Expanded subitems content */}
         <CollapsibleContent>
-          <div className="pl-1 pt-3 space-y-3">
+          <div className="pl-1 pt-4 space-y-3">
             {item.rows?.map((row, index) => (
-              <div key={row.id ?? `temp-${index}`} className="flex items-center justify-between group min-h-[44px]">
-                <div className="flex items-center gap-2 sm:gap-3 flex-grow">
-                  <Checkbox
-                    id={String(row.id ?? `temp-${index}`)}
-                    checked={row.completed as CheckedState}
-                    onCheckedChange={(checked) => handleRowCompleted(row, checked as boolean)}
+              <div
+                key={row.id ?? `temp-${index}`}
+                className="flex items-center justify-between group min-h-[40px]"
+              >
+                <div className="flex items-center gap-3 flex-grow">
+                  {/* Sub-item checkbox */}
+                  <button
+                    onClick={() => handleRowCompleted(row, !row.completed)}
                     disabled={!row.id || row.id <= 0}
-                    className="h-5 w-5 shrink-0 touch-manipulation"
+                    className={cn(
+                      "w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 touch-manipulation",
+                      row.completed
+                        ? "bg-primary border-primary"
+                        : "border-border hover:border-primary/50 bg-transparent",
+                      (!row.id || row.id <= 0) && "opacity-50 cursor-not-allowed"
+                    )}
                     aria-label={`Mark sub-item ${row.name} as complete`}
-                  />
+                  >
+                    {row.completed && (
+                      <svg
+                        className="w-3 h-3 text-primary-foreground"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        strokeWidth={3}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    )}
+                  </button>
 
                   {/* Editable row name */}
                   {editingRowId === row.id ? (
@@ -313,35 +412,37 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
                         onChange={(e) => setRowEditValue(e.target.value)}
                         onKeyDown={handleRowKeyDown}
                         onBlur={saveRowEdit}
-                        className="h-10 sm:h-9 text-sm sm:text-base flex-grow border-none shadow-none bg-transparent px-0 focus-visible:ring-1 focus-visible:ring-primary"
+                        className="h-8 text-sm flex-grow border-none shadow-none bg-transparent px-0 focus-visible:ring-1 focus-visible:ring-primary"
                       />
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={saveRowEdit}
-                        className="h-9 w-9 sm:h-8 sm:w-8 shrink-0 touch-manipulation"
+                        className="h-7 w-7 shrink-0 touch-manipulation"
                         aria-label="Save edit"
                       >
-                        <Check className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-green-600" />
+                        <Check className="h-3.5 w-3.5 text-primary" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={cancelRowEdit}
-                        className="h-9 w-9 sm:h-8 sm:w-8 shrink-0 touch-manipulation"
+                        className="h-7 w-7 shrink-0 touch-manipulation"
                         aria-label="Cancel edit"
                       >
-                        <X className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-muted-foreground" />
+                        <X className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
                     </div>
                   ) : (
                     <span
                       className={cn(
-                        "text-sm sm:text-base cursor-pointer hover:text-primary transition-colors leading-relaxed",
-                        row.completed && "line-through text-muted-foreground opacity-60"
+                        "text-sm cursor-pointer sm:hover:text-primary transition-colors leading-relaxed select-none",
+                        row.completed && "line-through text-muted-foreground"
                       )}
                       onClick={() => startRowEdit(row)}
-                      title="Click to edit"
+                      onTouchStart={() => handleRowTouchStart(row)}
+                      onTouchEnd={handleRowTouchEnd}
+                      onTouchMove={clearLongPress}
                     >
                       {row.name}
                     </span>
@@ -352,37 +453,30 @@ export function ChecklistItemComponent({ item, addRow, updateItem, deleteItem, d
                   variant="ghost"
                   size="icon"
                   onClick={() => deleteRow(item.id, row.id!)}
-                  className="h-9 w-9 sm:h-8 sm:w-8 shrink-0 touch-manipulation"
+                  className="h-7 w-7 shrink-0 touch-manipulation text-muted-foreground hover:text-destructive hover:bg-destructive/10 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
                   aria-label="Delete sub-item"
                 >
-                  <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
             ))}
 
-            {/* New sub-item form - Mobile optimized */}
+            {/* New sub-item form */}
             <form onSubmit={handleAddRowItem} className="flex gap-2 pt-2">
               <Input
                 value={newSubItemText}
                 onChange={(e) => setNewSubItemText(e.target.value)}
                 placeholder="Add a sub-item..."
-                className="h-11 sm:h-10 text-sm sm:text-base flex-grow touch-manipulation"
-              />
-              <Input
-                type="number"
-                value={newSubItemQuantity}
-                onChange={(e) => setNewSubItemQuantity(e.target.value)}
-                placeholder="Qty."
-                className="h-11 sm:h-10 text-sm sm:text-base w-20 touch-manipulation"
+                className="h-10 text-sm flex-grow touch-manipulation"
               />
               <Button
                 type="submit"
                 variant="ghost"
                 size="icon"
-                className="h-11 w-11 sm:h-10 sm:w-10 shrink-0 touch-manipulation"
+                className="h-10 w-10 shrink-0 touch-manipulation text-muted-foreground hover:text-primary hover:bg-primary/10"
                 aria-label="Add sub-item"
               >
-                <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
+                <Plus className="h-4 w-4" />
               </Button>
             </form>
           </div>

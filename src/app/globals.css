@@ -1,81 +1,114 @@
+/* Import Google Fonts - must be first */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Fix for mobile viewport and safe areas (notch, home indicator) */
+html, body {
+  min-height: 100%;
+  min-height: 100dvh; /* dynamic viewport height - accounts for mobile address bar */
+  background-color: hsl(42 33% 97%); /* Match --background color for safe areas */
+}
+
+/* Ensure safe area is covered with background color */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 body {
-  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer base {
   :root {
-    /* Color palette - Clean & Minimal */
-    --background: 210 22% 98%; /* #F8FAFB - lighter, airier */
-    --foreground: 0 0% 10%; /* #1A1A1A - darker for better contrast */
-    --card: 0 0% 100%; /* Pure white */
-    --card-foreground: 0 0% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-    --primary: 207 82% 67%; /* #64B5F6 - calming blue (existing) */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 9% 46%; /* #6B7280 - subtle gray */
-    --secondary-foreground: 0 0% 100%;
-    --muted: 210 22% 96%;
-    --muted-foreground: 220 9% 46%; /* #6B7280 */
-    --accent: 124 39% 64%; /* #81C784 - gentle green (existing) */
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%; /* #EF4444 */
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%; /* #E5E7EB - ultra-subtle */
-    --input: 220 13% 91%;
-    --ring: 207 82% 67%;
+    /* Paper & Ink Color Palette */
+    --background: 42 33% 97%; /* Warm off-white, like quality paper */
+    --foreground: 30 10% 15%; /* Rich dark brown-black ink */
+    --card: 45 40% 99%; /* Slightly warmer white for cards */
+    --card-foreground: 30 10% 15%;
+    --popover: 45 40% 99%;
+    --popover-foreground: 30 10% 15%;
 
-    /* Spacing scale - Mobile-first */
+    /* Primary: Deep teal - sophisticated yet calming */
+    --primary: 175 50% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: Warm taupe */
+    --secondary: 30 15% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted: Soft sepia */
+    --muted: 40 20% 94%;
+    --muted-foreground: 30 10% 45%;
+
+    /* Accent: Terracotta for completed/success states */
+    --accent: 15 60% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive: Muted red */
+    --destructive: 5 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders and inputs */
+    --border: 35 20% 88%;
+    --input: 35 20% 88%;
+    --ring: 175 50% 35%;
+
+    /* Spacing */
     --spacing-xs: 8px;
     --spacing-sm: 12px;
     --spacing-md: 16px;
     --spacing-lg: 24px;
     --spacing-xl: 32px;
 
-    /* Border radius - Slightly larger for modern look */
-    --radius: 10px;
+    /* Border radius - slightly softer */
+    --radius: 12px;
     --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
 
-    /* Touch targets - Mobile-first */
+    /* Touch targets */
     --touch-target-min: 44px;
 
-    /* Shadows - Minimal */
-    --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.06);
-    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
+    /* Shadows - warm and layered */
+    --shadow-subtle: 0 1px 3px rgba(45, 35, 25, 0.06), 0 1px 2px rgba(45, 35, 25, 0.04);
+    --shadow-card: 0 4px 12px rgba(45, 35, 25, 0.08), 0 2px 4px rgba(45, 35, 25, 0.04);
+    --shadow-elevated: 0 12px 40px rgba(45, 35, 25, 0.12), 0 4px 12px rgba(45, 35, 25, 0.06);
   }
-  .dark {
-    /* Dark mode - for future use */
-    --background: 210 15% 12%;
-    --foreground: 210 10% 85%;
-    --card: 210 15% 15%;
-    --card-foreground: 210 10% 85%;
-    --popover: 210 15% 15%;
-    --popover-foreground: 210 10% 85%;
-    --primary: 207 82% 67%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 15% 25%;
-    --secondary-foreground: 210 10% 85%;
-    --muted: 210 15% 25%;
-    --muted-foreground: 210 10% 65%;
-    --accent: 124 39% 64%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 210 15% 25%;
-    --input: 210 15% 30%;
-    --ring: 207 82% 67%;
 
-    /* Shadows match light mode */
-    --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
+  .dark {
+    /* Dark mode - Rich midnight */
+    --background: 30 15% 10%;
+    --foreground: 40 20% 90%;
+    --card: 30 12% 14%;
+    --card-foreground: 40 20% 90%;
+    --popover: 30 12% 14%;
+    --popover-foreground: 40 20% 90%;
+    --primary: 175 45% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 12% 25%;
+    --secondary-foreground: 40 20% 90%;
+    --muted: 30 12% 20%;
+    --muted-foreground: 40 15% 60%;
+    --accent: 15 55% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 5 60% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 30 12% 22%;
+    --input: 30 12% 25%;
+    --ring: 175 45% 50%;
+
+    --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.25);
+    --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -86,4 +119,171 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Headline font */
+  h1, h2, h3, .font-headline {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Custom animations */
+@layer utilities {
+  /* Paper texture overlay */
+  .paper-texture {
+    position: relative;
+  }
+  .paper-texture::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.025;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+  }
+
+  /* Fade animations */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  .animate-slide-in {
+    animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Check animation for completed items */
+  .animate-check {
+    animation: checkmark 0.4s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  }
+
+  /* Strikethrough animation */
+  .animate-strikethrough {
+    background: linear-gradient(to right, currentColor 0%, currentColor 100%) no-repeat;
+    background-size: 0% 2px;
+    background-position: 0 50%;
+    animation: strikethrough 0.3s ease-out forwards;
+  }
+
+  /* Stagger animation delays */
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-6 { animation-delay: 0.3s; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes checkmark {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes strikethrough {
+  from {
+    background-size: 0% 2px;
+  }
+  to {
+    background-size: 100% 2px;
+  }
+}
+
+/* Accordion animations - keep existing */
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+/* Custom scrollbar - refined */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+  border: 2px solid hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
+}
+
+/* Focus visible styles */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+  background: hsl(var(--primary) / 0.2);
+  color: hsl(var(--foreground));
 }
