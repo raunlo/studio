@@ -14,6 +14,8 @@ export interface ChecklistItem {
   completed: boolean;
   orderNumber: number | null;
   rows: ChecklistItemRow[] | null;
+  /** Transient flag for SSE highlight animation - auto-clears after animation */
+  _sseHighlight?: boolean;
 }
 
 export interface ChecklistItemRow {

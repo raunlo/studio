@@ -219,7 +219,12 @@ export function ChecklistItemComponent({
   };
 
   return (
-    <div className="flex items-start gap-3 w-full min-h-[44px]">
+    <div
+      className={cn(
+        "flex items-start gap-3 w-full min-h-[44px] rounded-lg transition-colors",
+        item._sseHighlight && "animate-sse-highlight"
+      )}
+    >
       {/* Custom checkbox with satisfying animation */}
       <div className="flex items-center pt-0.5">
         <button
