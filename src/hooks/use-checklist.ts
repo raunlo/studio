@@ -30,6 +30,9 @@ import { getClientId } from "@/lib/axios";
 const logger = createLogger('UseChecklist');
 // SSE used for realtime updates
 
+// Duration for SSE highlight animation (matches CSS animation duration)
+const SSE_HIGHLIGHT_DURATION = 1500;
+
 const inFlightRequests = new Map<string, Promise<unknown>>();
 
 async function dedupeRequest<T>(key: string, fn: () => Promise<T>): Promise<T> {
@@ -67,6 +70,7 @@ export function useChecklist(
   const recentlyAddedItemsRef = useRef<Set<number>>(new Set()); // Track recently added item IDs
   const recentlyReorderedItemsRef = useRef<Set<string>>(new Set()); // Track recently reordered items
   const clientIdRef = useRef<string>(''); // Persistent client ID - initialized lazily
+  const highlightTimeoutsRef = useRef<Map<number, NodeJS.Timeout>>(new Map()); // Track highlight clear timeouts
 
   // Initialize client ID lazily to avoid SSR issues
   if (typeof window !== 'undefined' && !clientIdRef.current) {
@@ -130,19 +134,51 @@ export function useChecklist(
     }, 1500);
   }, [mutateItems, checklistId]);
 
+  // Clear SSE highlight after animation completes
+  const clearSseHighlight = useCallback((itemId: number) => {
+    // Clear any existing timeout for this item
+    const existingTimeout = highlightTimeoutsRef.current.get(itemId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    // Schedule clearing the highlight
+    const timeout = setTimeout(() => {
+      mutateItems((currentItems) => {
+        if (!currentItems) return currentItems;
+        return currentItems.map(item =>
+          item.id === itemId ? { ...item, _sseHighlight: undefined } : item
+        );
+      }, { revalidate: false });
+      highlightTimeoutsRef.current.delete(itemId);
+    }, SSE_HIGHLIGHT_DURATION);
+
+    highlightTimeoutsRef.current.set(itemId, timeout);
+  }, [mutateItems]);
+
+  // Mark an item as highlighted from SSE and schedule clear
+  const markItemHighlighted = useCallback((item: ChecklistItem): ChecklistItem => {
+    if (item.id) {
+      clearSseHighlight(item.id);
+    }
+    return { ...item, _sseHighlight: true };
+  }, [clearSseHighlight]);
+
   const handleItemCreatedMessageFromChecklistItemUpdates = (newItem: ChecklistItem)  => {
           const firstCompletedIndex = itemsRef.current.findIndex(item => item.completed);
           const insertIndex = firstCompletedIndex === -1 ? itemsRef.current.length : firstCompletedIndex;
+          const highlightedItem = markItemHighlighted(newItem);
           const updatedItems = [
         ...itemsRef.current.slice(0, insertIndex),
-        newItem,
+        highlightedItem,
         ...itemsRef.current.slice(insertIndex)
           ];
           scheduleRefetch({ updatedItems: updatedItems });
         }
-  
+
   const handleItemUpdatedMessageFromChecklistItemUpdates = (payload: ChecklistItem)  => {
-          scheduleRefetch({ updatedItems: (itemsRef.current ?? []).map(item => item.id === payload.id ? payload : item) });
+          const highlightedItem = markItemHighlighted(payload);
+          scheduleRefetch({ updatedItems: (itemsRef.current ?? []).map(item => item.id === payload.id ? highlightedItem : item) });
   }
   const handleItemReorderedMessageFromChecklistItemUpdates = (payload: ChecklistItemReorderedEventPayload)  => {
           const itemId = payload.itemId;
@@ -164,8 +200,9 @@ export function useChecklist(
             targetIndex = itemsCopy.length;
           }
 
-          // Insert the moved item at the target index
-          itemsCopy.splice(targetIndex, 0, { ...movedItem, orderNumber: newOrderNumber });
+          // Insert the moved item at the target index with highlight
+          const highlightedItem = markItemHighlighted({ ...movedItem, orderNumber: newOrderNumber });
+          itemsCopy.splice(targetIndex, 0, highlightedItem);
 
           // Reassign orderNumbers to ensure correct sequence
           const sortedItems = itemsCopy.map((item, idx) => ({
@@ -184,7 +221,7 @@ export function useChecklist(
       const item = currentItems.find((i) => i.id === payload.itemId);
       if (item) {
         const newRows = [...(item.rows || []), payload.row];
-        const updatedItem = { ...item, rows: newRows };
+        const updatedItem = markItemHighlighted({ ...item, rows: newRows });
         const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
         scheduleRefetch({ updatedItems: newItemsArray });
       }
@@ -194,7 +231,7 @@ export function useChecklist(
       const item = currentItems.find((i) => i.id === data.itemId);
       if (item) {
         const newRows = (item.rows || []).filter((r) => r.id !== data.rowId);
-        const updatedItem = { ...item, rows: newRows };
+        const updatedItem = markItemHighlighted({ ...item, rows: newRows });
         const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
         scheduleRefetch({ updatedItems: newItemsArray });
       }

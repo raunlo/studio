@@ -181,6 +181,27 @@ body {
   .stagger-4 { animation-delay: 0.2s; }
   .stagger-5 { animation-delay: 0.25s; }
   .stagger-6 { animation-delay: 0.3s; }
+
+  /* SSE remote update highlight - subtle glow that fades */
+  .animate-sse-highlight {
+    animation: sseHighlight 1.5s ease-out forwards;
+  }
+}
+
+/* SSE highlight animation - gentle pulse to show remote changes */
+@keyframes sseHighlight {
+  0% {
+    background-color: hsl(var(--primary) / 0.15);
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.2);
+  }
+  30% {
+    background-color: hsl(var(--primary) / 0.1);
+    box-shadow: 0 0 8px 2px hsl(var(--primary) / 0.15);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 0 transparent;
+  }
 }
 
 @keyframes fadeIn {
