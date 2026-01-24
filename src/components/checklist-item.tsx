@@ -10,9 +10,19 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Plus, Trash2, Check, X, ChevronRight } from "lucide-react";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 import { CheckedState } from "@radix-ui/react-checkbox";
+import { useIsMobile } from "@/lib/hooks/use-media-query";
+import { useTranslation } from "react-i18next";
 
 type ChecklistItemProps = {
   item: ChecklistItem;
@@ -32,6 +42,8 @@ export function ChecklistItemComponent({
   deleteRow,
   toggleCompletion,
 }: ChecklistItemProps) {
+  const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
   const [newSubItemText, setNewSubItemText] = useState("");
   const [newSubItemQuantity, setNewSubItemQuantity] = useState("");
@@ -264,30 +276,29 @@ export function ChecklistItemComponent({
         {/* Title Row */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-start gap-2 flex-grow">
-            {/* Expand/Collapse Button - hide when editing */}
-            {!isEditingTitle && (
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 shrink-0 touch-manipulation text-muted-foreground hover:text-foreground"
-                  aria-label={
-                    expanded ? "Collapse checklist item" : "Expand checklist item"
-                  }
-                >
-                  <ChevronRight
-                    className={cn(
-                      "h-4 w-4 transition-transform duration-200",
-                      expanded && "rotate-90"
-                    )}
-                  />
-                </Button>
-              </CollapsibleTrigger>
-            )}
+            {/* Expand/Collapse Button */}
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0 touch-manipulation text-muted-foreground hover:text-foreground"
+                aria-label={
+                  expanded ? "Collapse checklist item" : "Expand checklist item"
+                }
+              >
+                <ChevronRight
+                  className={cn(
+                    "h-4 w-4 transition-transform duration-200",
+                    expanded && "rotate-90"
+                  )}
+                />
+              </Button>
+            </CollapsibleTrigger>
 
             {/* Title content */}
             <div className="flex flex-col items-start gap-1.5 text-left flex-grow pt-1.5">
-              {isEditingTitle ? (
+              {/* Desktop inline edit */}
+              {isEditingTitle && !isMobile ? (
                 <div
                   className="flex items-center gap-2 w-full"
                   onClick={(e) => e.stopPropagation()}
@@ -298,25 +309,25 @@ export function ChecklistItemComponent({
                     onChange={(e) => setTitleEditValue(e.target.value)}
                     onKeyDown={handleTitleKeyDown}
                     onBlur={saveTitleEdit}
-                    className="min-h-[44px] text-base flex-1 px-3 py-2 focus-visible:ring-1 focus-visible:ring-primary"
+                    className="h-9 text-base flex-grow"
                   />
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={saveTitleEdit}
-                    className="h-10 w-10 shrink-0 touch-manipulation"
+                    className="h-8 w-8 shrink-0"
                     aria-label="Save edit"
                   >
-                    <Check className="h-5 w-5 text-primary" />
+                    <Check className="h-4 w-4 text-primary" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={cancelTitleEdit}
-                    className="h-10 w-10 shrink-0 touch-manipulation"
+                    className="h-8 w-8 shrink-0"
                     aria-label="Cancel edit"
                   >
-                    <X className="h-5 w-5 text-muted-foreground" />
+                    <X className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </div>
               ) : (
@@ -359,18 +370,16 @@ export function ChecklistItemComponent({
             </div>
           </div>
 
-          {/* Delete button - hide when editing title */}
-          {!isEditingTitle && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => deleteItem(item.id)}
-              aria-label="Delete item"
-              className="h-9 w-9 shrink-0 touch-manipulation text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
+          {/* Delete button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => deleteItem(item.id)}
+            aria-label="Delete item"
+            className="h-9 w-9 shrink-0 touch-manipulation text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Expanded subitems content */}
@@ -475,7 +484,7 @@ export function ChecklistItemComponent({
               <Input
                 value={newSubItemText}
                 onChange={(e) => setNewSubItemText(e.target.value)}
-                placeholder="Add a sub-item..."
+                placeholder={t('item.addSubItem')}
                 className="h-10 text-sm flex-grow touch-manipulation"
               />
               <Button
@@ -491,6 +500,44 @@ export function ChecklistItemComponent({
           </div>
         </CollapsibleContent>
       </Collapsible>
+
+      {/* Bottom Sheet for editing title - only on mobile */}
+      {isMobile && (
+        <Sheet open={isEditingTitle} onOpenChange={(open) => !open && cancelTitleEdit()}>
+          <SheetContent side="bottom" className="rounded-t-xl">
+            <SheetHeader>
+              <SheetTitle>{t('item.editTitle')}</SheetTitle>
+              <SheetDescription>{t('item.editDescription')}</SheetDescription>
+            </SheetHeader>
+            <div className="py-6">
+              <Input
+                ref={titleInputRef}
+                value={titleEditValue}
+                onChange={(e) => setTitleEditValue(e.target.value)}
+                onKeyDown={handleTitleKeyDown}
+                placeholder={t('item.namePlaceholder')}
+                className="h-12 text-lg w-full"
+                autoFocus
+              />
+            </div>
+            <SheetFooter className="flex-row gap-3 sm:flex-row">
+              <Button
+                variant="outline"
+                onClick={cancelTitleEdit}
+                className="flex-1 h-12 touch-manipulation"
+              >
+                {t('item.cancel')}
+              </Button>
+              <Button
+                onClick={saveTitleEdit}
+                className="flex-1 h-12 touch-manipulation"
+              >
+                {t('item.save')}
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 }

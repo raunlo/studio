@@ -86,7 +86,18 @@
     "completed": "completed",
     "emptyList": "Empty list",
     "myChecklists": "My Checklists",
-    "sharedWithMe": "Shared with me"
+    "sharedWithMe": "Shared with me",
+    "delete": "Delete",
+    "cannotDelete": "Cannot delete",
+    "deleteAllItemsFirst": "Delete all items first"
+  },
+  "item": {
+    "editTitle": "Rename",
+    "editDescription": "Enter a new name",
+    "namePlaceholder": "Name...",
+    "addSubItem": "Add...",
+    "save": "Save",
+    "cancel": "Cancel"
   },
   "detail": {
     "back": "Back to checklists",
