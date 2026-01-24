@@ -86,7 +86,18 @@
     "completed": "tehtud",
     "emptyList": "Tühi nimekiri",
     "myChecklists": "Minu Nimekirjad",
-    "sharedWithMe": "Minuga jagatud"
+    "sharedWithMe": "Minuga jagatud",
+    "delete": "Kustuta",
+    "cannotDelete": "Ei saa kustutada",
+    "deleteAllItemsFirst": "Kustuta kõigepealt kõik ülesanded"
+  },
+  "item": {
+    "editTitle": "Muuda nime",
+    "editDescription": "Sisesta uus nimi",
+    "namePlaceholder": "Nimi...",
+    "addSubItem": "Lisa...",
+    "save": "Salvesta",
+    "cancel": "Tühista"
   },
   "detail": {
     "back": "Tagasi nimekirjade juurde",

@@ -10,9 +10,19 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Plus, Trash2, Check, X, ChevronRight } from "lucide-react";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 import { CheckedState } from "@radix-ui/react-checkbox";
+import { useIsMobile } from "@/lib/hooks/use-media-query";
+import { useTranslation } from "react-i18next";
 
 type ChecklistItemProps = {
   item: ChecklistItem;
@@ -32,6 +42,8 @@ export function ChecklistItemComponent({
   deleteRow,
   toggleCompletion,
 }: ChecklistItemProps) {
+  const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
   const [newSubItemText, setNewSubItemText] = useState("");
   const [newSubItemQuantity, setNewSubItemQuantity] = useState("");
@@ -285,7 +297,8 @@ export function ChecklistItemComponent({
 
             {/* Title content */}
             <div className="flex flex-col items-start gap-1.5 text-left flex-grow pt-1.5">
-              {isEditingTitle ? (
+              {/* Desktop inline edit */}
+              {isEditingTitle && !isMobile ? (
                 <div
                   className="flex items-center gap-2 w-full"
                   onClick={(e) => e.stopPropagation()}
@@ -296,13 +309,13 @@ export function ChecklistItemComponent({
                     onChange={(e) => setTitleEditValue(e.target.value)}
                     onKeyDown={handleTitleKeyDown}
                     onBlur={saveTitleEdit}
-                    className="h-9 text-base flex-grow border-none shadow-none bg-transparent px-0 focus-visible:ring-1 focus-visible:ring-primary"
+                    className="h-9 text-base flex-grow"
                   />
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={saveTitleEdit}
-                    className="h-8 w-8 shrink-0 touch-manipulation"
+                    className="h-8 w-8 shrink-0"
                     aria-label="Save edit"
                   >
                     <Check className="h-4 w-4 text-primary" />
@@ -311,7 +324,7 @@ export function ChecklistItemComponent({
                     variant="ghost"
                     size="icon"
                     onClick={cancelTitleEdit}
-                    className="h-8 w-8 shrink-0 touch-manipulation"
+                    className="h-8 w-8 shrink-0"
                     aria-label="Cancel edit"
                   >
                     <X className="h-4 w-4 text-muted-foreground" />
@@ -471,7 +484,7 @@ export function ChecklistItemComponent({
               <Input
                 value={newSubItemText}
                 onChange={(e) => setNewSubItemText(e.target.value)}
-                placeholder="Add a sub-item..."
+                placeholder={t('item.addSubItem')}
                 className="h-10 text-sm flex-grow touch-manipulation"
               />
               <Button
@@ -487,6 +500,44 @@ export function ChecklistItemComponent({
           </div>
         </CollapsibleContent>
       </Collapsible>
+
+      {/* Bottom Sheet for editing title - only on mobile */}
+      {isMobile && (
+        <Sheet open={isEditingTitle} onOpenChange={(open) => !open && cancelTitleEdit()}>
+          <SheetContent side="bottom" className="rounded-t-xl">
+            <SheetHeader>
+              <SheetTitle>{t('item.editTitle')}</SheetTitle>
+              <SheetDescription>{t('item.editDescription')}</SheetDescription>
+            </SheetHeader>
+            <div className="py-6">
+              <Input
+                ref={titleInputRef}
+                value={titleEditValue}
+                onChange={(e) => setTitleEditValue(e.target.value)}
+                onKeyDown={handleTitleKeyDown}
+                placeholder={t('item.namePlaceholder')}
+                className="h-12 text-lg w-full"
+                autoFocus
+              />
+            </div>
+            <SheetFooter className="flex-row gap-3 sm:flex-row">
+              <Button
+                variant="outline"
+                onClick={cancelTitleEdit}
+                className="flex-1 h-12 touch-manipulation"
+              >
+                {t('item.cancel')}
+              </Button>
+              <Button
+                onClick={saveTitleEdit}
+                className="flex-1 h-12 touch-manipulation"
+              >
+                {t('item.save')}
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 }

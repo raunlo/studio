@@ -199,12 +199,26 @@ export function ChecklistOverview() {
     }
 
     // Show error for non-auth errors
+    const is500Error = error instanceof AxiosError && error.response?.status === 500;
+    const errorMessage = error instanceof AxiosError
+      ? error.response?.data?.message || error.response?.data?.error || error.message
+      : error?.message || 'Unknown error';
+
     return (
       <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg border-destructive">
         <h3 className="text-xl font-semibold text-destructive">{t('main.error')}</h3>
         <p className="text-muted-foreground mt-2">
-          Could not connect to the server. Please ensure the API is running and accessible.
+          {is500Error
+            ? `Server error: ${errorMessage}`
+            : 'Could not connect to the server. Please ensure the API is running and accessible.'}
         </p>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => window.location.reload()}
+        >
+          {t('main.retry') || 'Retry'}
+        </Button>
       </div>
     );
   }

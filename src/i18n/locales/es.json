@@ -86,7 +86,18 @@
     "completed": "completado",
     "emptyList": "Lista vacía",
     "myChecklists": "Mis Listas",
-    "sharedWithMe": "Compartido conmigo"
+    "sharedWithMe": "Compartido conmigo",
+    "delete": "Eliminar",
+    "cannotDelete": "No se puede eliminar",
+    "deleteAllItemsFirst": "Elimina todos los elementos primero"
+  },
+  "item": {
+    "editTitle": "Cambiar nombre",
+    "editDescription": "Ingresa un nuevo nombre",
+    "namePlaceholder": "Nombre...",
+    "addSubItem": "Añadir...",
+    "save": "Guardar",
+    "cancel": "Cancelar"
   },
   "detail": {
     "back": "Volver a listas",

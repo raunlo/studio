@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTranslation } from "react-i18next";
+import { toast } from "@/hooks/use-toast";
 
 interface ChecklistOverviewCardProps {
   id: number;
@@ -63,6 +64,13 @@ export function ChecklistOverviewCard({
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (totalItems > 0) {
+      toast({
+        title: t('overview.cannotDelete'),
+        description: t('overview.deleteAllItemsFirst'),
+      });
+      return;
+    }
     if (onDelete) {
       onDelete(id);
     }
@@ -136,9 +144,16 @@ export function ChecklistOverviewCard({
                 </DropdownMenuItem>
               )}
               {isOwner ? (
-                <DropdownMenuItem onClick={handleDelete} className="cursor-pointer text-destructive focus:text-destructive">
+                <DropdownMenuItem
+                  onClick={handleDelete}
+                  className={
+                    totalItems > 0
+                      ? "cursor-not-allowed opacity-50 text-muted-foreground"
+                      : "cursor-pointer text-destructive focus:text-destructive"
+                  }
+                >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
+                  {t('overview.delete')}
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem onClick={handleLeave} className="cursor-pointer text-orange-600 focus:text-orange-600">
