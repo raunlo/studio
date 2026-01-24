@@ -264,24 +264,26 @@ export function ChecklistItemComponent({
         {/* Title Row */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-start gap-2 flex-grow">
-            {/* Expand/Collapse Button */}
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 shrink-0 touch-manipulation text-muted-foreground hover:text-foreground"
-                aria-label={
-                  expanded ? "Collapse checklist item" : "Expand checklist item"
-                }
-              >
-                <ChevronRight
-                  className={cn(
-                    "h-4 w-4 transition-transform duration-200",
-                    expanded && "rotate-90"
-                  )}
-                />
-              </Button>
-            </CollapsibleTrigger>
+            {/* Expand/Collapse Button - hide when editing */}
+            {!isEditingTitle && (
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 shrink-0 touch-manipulation text-muted-foreground hover:text-foreground"
+                  aria-label={
+                    expanded ? "Collapse checklist item" : "Expand checklist item"
+                  }
+                >
+                  <ChevronRight
+                    className={cn(
+                      "h-4 w-4 transition-transform duration-200",
+                      expanded && "rotate-90"
+                    )}
+                  />
+                </Button>
+              </CollapsibleTrigger>
+            )}
 
             {/* Title content */}
             <div className="flex flex-col items-start gap-1.5 text-left flex-grow pt-1.5">
@@ -296,25 +298,25 @@ export function ChecklistItemComponent({
                     onChange={(e) => setTitleEditValue(e.target.value)}
                     onKeyDown={handleTitleKeyDown}
                     onBlur={saveTitleEdit}
-                    className="h-9 text-base flex-grow border-none shadow-none bg-transparent px-0 focus-visible:ring-1 focus-visible:ring-primary"
+                    className="min-h-[44px] text-base flex-1 px-3 py-2 focus-visible:ring-1 focus-visible:ring-primary"
                   />
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={saveTitleEdit}
-                    className="h-8 w-8 shrink-0 touch-manipulation"
+                    className="h-10 w-10 shrink-0 touch-manipulation"
                     aria-label="Save edit"
                   >
-                    <Check className="h-4 w-4 text-primary" />
+                    <Check className="h-5 w-5 text-primary" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={cancelTitleEdit}
-                    className="h-8 w-8 shrink-0 touch-manipulation"
+                    className="h-10 w-10 shrink-0 touch-manipulation"
                     aria-label="Cancel edit"
                   >
-                    <X className="h-4 w-4 text-muted-foreground" />
+                    <X className="h-5 w-5 text-muted-foreground" />
                   </Button>
                 </div>
               ) : (
@@ -357,16 +359,18 @@ export function ChecklistItemComponent({
             </div>
           </div>
 
-          {/* Delete button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => deleteItem(item.id)}
-            aria-label="Delete item"
-            className="h-9 w-9 shrink-0 touch-manipulation text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {/* Delete button - hide when editing title */}
+          {!isEditingTitle && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => deleteItem(item.id)}
+              aria-label="Delete item"
+              className="h-9 w-9 shrink-0 touch-manipulation text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
 
         {/* Expanded subitems content */}
