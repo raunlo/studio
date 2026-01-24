@@ -101,7 +101,10 @@ export function useChecklists(
           return response.checklists;
         }
       );
-      return res;
+      // Filter out recently deleted checklists to prevent flickering
+      return res.filter((checklist) =>
+        !recentlyDeletedChecklistsRef.current.has(checklist.id)
+      );
     },
     {
       refreshInterval,
@@ -115,6 +118,11 @@ export function useChecklists(
     checklistsRef.current = checklists ?? [];
   }, [checklists]);
 
+  // Helper to filter out recently deleted checklists from any list
+  const filterDeletedChecklists = useCallback((list: ChecklistWithStats[]): ChecklistWithStats[] => {
+    return list.filter(c => !recentlyDeletedChecklistsRef.current.has(c.id));
+  }, []);
+
   /**
    * Schedule a debounced refetch
    * Optionally update UI immediately, then refetch after 1500ms
@@ -124,9 +132,9 @@ export function useChecklists(
 
     logger.debug('scheduleRefetch called with options:', options);
 
-    // Update the UI immediately if provided
+    // Update the UI immediately if provided, always filtering out deleted items
     if (updatedChecklists) {
-      mutateChecklists(updatedChecklists, { revalidate: false });
+      mutateChecklists(filterDeletedChecklists(updatedChecklists), { revalidate: false });
     }
 
     // Debounced API call
@@ -223,38 +231,37 @@ export function useChecklists(
   const deleteChecklist = useCallback(async (checklistId: number): Promise<void> => {
     logger.info('Deleting checklist:', checklistId);
 
+    // Track deleted checklist immediately to prevent flickering
+    recentlyDeletedChecklistsRef.current.add(checklistId);
+
     // Store previous state for rollback
     const previousChecklists = [...checklistsRef.current];
 
     // Optimistic update - remove from list
-    const updatedChecklists = checklistsRef.current.filter(c => c.id !== checklistId);
+    const updatedChecklists = filterDeletedChecklists(checklistsRef.current);
     mutateChecklists(updatedChecklists, { revalidate: false });
 
-    try {
-      // API call with retry wrapper
-      await retryableRequest(
-        () => deleteChecklistById(checklistId),
-        1 // max 1 retry
-      );
-
+    // Fire API call without blocking (parallel execution)
+    retryableRequest(
+      () => deleteChecklistById(checklistId),
+      1 // max 1 retry
+    ).then(() => {
       logger.info('Checklist deleted successfully:', checklistId);
 
-      // Track deleted checklist to prevent SSE duplication (for future SSE support)
-      recentlyDeletedChecklistsRef.current.add(checklistId);
+      // Clean up tracking after 10 seconds
       setTimeout(() => {
         recentlyDeletedChecklistsRef.current.delete(checklistId);
-      }, 5000);
-
-      // Debounced refetch to sync authoritative state
-      scheduleRefetch();
+      }, 10000);
 
       // Show success toast
       toast({
         title: 'Checklist deleted',
       });
-
-    } catch (error) {
+    }).catch((error) => {
       logger.error('Failed to delete checklist:', error);
+
+      // Remove from deleted tracking so it can reappear
+      recentlyDeletedChecklistsRef.current.delete(checklistId);
 
       // Rollback optimistic update
       mutateChecklists(previousChecklists, { revalidate: false });
@@ -265,10 +272,11 @@ export function useChecklists(
         description: error instanceof Error ? error.message : 'Please try again',
         variant: 'destructive',
       });
+    });
 
-      throw error;
-    }
-  }, [mutateChecklists, scheduleRefetch]);
+    // Debounced refetch to sync authoritative state
+    scheduleRefetch();
+  }, [mutateChecklists, scheduleRefetch, filterDeletedChecklists]);
 
   /**
    * Rename a checklist with optimistic update

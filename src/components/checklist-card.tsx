@@ -31,6 +31,8 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
   const { t } = useTranslation();
   const {
     items,
+    isLoading,
+    error,
     addItem,
     reorderItem,
     deleteRow: deleteRowFn,
@@ -191,6 +193,25 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
     // Store timeout ref
     deleteTimeoutsRef.current.set(itemId, timeout);
   };
+
+  // Show error state if hook failed to load
+  if (error) {
+    return (
+      <Card className="border border-destructive bg-card transition-shadow duration-200 flex flex-col rounded-lg">
+        <CardHeader className="flex flex-row items-center justify-between pb-3 sm:pb-4 px-4 sm:px-6 pt-4 sm:pt-6">
+          <h2 className="text-xl sm:text-2xl font-semibold">{checklist.name}</h2>
+        </CardHeader>
+        <CardContent className="pt-0 pb-4 sm:pb-6 px-4 sm:px-6 flex-grow">
+          <div className="text-center py-8">
+            <p className="text-destructive font-medium">{t('main.error')}</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {error.message || t('detail.loadError') || 'Failed to load checklist items'}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <>

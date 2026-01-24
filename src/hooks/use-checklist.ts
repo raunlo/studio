@@ -46,6 +46,8 @@ async function dedupeRequest<T>(key: string, fn: () => Promise<T>): Promise<T> {
 
 interface ChecklistHookResult {
   items: ChecklistItem[];
+  isLoading: boolean;
+  error: Error | null;
   addItem: (item: ChecklistItem) => Promise<void>;
   updateItem: (item: ChecklistItem) => Promise<void>;
   deleteItem: (itemId: number | null) => Promise<void>;
@@ -69,6 +71,7 @@ export function useChecklist(
   const itemsRef = useRef<ChecklistItem[]>([]);
   const recentlyAddedItemsRef = useRef<Set<number>>(new Set()); // Track recently added item IDs
   const recentlyReorderedItemsRef = useRef<Set<string>>(new Set()); // Track recently reordered items
+  const recentlyDeletedItemsRef = useRef<Set<number>>(new Set()); // Track recently deleted item IDs
   const clientIdRef = useRef<string>(''); // Persistent client ID - initialized lazily
   const highlightTimeoutsRef = useRef<Map<number, NodeJS.Timeout>>(new Map()); // Track highlight clear timeouts
 
@@ -80,7 +83,7 @@ export function useChecklist(
   // Ref to track rapid operations and debounce refetching
   const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { data: items = [], mutate: mutateItems } = useSWR<ChecklistItem[]>(
+  const { data: items = [], mutate: mutateItems, isLoading, error } = useSWR<ChecklistItem[]>(
     checklistId ? ["checklist-items", checklistId] : null,
     async () => {
       const res = await dedupeRequest(
@@ -91,7 +94,7 @@ export function useChecklist(
             { completed: undefined }
           ),
       );
-      return res.map((i: ChecklistItemResponse) => ({
+      const mappedItems = res.map((i: ChecklistItemResponse) => ({
         id: i.id,
         name: i.name,
         completed: i.completed,
@@ -103,18 +106,29 @@ export function useChecklist(
             completed: r.completed,
           })) ?? null,
       }));
+      // Filter out recently deleted items to prevent flickering
+      return mappedItems.filter((item: ChecklistItem) =>
+        item.id === null || !recentlyDeletedItemsRef.current.has(item.id)
+      );
     },
     { refreshInterval },
   );
+
+  // Helper to filter out recently deleted items from any list
+  const filterDeletedItems = useCallback((itemList: ChecklistItem[]): ChecklistItem[] => {
+    return itemList.filter(item =>
+      item.id === null || !recentlyDeletedItemsRef.current.has(item.id)
+    );
+  }, []);
 
   // Handlers for checklist items real time updates via SSE
   const scheduleRefetch = useCallback((options: { updatedItems?: Array<ChecklistItem>} = {}) => {
     const { updatedItems: items  } = options;
     logger.debug('scheduleRefetch called with options:', options);
 
-    // Update the UI immediately
+    // Update the UI immediately, always filtering out recently deleted items
     if (items) {
-      mutateItems(items, { revalidate: false }); // Update UI immediately
+      mutateItems(filterDeletedItems(items), { revalidate: false });
     }
 
     // Debounced API call
@@ -126,7 +140,7 @@ export function useChecklist(
       console.debug('Calling API after debounce.');
       void (async () => {
         try {
-          mutateItems(); // Fetch fresh data from API
+          mutateItems(); // Fetch fresh data from API (fetcher also filters deleted items)
         } catch (e) {
           logger.error('Error during API call:', e);
         }
@@ -165,6 +179,10 @@ export function useChecklist(
   }, [clearSseHighlight]);
 
   const handleItemCreatedMessageFromChecklistItemUpdates = (newItem: ChecklistItem)  => {
+          // Don't add if it's in the recently deleted list
+          if (newItem.id && recentlyDeletedItemsRef.current.has(newItem.id)) {
+            return;
+          }
           const firstCompletedIndex = itemsRef.current.findIndex(item => item.completed);
           const insertIndex = firstCompletedIndex === -1 ? itemsRef.current.length : firstCompletedIndex;
           const highlightedItem = markItemHighlighted(newItem);
@@ -177,6 +195,10 @@ export function useChecklist(
         }
 
   const handleItemUpdatedMessageFromChecklistItemUpdates = (payload: ChecklistItem)  => {
+          // Don't update if it's in the recently deleted list
+          if (payload.id && recentlyDeletedItemsRef.current.has(payload.id)) {
+            return;
+          }
           const highlightedItem = markItemHighlighted(payload);
           scheduleRefetch({ updatedItems: (itemsRef.current ?? []).map(item => item.id === payload.id ? highlightedItem : item) });
   }
@@ -340,16 +362,33 @@ export function useChecklist(
   };
 
   const deleteItem = async (itemId: number | null) => {
-    if (!checklistId) return;
-    mutateItems(items.filter((i) => i.id !== itemId), false);
-    if (itemId) {
-      await dedupeRequest(
-        `delete-item-${checklistId}-${itemId}`,
-        () => deleteChecklistItemById(checklistId, itemId),
-      );
-  // Debounced refetch to avoid immediate revalidation during rapid UI ops
-  scheduleRefetch();
-    }
+    if (!checklistId || !itemId) return;
+
+    // Track deleted item to prevent flickering on revalidation
+    recentlyDeletedItemsRef.current.add(itemId);
+
+    // Optimistic update - remove from UI immediately
+    mutateItems(filterDeletedItems(items), false);
+
+    // Fire API call without waiting (parallel execution)
+    dedupeRequest(
+      `delete-item-${checklistId}-${itemId}`,
+      () => deleteChecklistItemById(checklistId, itemId),
+    ).then(() => {
+      // Clean up tracking after 10 seconds (longer to handle slow networks)
+      setTimeout(() => {
+        recentlyDeletedItemsRef.current.delete(itemId);
+      }, 10000);
+    }).catch((error) => {
+      logger.error('Failed to delete item:', error);
+      // On error, remove from deleted tracking so it can reappear
+      recentlyDeletedItemsRef.current.delete(itemId);
+      // Refetch to restore state
+      mutateItems();
+    });
+
+    // Debounced refetch to sync with server
+    scheduleRefetch();
   };
 
   const reorderItem = async (from: number, to: number) => {
@@ -575,6 +614,8 @@ export function useChecklist(
 
   return {
     items,
+    isLoading,
+    error: error ?? null,
     addItem,
     updateItem,
     deleteItem,
