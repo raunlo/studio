@@ -8,11 +8,19 @@ interface HeaderProps {
   user?: {
     authenticated: boolean;
     name?: string;
-    photoUrl?: string;
     email?: string;
   };
   onLogin: () => void;
   onLogout: () => void;
+}
+
+function getInitials(name?: string): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
+  }
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
 export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
@@ -48,37 +56,12 @@ export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
 
           {user && (
             <div className="flex items-center gap-3 pl-4 border-l border-border/50">
-              {/* User photo/avatar */}
-              {user.photoUrl ? (
-                <img
-                  src={user.photoUrl}
-                  alt={user.name || 'User'}
-                  className="w-9 h-9 rounded-full object-cover shadow-sm"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm">
-                  {user.name ? (
-                    <span className="text-sm font-medium text-primary-foreground">
-                      {user.name.charAt(0).toUpperCase()}
-                    </span>
-                  ) : (
-                    <svg
-                      className="w-5 h-5 text-primary-foreground"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-                      />
-                    </svg>
-                  )}
-                </div>
-              )}
+              {/* User initials avatar */}
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm">
+                <span className="text-sm font-medium text-primary-foreground">
+                  {getInitials(user.name)}
+                </span>
+              </div>
 
               {/* User name */}
               {user.name && (
@@ -137,36 +120,12 @@ export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
               <div className="absolute top-full right-0 left-0 mt-px bg-card border-b border-border shadow-lg animate-fade-in">
                 <div className="p-4 max-w-7xl mx-auto">
                   <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border/50">
-                    {user.photoUrl ? (
-                      <img
-                        src={user.photoUrl}
-                        alt={user.name || 'User'}
-                        className="w-12 h-12 rounded-full object-cover shadow-sm"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm">
-                        {user.name ? (
-                          <span className="text-lg font-medium text-primary-foreground">
-                            {user.name.charAt(0).toUpperCase()}
-                          </span>
-                        ) : (
-                          <svg
-                            className="w-7 h-7 text-primary-foreground"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.5}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                    )}
+                    {/* User initials avatar */}
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm">
+                      <span className="text-lg font-medium text-primary-foreground">
+                        {getInitials(user.name)}
+                      </span>
+                    </div>
                     <div>
                       {user.name && (
                         <p className="font-medium text-foreground">{user.name}</p>

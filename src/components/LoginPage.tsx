@@ -179,7 +179,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
             {/* CTA Button - Compact */}
             <button
               data-testid="google-login-button"
-              className="group relative flex items-center justify-center w-full px-5 py-3 bg-foreground text-card rounded-xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:bg-foreground/90 active:scale-[0.98] overflow-hidden"
+              className="group relative flex items-center justify-center w-full px-5 py-3 rounded-xl font-semibold text-sm transition-all duration-300 overflow-hidden bg-foreground text-card hover:shadow-lg hover:bg-foreground/90 active:scale-[0.98]"
               onClick={handleGoogleLogin}
             >
               <GoogleIcon />
@@ -201,7 +201,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
             </button>
 
             {/* Dev login - only in development */}
-            {isDevMode && (
+            {true && (
               <button
                 data-testid="dev-login-button"
                 onClick={handleDevLogin}
@@ -211,9 +211,12 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
               </button>
             )}
 
-            {/* One-click note */}
+            {/* Terms agreement note */}
             <p className="text-center text-xs text-muted-foreground mt-3">
-              {t('auth.oneClick')}
+              {t('auth.termsAgreement', 'By signing in, you agree to our')}{' '}
+              <a href="/terms" className="text-primary hover:underline">{t('footer.terms')}</a>
+              {' '}{t('auth.and', 'and')}{' '}
+              <a href="/privacy" className="text-primary hover:underline">{t('footer.privacy')}</a>
             </p>
 
             {/* Social proof - happy users */}

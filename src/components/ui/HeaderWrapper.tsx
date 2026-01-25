@@ -7,8 +7,8 @@ import { markLoggingOut, NEXT_PUBLIC_API_BASE_URL, getCsrfToken } from '@/lib/ax
 interface User {
   authenticated: boolean;
   name?: string;
-  photoUrl?: string;
   email?: string;
+  needsAgeVerify?: boolean;
 }
 
 export const HeaderWrapper = () => {
@@ -28,12 +28,31 @@ export const HeaderWrapper = () => {
       const sessionData = await response.json();
       // Store authentication + user profile data
       if (sessionData.authenticated) {
-        setUser({
+        const userData: User = {
           authenticated: true,
           name: sessionData.user?.name,
-          photoUrl: sessionData.user?.photoUrl,
           email: sessionData.user?.email,
-        });
+          needsAgeVerify: sessionData.user?.needsAgeVerify,
+        };
+        setUser(userData);
+
+        // Check if age verification is pending from login
+        const pendingVerification = sessionStorage.getItem('pending_age_verification');
+        if (pendingVerification === 'true' && sessionData.user?.needsAgeVerify) {
+          // Call verify endpoint
+          try {
+            await fetch(`${NEXT_PUBLIC_API_BASE_URL}/api/v1/user/verify-age`, {
+              method: 'POST',
+              credentials: 'include',
+            });
+            // Remove pending flag
+            sessionStorage.removeItem('pending_age_verification');
+            // Refresh session to get updated status
+            await checkSession();
+          } catch (error) {
+            console.error('Age verification failed:', error);
+          }
+        }
       } else {
         setUser(null);
       }

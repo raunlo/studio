@@ -1,10 +1,11 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Collapsible,
   CollapsibleContent,
@@ -54,9 +55,18 @@ export function ChecklistItemComponent({
   const [rowEditValue, setRowEditValue] = useState("");
 
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const rowInputRef = useRef<HTMLInputElement>(null);
+  const rowInputRef = useRef<HTMLTextAreaElement>(null);
+  const subItemTextareaRef = useRef<HTMLTextAreaElement>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressDuration = 500; // ms
+
+  // Auto-resize textarea
+  const autoResize = useCallback((textarea: HTMLTextAreaElement | null) => {
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, []);
 
   // Cleanup long press timer on unmount
   useEffect(() => {
@@ -78,8 +88,9 @@ export function ChecklistItemComponent({
     if (editingRowId && rowInputRef.current) {
       rowInputRef.current.focus();
       rowInputRef.current.select();
+      autoResize(rowInputRef.current);
     }
-  }, [editingRowId]);
+  }, [editingRowId, autoResize]);
 
   const handleAddRowItem = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,8 +231,8 @@ export function ChecklistItemComponent({
     setRowEditValue("");
   };
 
-  const handleRowKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+  const handleRowKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       saveRowEdit();
     } else if (e.key === "Escape") {
@@ -333,7 +344,7 @@ export function ChecklistItemComponent({
               ) : (
                 <span
                   className={cn(
-                    "cursor-pointer sm:hover:text-primary transition-colors text-base leading-relaxed select-none",
+                    "cursor-pointer sm:hover:text-primary transition-colors text-base leading-relaxed select-none break-all",
                     item.completed && "line-through text-muted-foreground"
                   )}
                   onClick={(e) => {
@@ -359,6 +370,7 @@ export function ChecklistItemComponent({
                           : `checklistItem-row-temp-${index}`
                       }
                       className={cn(
+                        "break-all",
                         row.completed && "line-through opacity-60"
                       )}
                     >
@@ -388,9 +400,9 @@ export function ChecklistItemComponent({
             {item.rows?.map((row, index) => (
               <div
                 key={row.id ?? `temp-${index}`}
-                className="flex items-center justify-between group min-h-[40px]"
+                className="flex items-start justify-between group min-h-[40px] gap-2"
               >
-                <div className="flex items-center gap-3 flex-grow">
+                <div className="flex items-start gap-3 flex-grow min-w-0">
                   {/* Sub-item checkbox */}
                   <button
                     onClick={() => handleRowCompleted(row, !row.completed)}
@@ -423,14 +435,18 @@ export function ChecklistItemComponent({
 
                   {/* Editable row name */}
                   {editingRowId === row.id ? (
-                    <div className="flex items-center gap-2 flex-grow">
-                      <Input
+                    <div className="flex items-end gap-2 flex-grow min-w-0">
+                      <Textarea
                         ref={rowInputRef}
                         value={rowEditValue}
-                        onChange={(e) => setRowEditValue(e.target.value)}
+                        onChange={(e) => {
+                          setRowEditValue(e.target.value);
+                          autoResize(e.target);
+                        }}
                         onKeyDown={handleRowKeyDown}
                         onBlur={saveRowEdit}
-                        className="h-8 text-sm flex-grow border-none shadow-none bg-transparent px-0 focus-visible:ring-1 focus-visible:ring-primary"
+                        className="min-h-[32px] max-h-[120px] py-1 text-sm flex-grow border-none shadow-none bg-transparent px-0 focus-visible:ring-1 focus-visible:ring-primary resize-none overflow-hidden"
+                        rows={1}
                       />
                       <Button
                         variant="ghost"
@@ -454,7 +470,7 @@ export function ChecklistItemComponent({
                   ) : (
                     <span
                       className={cn(
-                        "text-sm cursor-pointer sm:hover:text-primary transition-colors leading-relaxed select-none",
+                        "text-sm cursor-pointer sm:hover:text-primary transition-colors leading-relaxed select-none break-all",
                         row.completed && "line-through text-muted-foreground"
                       )}
                       onClick={() => startRowEdit(row)}
@@ -470,6 +486,7 @@ export function ChecklistItemComponent({
                 <Button
                   variant="ghost"
                   size="icon"
+                  tabIndex={-1}
                   onClick={() => deleteRow(item.id, row.id!)}
                   className="h-7 w-7 shrink-0 touch-manipulation text-muted-foreground hover:text-destructive hover:bg-destructive/10 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
                   aria-label="Delete sub-item"
@@ -480,12 +497,27 @@ export function ChecklistItemComponent({
             ))}
 
             {/* New sub-item form */}
-            <form onSubmit={handleAddRowItem} className="flex gap-2 pt-2">
-              <Input
+            <form onSubmit={handleAddRowItem} className="flex items-end gap-2 pt-2">
+              <Textarea
+                ref={subItemTextareaRef}
                 value={newSubItemText}
-                onChange={(e) => setNewSubItemText(e.target.value)}
+                onChange={(e) => {
+                  setNewSubItemText(e.target.value);
+                  autoResize(e.target);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddRowItem(e);
+                    // Reset textarea height after submit
+                    if (subItemTextareaRef.current) {
+                      subItemTextareaRef.current.style.height = 'auto';
+                    }
+                  }
+                }}
                 placeholder={t('item.addSubItem')}
-                className="h-10 text-sm flex-grow touch-manipulation"
+                className="min-h-[40px] max-h-[120px] py-2 text-sm flex-grow touch-manipulation resize-none overflow-hidden"
+                rows={1}
               />
               <Button
                 type="submit"
