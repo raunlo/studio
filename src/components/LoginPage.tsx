@@ -201,7 +201,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
             </button>
 
             {/* Dev login - only in development */}
-            {true && (
+            {isDevMode && (
               <button
                 data-testid="dev-login-button"
                 onClick={handleDevLogin}
