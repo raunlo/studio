@@ -58,7 +58,9 @@
     "featureSell3": "Share & edit together",
     "happyUsers": "1000+ happy users",
     "secure": "Secure",
-    "privacy": "Private"
+    "privacy": "Private",
+    "termsAgreement": "By signing in, you agree to our",
+    "and": "and"
   },
   "languages": {
     "et": "Estonian",

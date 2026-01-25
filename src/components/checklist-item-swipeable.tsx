@@ -3,14 +3,14 @@
 import { useGesture } from '@use-gesture/react';
 import { useSpring, animated } from '@react-spring/web';
 import { Check, Trash2 } from 'lucide-react';
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect, useRef } from 'react';
 
 type SwipeableItemProps = {
   children: ReactNode;
   onSwipeComplete: () => void;
   onSwipeDelete: () => void;
   isCompleted?: boolean;
-  swipeThreshold?: number;
+  deleteButtonWidth?: number;
 };
 
 export function SwipeableItem({
@@ -18,36 +18,74 @@ export function SwipeableItem({
   onSwipeComplete,
   onSwipeDelete,
   isCompleted = false,
-  swipeThreshold = 80,
+  deleteButtonWidth = 80,
 }: SwipeableItemProps) {
+  const [isDeleteRevealed, setIsDeleteRevealed] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [{ x }, api] = useSpring(() => ({ x: 0 }));
 
+  // Close when clicking outside
+  useEffect(() => {
+    if (!isDeleteRevealed) return;
+
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsDeleteRevealed(false);
+        api.start({ x: 0 });
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isDeleteRevealed, api]);
+
   const bind = useGesture({
-    onDrag: async ({ offset: [ox], direction: [dx], cancel, velocity: [vx] }) => {
-      // Right swipe (complete/uncomplete)
-      if (ox > swipeThreshold && dx > 0) {
+    onDrag: ({ offset: [ox], direction: [dx], cancel }) => {
+      // If delete is revealed and swiping right, close it
+      if (isDeleteRevealed && dx > 0) {
         cancel();
-        // Animate to the edge before triggering action
-        await api.start({ x: 200 });
-        onSwipeComplete();
-        api.set({ x: 0 });
+        setIsDeleteRevealed(false);
+        api.start({ x: 0 });
+        return;
       }
-      // Left swipe (delete)
-      else if (ox < -swipeThreshold && dx < 0) {
+
+      // Right swipe (complete/uncomplete) - auto trigger
+      if (ox > 60 && dx > 0) {
         cancel();
-        // Animate to the edge before triggering action
-        await api.start({ x: -200 });
-        onSwipeDelete();
-        api.set({ x: 0 });
+        api.start({
+          x: 100,
+          onRest: () => {
+            onSwipeComplete();
+            api.start({ x: 0 });
+          }
+        });
+        return;
       }
+
+      // Left swipe - reveal delete button (iOS style)
+      if (ox < -deleteButtonWidth && dx < 0) {
+        cancel();
+        setIsDeleteRevealed(true);
+        api.start({ x: -deleteButtonWidth });
+        return;
+      }
+
       // Normal drag
-      else {
-        api.start({ x: ox, immediate: false });
-      }
+      api.start({ x: ox, immediate: false });
     },
     onDragEnd: ({ offset: [ox] }) => {
-      // Snap back if didn't reach threshold
-      if (Math.abs(ox) < swipeThreshold) {
+      if (isDeleteRevealed) return;
+
+      // Snap to reveal delete if past halfway
+      if (ox < -deleteButtonWidth / 2) {
+        setIsDeleteRevealed(true);
+        api.start({ x: -deleteButtonWidth });
+      } else {
+        // Snap back
         api.start({ x: 0 });
       }
     },
@@ -56,27 +94,55 @@ export function SwipeableItem({
       axis: 'x',
       filterTaps: true,
       rubberband: true,
+      from: () => [x.get(), 0],
     }
   });
 
+  const handleDeleteClick = () => {
+    // Animate out then delete
+    api.start({
+      x: -300,
+      onRest: () => {
+        onSwipeDelete();
+        // Reset position after delete
+        setIsDeleteRevealed(false);
+        api.set({ x: 0 });
+      }
+    });
+  };
+
+  const handleContentClick = () => {
+    // If delete is revealed, close it on content click
+    if (isDeleteRevealed) {
+      setIsDeleteRevealed(false);
+      api.start({ x: 0 });
+    }
+  };
+
   return (
-    <div className="relative overflow-hidden touch-manipulation flex-1">
+    <div ref={containerRef} className="relative overflow-hidden touch-manipulation flex-1">
       {/* Background actions (revealed on swipe) */}
-      <div className="absolute inset-0 flex justify-between items-center pointer-events-none">
+      <div className="absolute inset-0 flex justify-between items-stretch pointer-events-none">
         {/* Left side - Complete/Uncomplete (green) */}
         <div className="h-full flex items-center px-6 bg-accent">
           <Check className="text-white w-6 h-6" />
         </div>
 
-        {/* Right side - Delete (red) */}
-        <div className="h-full flex items-center px-6 bg-destructive">
+        {/* Right side - Delete button (red) - clickable when revealed */}
+        <button
+          onClick={handleDeleteClick}
+          className="h-full flex items-center justify-center bg-destructive pointer-events-auto active:bg-destructive/80 transition-colors"
+          style={{ width: deleteButtonWidth }}
+          aria-label="Delete"
+        >
           <Trash2 className="text-white w-6 h-6" />
-        </div>
+        </button>
       </div>
 
       {/* Draggable item */}
       <animated.div
         {...bind()}
+        onClick={handleContentClick}
         style={{ x }}
         className="bg-card relative z-10 cursor-grab active:cursor-grabbing"
       >
