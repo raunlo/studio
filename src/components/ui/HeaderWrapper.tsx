@@ -7,7 +7,6 @@ import { markLoggingOut, NEXT_PUBLIC_API_BASE_URL, getCsrfToken } from '@/lib/ax
 interface User {
   authenticated: boolean;
   name?: string;
-  photoUrl?: string;
   email?: string;
   needsAgeVerify?: boolean;
 }
@@ -32,7 +31,6 @@ export const HeaderWrapper = () => {
         const userData: User = {
           authenticated: true,
           name: sessionData.user?.name,
-          photoUrl: sessionData.user?.photoUrl,
           email: sessionData.user?.email,
           needsAgeVerify: sessionData.user?.needsAgeVerify,
         };
