@@ -19,6 +19,7 @@ import {
   SheetFooter,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { Drawer } from "vaul";
 import { Plus, Trash2, Check, X, ChevronRight } from "lucide-react";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 import { CheckedState } from "@radix-ui/react-checkbox";
@@ -78,11 +79,11 @@ export function ChecklistItemComponent({
   }, []);
 
   useEffect(() => {
-    if (isEditingTitle && titleInputRef.current) {
+    if (isEditingTitle && titleInputRef.current && !isMobile) {
       titleInputRef.current.focus();
       titleInputRef.current.select();
     }
-  }, [isEditingTitle]);
+  }, [isEditingTitle, isMobile]);
 
   useEffect(() => {
     if (editingRowId && rowInputRef.current) {
@@ -533,42 +534,54 @@ export function ChecklistItemComponent({
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Bottom Sheet for editing title - only on mobile */}
+      {/* Bottom Drawer for editing title - only on mobile */}
       {isMobile && (
-        <Sheet open={isEditingTitle} onOpenChange={(open) => !open && cancelTitleEdit()}>
-          <SheetContent side="bottom" className="rounded-t-xl">
-            <SheetHeader>
-              <SheetTitle>{t('item.editTitle')}</SheetTitle>
-              <SheetDescription>{t('item.editDescription')}</SheetDescription>
-            </SheetHeader>
-            <div className="py-6">
-              <Input
-                ref={titleInputRef}
-                value={titleEditValue}
-                onChange={(e) => setTitleEditValue(e.target.value)}
-                onKeyDown={handleTitleKeyDown}
-                placeholder={t('item.namePlaceholder')}
-                className="h-12 text-lg w-full"
-                autoFocus
-              />
-            </div>
-            <SheetFooter className="flex-row gap-3 sm:flex-row">
-              <Button
-                variant="outline"
-                onClick={cancelTitleEdit}
-                className="flex-1 h-12 touch-manipulation"
-              >
-                {t('item.cancel')}
-              </Button>
-              <Button
-                onClick={saveTitleEdit}
-                className="flex-1 h-12 touch-manipulation"
-              >
-                {t('item.save')}
-              </Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+        <Drawer.Root open={isEditingTitle} onOpenChange={(open) => !open && cancelTitleEdit()}>
+          <Drawer.Portal>
+            <Drawer.Overlay className="fixed inset-0 bg-black/40 z-50" />
+            <Drawer.Content className="bg-background flex flex-col rounded-t-[10px] h-auto fixed bottom-0 left-0 right-0 z-50 outline-none">
+              {/* iOS-style drag handle */}
+              <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted-foreground/30 mt-4 mb-6" />
+              
+              <div className="px-6 pb-6">
+                <div className="mb-4">
+                  <h2 className="text-lg font-semibold text-foreground mb-1">
+                    {t('item.editTitle')}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {t('item.editDescription')}
+                  </p>
+                </div>
+                
+                <div className="py-4">
+                  <Input
+                    value={titleEditValue}
+                    onChange={(e) => setTitleEditValue(e.target.value)}
+                    onKeyDown={handleTitleKeyDown}
+                    placeholder={t('item.namePlaceholder')}
+                    className="h-12 text-lg w-full"
+                  />
+                </div>
+                
+                <div className="flex flex-row gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={cancelTitleEdit}
+                    className="flex-1 h-12 touch-manipulation"
+                  >
+                    {t('item.cancel')}
+                  </Button>
+                  <Button
+                    onClick={saveTitleEdit}
+                    className="flex-1 h-12 touch-manipulation"
+                  >
+                    {t('item.save')}
+                  </Button>
+                </div>
+              </div>
+            </Drawer.Content>
+          </Drawer.Portal>
+        </Drawer.Root>
       )}
     </div>
   );
