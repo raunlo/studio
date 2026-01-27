@@ -134,13 +134,13 @@ export function ChecklistOverviewCard({
               {isOwner && (
                 <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
                   <Edit className="w-4 h-4 mr-2" />
-                  Rename
+                  {t('overview.rename')}
                 </DropdownMenuItem>
               )}
               {isOwner && (
                 <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
                   <Share2 className="w-4 h-4 mr-2" />
-                  Share
+                  {t('overview.share')}
                 </DropdownMenuItem>
               )}
               {isOwner ? (
@@ -158,7 +158,7 @@ export function ChecklistOverviewCard({
               ) : (
                 <DropdownMenuItem onClick={handleLeave} className="cursor-pointer text-orange-600 focus:text-orange-600">
                   <LogOut className="w-4 h-4 mr-2" />
-                  Leave
+                  {t('overview.leave')}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -176,7 +176,7 @@ export function ChecklistOverviewCard({
               </div>
               <span className="text-sm text-muted-foreground">
                 {progress === 100 ? (
-                  <span className="text-accent font-medium">Complete</span>
+                  <span className="text-accent font-medium">{t('overview.complete')}</span>
                 ) : (
                   `${Math.round(progress)}%`
                 )}

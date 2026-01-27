@@ -237,8 +237,8 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
           )}
         </CardHeader>
         <CardContent className="pt-0 pb-4 sm:pb-6 px-4 sm:px-6 flex-grow">
-          {/* Add item form - sticky at top */}
-          <div className="pb-4 border-b mb-4">
+          {/* Add item form */}
+          <div className="pb-3 border-b mb-2">
             <AddItemForm onFormSubmit={handleFormSubmit} />
           </div>
 
@@ -258,7 +258,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                 <div
                   {...provided.droppableProps}
                   ref={provided.innerRef}
-                  className="space-y-3 sm:space-y-4 min-h-[10px] w-full pt-4"
+                  className="space-y-2 sm:space-y-3 min-h-[10px] w-full pt-2"
                 >
                   {displayedItems.map((item: ChecklistItem, index: number) => (
                     <Draggable
@@ -328,7 +328,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                 <div
                   {...provided.droppableProps}
                   ref={provided.innerRef}
-                  className="space-y-3 min-h-[10px] w-full pt-4"
+                  className="space-y-2 min-h-[10px] w-full pt-2"
                 >
                   {displayedItems.map((item: ChecklistItem, index: number) => (
                     <Draggable
@@ -348,9 +348,9 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                           {/* Drag handle - visible on mobile */}
                           <div
                             {...provided.dragHandleProps}
-                            className="flex items-center justify-center w-10 shrink-0 bg-muted/30 touch-none active:bg-muted/50"
+                            className="flex items-center justify-center w-6 shrink-0 bg-muted/20 touch-none active:bg-muted/40"
                           >
-                            <GripVertical className="w-4 h-4 text-muted-foreground/60" />
+                            <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50" />
                           </div>
                           {/* Swipeable content */}
                           <SwipeableItem
@@ -358,7 +358,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                             onSwipeDelete={() => handleDeleteItem(item.id)}
                             isCompleted={item.completed}
                           >
-                            <div className="w-full p-3">
+                            <div className="w-full py-2.5 px-2">
                               <ChecklistItemComponent
                                 item={item}
                                 checklistId={checklist.id}

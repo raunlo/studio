@@ -1,4 +1,83 @@
 {
+  "common": {
+    "close": "Sulge",
+    "retry": "Proovi uuesti",
+    "loading": "Laadimine...",
+    "somethingWentWrong": "Midagi läks valesti"
+  },
+  "filter": {
+    "all": "Kõik",
+    "active": "Pooleli",
+    "done": "Tehtud"
+  },
+  "quickAdd": {
+    "bread": "Leib",
+    "milk": "Piim",
+    "eggs": "Munad",
+    "apples": "Õunad",
+    "butter": "Või",
+    "coffee": "Kohv"
+  },
+  "share": {
+    "title": "Jaga nimekirja",
+    "description": "Loo kutsete linke selle nimekirja jagamiseks teistega",
+    "createNewInviteLink": "Loo uus kutselink",
+    "nameOptional": "Nimi (valikuline)",
+    "namePlaceholder": "Näiteks: Jüri jaoks, Tiimiliikmed",
+    "nameHelperText": "Anna kutsele sõbralik nimi, et meeles pidada kellele see on",
+    "singleUseOnly": "Ainult ühekordne kasutus",
+    "expiresIn": "Aegub",
+    "expiryNever": "Mitte kunagi",
+    "expiry1day": "1 päev",
+    "expiry7days": "7 päeva",
+    "expiry30days": "30 päeva",
+    "generateInviteLink": "Loo kutselink",
+    "generating": "Loon...",
+    "activeInvites": "Aktiivsed kutsed",
+    "loadingInvites": "Laadin kutseid...",
+    "noActiveInvites": "Aktiivseid kutseid pole. Loo link nimekirja jagamiseks.",
+    "singleUse": "Ühekordne",
+    "reusable": "Korduvkasutatav",
+    "claimed": "Kasutatud",
+    "share": "Jaga",
+    "copyLink": "Kopeeri link",
+    "revoking": "Tühistan...",
+    "revoke": "Tühista",
+    "inviteLinkCopied": "Kutselink kopeeritud!",
+    "inviteLinkCopiedDescription": "Kutselink on kopeeritud lõikelauale.",
+    "linkGenerated": "Link loodud",
+    "failedToGenerateInvite": "Kutse loomine ebaõnnestus",
+    "linkCopied": "Link kopeeritud!",
+    "pasteToShare": "Kleebi see kuhu iganes jagamiseks",
+    "copyFailed": "Kopeerimine ebaõnnestus - siin on sinu link:",
+    "joinChecklist": "Liitu nimekirjaga",
+    "shareMessage": "Liitu minu nimekirjaga DailyChexly's!",
+    "sharedSuccessfully": "Edukalt jagatud!",
+    "revokeConfirmation": "Kas oled kindel, et soovid selle kutselingi tühistada? Keegi selle lingiga ei saa enam seda kasutada.",
+    "inviteRevoked": "Kutse tühistatud",
+    "failedToRevoke": "Kutse tühistamine ebaõnnestus"
+  },
+  "invite": {
+    "joiningChecklist": "Liitun nimekirjaga...",
+    "successfullyJoined": "Oled nimekirjaga liitunud!",
+    "redirecting": "Suunan ümber...",
+    "unableToJoin": "Nimekirjaga liitumine ebaõnnestus",
+    "failedToClaim": "Kutse kasutamine ebaõnnestus",
+    "backToHome": "Tagasi avalehele"
+  },
+  "toast": {
+    "leftChecklist": "Lahkusid nimekirjast",
+    "leftChecklistDescription": "Oled edukalt jagatud nimekirjast lahkunud",
+    "failedToLeave": "Nimekirjast lahkumine ebaõnnestus"
+  },
+  "confirm": {
+    "deleteChecklist": "Kas oled kindel, et soovid selle nimekirja kustutada? Seda toimingut ei saa tagasi võtta.",
+    "leaveChecklist": "Kas oled kindel, et soovid sellest jagatud nimekirjast lahkuda? Saad kutselingi kaudu uuesti liituda."
+  },
+  "error": {
+    "apiConnectionError": "Serveriga ühenduse loomine ebaõnnestus. Palun veendu, et API töötab ja on kättesaadav.",
+    "loadError": "Andmete laadimine ebaõnnestus"
+  },
   "welcome": "Tere tulemast",
   "appName": "Daily Chexly",
   "tagline": "Hoia oma nimekirjad alati käepärast",
@@ -37,6 +116,10 @@
     "signIn": "Logi sisse Google'ga",
     "signOut": "Logi välja",
     "hello": "Tere",
+    "sessionExpired": "Sinu sessioon on aegunud. Palun logi uuesti sisse.",
+    "authenticationFailed": "Autentimine ebaõnnestus. Palun proovi uuesti.",
+    "unknownError": "Tekkis viga. Palun proovi uuesti sisse logida.",
+    "devLogin": "Arendaja sisselogimine",
     "welcome": "Tere tulemast",
     "appName": "Checklist",
     "tagline": "Hoia oma nimekirjad alati käepärast",
@@ -91,7 +174,11 @@
     "sharedWithMe": "Minuga jagatud",
     "delete": "Kustuta",
     "cannotDelete": "Ei saa kustutada",
-    "deleteAllItemsFirst": "Kustuta kõigepealt kõik ülesanded"
+    "deleteAllItemsFirst": "Kustuta kõigepealt kõik ülesanded",
+    "rename": "Muuda nime",
+    "share": "Jaga",
+    "leave": "Lahku",
+    "complete": "Valmis"
   },
   "item": {
     "editTitle": "Muuda nime",

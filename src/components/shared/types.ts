@@ -16,6 +16,8 @@ export interface ChecklistItem {
   rows: ChecklistItemRow[] | null;
   /** Transient flag for SSE highlight animation - auto-clears after animation */
   _sseHighlight?: boolean;
+  /** Transient flag for optimistic update - item is pending server confirmation */
+  _isPending?: boolean;
 }
 
 export interface ChecklistItemRow {

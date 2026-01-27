@@ -126,7 +126,7 @@ export function ChecklistOverview() {
   const handleEdit = handleRename;
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this checklist? This action cannot be undone.')) {
+    if (!confirm(t('confirm.deleteChecklist'))) {
       return;
     }
 
@@ -138,22 +138,22 @@ export function ChecklistOverview() {
   };
 
   const handleLeave = async (id: number) => {
-    if (!confirm('Are you sure you want to leave this shared checklist? You can rejoin using the invite link.')) {
+    if (!confirm(t('confirm.leaveChecklist'))) {
       return;
     }
 
     try {
       await leaveSharedChecklist(id);
       toast({
-        title: 'Left checklist',
-        description: 'You have successfully left the shared checklist',
+        title: t('toast.leftChecklist'),
+        description: t('toast.leftChecklistDescription'),
       });
       // Note: Manual refetch needed since leave is not in useChecklists hook
       // The hook's 10s polling will eventually update the list
     } catch (error: any) {
       toast({
-        title: 'Failed to leave checklist',
-        description: error?.message || 'Something went wrong',
+        title: t('toast.failedToLeave'),
+        description: error?.message || t('common.somethingWentWrong'),
         variant: 'destructive',
       });
     }
@@ -236,9 +236,13 @@ export function ChecklistOverview() {
         {checklists.length === 0 ? (
           <div className="text-center py-20 px-4 border-2 border-dashed border-border rounded-xl bg-card">
             <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-primary/10 flex items-center justify-center">
+              <button
+                onClick={() => setDialogOpen(true)}
+                className="w-16 h-16 mx-auto mb-4 rounded-xl bg-primary/10 flex items-center justify-center cursor-pointer hover:bg-primary/20 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                aria-label={t('overview.newChecklist')}
+              >
                 <Plus className="w-8 h-8 text-primary" />
-              </div>
+              </button>
               <h3 className="text-xl font-headline text-foreground">{t('overview.empty')}</h3>
               <p className="text-muted-foreground mt-2 mb-6">{t('overview.emptyDescription')}</p>
               <Button

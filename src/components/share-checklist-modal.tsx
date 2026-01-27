@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   useGetChecklistInvites,
   useCreateChecklistInvite,
@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { useTranslation } from 'react-i18next';
 
 interface ShareChecklistModalProps {
   checklistId: number;
@@ -47,6 +48,7 @@ export function ShareChecklistModal({
   isOpen,
   onClose,
 }: ShareChecklistModalProps) {
+  const { t } = useTranslation();
   const [selectedExpiry, setSelectedExpiry] = useState<ExpiryOption>('7days');
   const [isSingleUse, setIsSingleUse] = useState(true);
   const [inviteName, setInviteName] = useState('');
@@ -83,125 +85,113 @@ export function ShareChecklistModal({
       });
 
       if (result?.inviteUrl) {
-        // Fix the URL - replace backend URL with frontend URL
-        // Backend sends: http://localhost:8080/invites/{token}/claim
-        // Extract token and build frontend URL
         let urlToCopy = result.inviteUrl;
         const tokenMatch = result.inviteUrl.match(/\/invites\/([^/]+)\/claim/);
         if (tokenMatch && tokenMatch[1]) {
           const token = tokenMatch[1];
           urlToCopy = `${window.location.origin}/invites/${token}/claim`;
         }
-        
+
         const success = await copyToClipboard(urlToCopy);
         if (success) {
           toast({
-            title: 'Invite link copied!',
-            description: 'The invite link has been copied to your clipboard.',
+            title: t('share.inviteLinkCopied'),
+            description: t('share.inviteLinkCopiedDescription'),
           });
         } else {
           toast({
-            title: 'Link generated',
+            title: t('share.linkGenerated'),
             description: urlToCopy,
             variant: 'default',
           });
         }
 
-        // Refresh the invite list
         await refreshInvites();
 
-        // Reset form
         setInviteName('');
         setIsSingleUse(true);
         setSelectedExpiry('7days');
       }
     } catch (error: any) {
       toast({
-        title: 'Failed to generate invite',
-        description: error?.message || 'Something went wrong',
+        title: t('share.failedToGenerateInvite'),
+        description: error?.message || t('common.somethingWentWrong'),
         variant: 'destructive',
       });
     }
   };
 
   const handleCopyLink = async (url: string) => {
-    console.log('handleCopyLink called with:', url);
     try {
       const success = await copyToClipboard(url);
       if (success) {
         toast({
-          title: 'Link copied!',
-          description: 'Paste it anywhere to share',
+          title: t('share.linkCopied'),
+          description: t('share.pasteToShare'),
         });
       } else {
-        // Show the URL so user can copy manually
         toast({
-          title: 'Copy failed - here is your link:',
+          title: t('share.copyFailed'),
           description: url,
-          duration: 10000, // Keep visible longer so user can copy
+          duration: 10000,
         });
       }
     } catch (error) {
       console.error('Copy error:', error);
       toast({
-        title: 'Copy failed - here is your link:',
+        title: t('share.copyFailed'),
         description: url,
         duration: 10000,
       });
     }
   };
 
-  const handleShare = async (url: string, inviteName?: string | null) => {
-    // Check if Web Share API is available (mobile and modern browsers)
+  const handleShare = async (url: string, inviteNameParam?: string | null) => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Join checklist: ${checklistName}`,
-          text: inviteName 
-            ? `${inviteName} - Join my checklist on DailyChexly!`
-            : `Join my checklist "${checklistName}" on DailyChexly!`,
+          title: `${t('share.joinChecklist')}: ${checklistName}`,
+          text: inviteNameParam
+            ? `${inviteNameParam} - ${t('share.shareMessage')}`
+            : `${t('share.shareMessage')} "${checklistName}"`,
           url: url,
         });
         toast({
-          title: 'Shared successfully!',
+          title: t('share.sharedSuccessfully'),
         });
       } catch (error: any) {
-        // User cancelled or error occurred
         if (error.name !== 'AbortError') {
           console.error('Share failed:', error);
-          // Fallback to copy
           await handleCopyLink(url);
         }
       }
     } else {
-      // Fallback to copy for desktop
       await handleCopyLink(url);
     }
   };
 
   const handleRevoke = async (inviteId: number) => {
-    if (!confirm('Are you sure you want to revoke this invite link? Anyone with this link will no longer be able to use it.')) {
+    if (!confirm(t('share.revokeConfirmation'))) {
       return;
     }
 
     setRevokingId(inviteId);
-    
+
     try {
-      // Call the API directly instead of using the hook inside the function
       await customInstance({
         url: `/api/v1/checklists/invites/${inviteId}`,
         method: 'DELETE',
       });
-      
+
       toast({
-        title: 'Invite revoked',
+        title: t('share.inviteRevoked'),
       });
-      
+
       await refreshInvites();
     } catch (error: any) {
       toast({
-        title: 'Failed to revoke invite',
-        description: error?.message || 'Something went wrong',
+        title: t('share.failedToRevoke'),
+        description: error?.message || t('common.somethingWentWrong'),
         variant: 'destructive',
       });
     } finally {
@@ -218,9 +208,9 @@ export function ShareChecklistModal({
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 sm:p-6 border-b sticky top-0 bg-background z-10">
             <DialogHeader>
-              <DialogTitle className="text-base sm:text-lg">Share &quot;{checklistName}&quot;</DialogTitle>
+              <DialogTitle className="text-base sm:text-lg">{t('share.title')} &quot;{checklistName}&quot;</DialogTitle>
               <DialogDescription className="text-xs sm:text-sm">
-                Create invite links to share this checklist with others
+                {t('share.description')}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -228,21 +218,21 @@ export function ShareChecklistModal({
           <div className="space-y-6 p-4 sm:p-6">
             {/* Create New Invite Section */}
             <div className="border rounded-lg p-3 sm:p-4 space-y-4">
-              <h3 className="font-semibold text-sm sm:text-base">Create New Invite Link</h3>
+              <h3 className="font-semibold text-sm sm:text-base">{t('share.createNewInviteLink')}</h3>
 
               <div className="space-y-2">
-                <Label htmlFor="invite-name" className="text-sm">Name (optional)</Label>
+                <Label htmlFor="invite-name" className="text-sm">{t('share.nameOptional')}</Label>
                 <Input
                   id="invite-name"
                   type="text"
-                  placeholder="e.g., For John, Team members"
+                  placeholder={t('share.namePlaceholder')}
                   value={inviteName}
                   onChange={(e) => setInviteName(e.target.value)}
                   maxLength={100}
                   className="text-sm"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Give this invite a friendly name to help you remember who it&apos;s for
+                  {t('share.nameHelperText')}
                 </p>
               </div>
 
@@ -253,43 +243,43 @@ export function ShareChecklistModal({
                   onCheckedChange={(checked) => setIsSingleUse(!!checked)}
                 />
                 <Label htmlFor="single-use" className="cursor-pointer text-sm">
-                  Single use only
+                  {t('share.singleUseOnly')}
                 </Label>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="expiry" className="text-sm">Expires in</Label>
+                <Label htmlFor="expiry" className="text-sm">{t('share.expiresIn')}</Label>
                 <Select value={selectedExpiry} onValueChange={(value) => setSelectedExpiry(value as ExpiryOption)}>
                   <SelectTrigger id="expiry" className="text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="never">Never</SelectItem>
-                    <SelectItem value="1day">1 day</SelectItem>
-                    <SelectItem value="7days">7 days</SelectItem>
-                    <SelectItem value="30days">30 days</SelectItem>
+                    <SelectItem value="never">{t('share.expiryNever')}</SelectItem>
+                    <SelectItem value="1day">{t('share.expiry1day')}</SelectItem>
+                    <SelectItem value="7days">{t('share.expiry7days')}</SelectItem>
+                    <SelectItem value="30days">{t('share.expiry30days')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <Button onClick={handleGenerateLink} disabled={isCreating} className="w-full text-sm">
-                {isCreating ? 'Generating...' : 'Generate Invite Link'}
+                {isCreating ? t('share.generating') : t('share.generateInviteLink')}
               </Button>
             </div>
 
             {/* Active Invites Section */}
             <div className="space-y-4">
               <h3 className="font-semibold text-sm sm:text-base">
-                Active Invites ({displayInvites.length})
+                {t('share.activeInvites')} ({displayInvites.length})
               </h3>
 
               {isLoading ? (
                 <div className="text-center py-4 text-muted-foreground text-sm">
-                  Loading invites...
+                  {t('share.loadingInvites')}
                 </div>
               ) : displayInvites.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground text-sm">
-                  No active invites. Generate a link to share this checklist.
+                  {t('share.noActiveInvites')}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -314,7 +304,7 @@ export function ShareChecklistModal({
                             value={invite.url}
                             className="flex-1 text-xs font-mono min-w-0 bg-transparent border-none outline-none cursor-text"
                             onClick={(e) => e.currentTarget.select()}
-                            title="Click to select, then Ctrl+C to copy"
+                            title="Click to select"
                           />
                         </div>
                       </div>
@@ -322,12 +312,12 @@ export function ShareChecklistModal({
                       <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs text-muted-foreground">
                         <span>{invite.expiryLabel}</span>
                         <span>•</span>
-                        <span>{invite.isSingleUse ? 'Single use' : 'Reusable'}</span>
+                        <span>{invite.isSingleUse ? t('share.singleUse') : t('share.reusable')}</span>
                         {invite.claimedAt && (
                           <>
                             <span>•</span>
                             <span className="break-all">
-                              Claimed {invite.claimedAt.toLocaleDateString()}
+                              {t('share.claimed')} {invite.claimedAt.toLocaleDateString()}
                             </span>
                           </>
                         )}
@@ -342,7 +332,7 @@ export function ShareChecklistModal({
                               onClick={() => handleShare(invite.url, inviteData?.name)}
                               className="text-xs sm:text-sm"
                             >
-                              📤 Share
+                              📤 {t('share.share')}
                             </Button>
                             <Button
                               size="sm"
@@ -350,7 +340,7 @@ export function ShareChecklistModal({
                               onClick={() => handleCopyLink(invite.url)}
                               className="text-xs sm:text-sm"
                             >
-                              Copy Link
+                              {t('share.copyLink')}
                             </Button>
                           </>
                         )}
@@ -361,7 +351,7 @@ export function ShareChecklistModal({
                           disabled={revokingId === invite.id}
                           className="text-xs sm:text-sm"
                         >
-                          {revokingId === invite.id ? 'Revoking...' : 'Revoke'}
+                          {revokingId === invite.id ? t('share.revoking') : t('share.revoke')}
                         </Button>
                       </div>
                     </div>
@@ -373,7 +363,7 @@ export function ShareChecklistModal({
 
           <div className="flex justify-end p-4 sm:p-6 border-t bg-background">
             <Button variant="outline" onClick={onClose} className="text-sm">
-              Close
+              {t('common.close')}
             </Button>
           </div>
         </div>
