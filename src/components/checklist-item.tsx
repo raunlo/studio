@@ -448,7 +448,7 @@ export function ChecklistItemComponent({
                         }}
                         onKeyDown={handleRowKeyDown}
                         onBlur={saveRowEdit}
-                        className="min-h-[60px] max-h-[150px] py-2 px-3 text-base w-full border border-border rounded-md bg-card focus-visible:ring-2 focus-visible:ring-primary resize-none overflow-hidden"
+                        className="min-h-[60px] max-h-[150px] py-2 px-3 text-base w-full border border-border rounded-md bg-card focus-visible:ring-primary resize-none overflow-hidden"
                         rows={2}
                       />
                       <div className="flex gap-2">
@@ -522,7 +522,7 @@ export function ChecklistItemComponent({
                   }
                 }}
                 placeholder={t('item.addSubItem')}
-                className="min-h-[40px] max-h-[120px] py-2 text-sm flex-grow touch-manipulation resize-none overflow-hidden bg-muted/30 border-border/50 focus:bg-card"
+                className="min-h-[40px] max-h-[120px] py-2 text-base sm:text-sm flex-grow touch-manipulation resize-none overflow-hidden bg-muted/30 border-border/50 focus:bg-card"
                 rows={1}
               />
               <Button

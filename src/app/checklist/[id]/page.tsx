@@ -69,8 +69,9 @@ export default function ChecklistDetailPage() {
   };
 
   const handleBackToOverview = useCallback(async () => {
-    // Revalidate checklists cache and wait for fresh data before navigating
-    await mutate(['checklists']);
+    // Force revalidate checklists cache to get fresh stats from server
+    // This ensures stats are always up-to-date when navigating back
+    await mutate(['checklists'], undefined, { revalidate: true });
     router.push('/checklist');
   }, [mutate, router]);
 
