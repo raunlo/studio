@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
   Sheet,
@@ -245,39 +244,44 @@ export function ChecklistItemComponent({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 w-full min-h-[44px] rounded-lg transition-colors",
+        "flex items-start gap-4 w-full min-h-[52px] rounded-lg transition-all duration-300 py-3 px-1",
+        item.completed && "opacity-60",
         item._sseHighlight && "animate-sse-highlight"
       )}
     >
       {/* Custom checkbox with satisfying animation */}
-      <div className="flex items-center pt-0.5">
-        <button
-          onClick={() => handleItemCompleted(!item.completed)}
-          className={cn(
-            "w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-200 touch-manipulation",
-            item.completed
-              ? "bg-primary border-primary"
-              : "border-border hover:border-primary/50 bg-transparent"
-          )}
-          aria-label={`Mark item ${item.name} as complete`}
-        >
-          {item.completed && (
-            <svg
-              className="w-4 h-4 text-primary-foreground animate-check"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              strokeWidth={3}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          )}
-        </button>
-      </div>
+      <button
+        onClick={() => handleItemCompleted(!item.completed)}
+        className={cn(
+          "w-7 h-7 mt-0.5 rounded-md border-2 flex items-center justify-center transition-all duration-300 touch-manipulation shrink-0 relative overflow-hidden group",
+          item.completed
+            ? "bg-primary border-primary shadow-sm"
+            : "border-border hover:border-primary/60 bg-card hover:bg-primary/5"
+        )}
+        aria-label={`Mark item ${item.name} as complete`}
+      >
+        {/* Animated background on hover */}
+        <div className={cn(
+          "absolute inset-0 bg-primary/10 scale-0 group-hover:scale-100 transition-transform duration-300 rounded-md",
+          item.completed && "hidden"
+        )} />
+        
+        {item.completed && (
+          <svg
+            className="w-4 h-4 text-primary-foreground animate-check relative z-10"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={3}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+        )}
+      </button>
 
       {/* Collapsible Container */}
       <Collapsible
@@ -285,34 +289,24 @@ export function ChecklistItemComponent({
         onOpenChange={(checkedState) => setExpanded(checkedState as boolean)}
         className="flex-grow"
       >
-        {/* Title Row */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-start gap-2 flex-grow">
-            {/* Expand/Collapse Button */}
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 shrink-0 touch-manipulation text-muted-foreground hover:text-foreground"
-                aria-label={
-                  expanded ? "Collapse checklist item" : "Expand checklist item"
-                }
-              >
-                <ChevronRight
-                  className={cn(
-                    "h-4 w-4 transition-transform duration-200",
-                    expanded && "rotate-90"
-                  )}
-                />
-              </Button>
-            </CollapsibleTrigger>
-
-            {/* Title content */}
-            <div className="flex flex-col items-start gap-1.5 text-left flex-grow pt-1.5">
+        {/* Title Row - clickable to expand/collapse */}
+        <div className="flex items-start justify-between gap-3">
+          <div
+            className="flex flex-col items-start gap-2 text-left flex-grow cursor-pointer group"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {/* Title with expand indicator */}
+            <div className="flex items-start gap-2 w-full">
+              <ChevronRight
+                className={cn(
+                  "h-5 w-5 shrink-0 text-muted-foreground/50 transition-all duration-300 mt-0.5 group-hover:text-primary/70",
+                  expanded && "rotate-90 text-primary/70"
+                )}
+              />
               {/* Desktop inline edit */}
               {isEditingTitle && !isMobile ? (
                 <div
-                  className="flex items-center gap-2 w-full"
+                  className="flex items-center gap-2 flex-grow"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Input
@@ -321,13 +315,13 @@ export function ChecklistItemComponent({
                     onChange={(e) => setTitleEditValue(e.target.value)}
                     onKeyDown={handleTitleKeyDown}
                     onBlur={saveTitleEdit}
-                    className="h-9 text-base flex-grow"
+                    className="h-10 text-base flex-grow font-medium"
                   />
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={saveTitleEdit}
-                    className="h-8 w-8 shrink-0"
+                    className="h-9 w-9 shrink-0 hover:bg-primary/10"
                     aria-label="Save edit"
                   >
                     <Check className="h-4 w-4 text-primary" />
@@ -336,7 +330,7 @@ export function ChecklistItemComponent({
                     variant="ghost"
                     size="icon"
                     onClick={cancelTitleEdit}
-                    className="h-8 w-8 shrink-0"
+                    className="h-9 w-9 shrink-0"
                     aria-label="Cancel edit"
                   >
                     <X className="h-4 w-4 text-muted-foreground" />
@@ -345,8 +339,9 @@ export function ChecklistItemComponent({
               ) : (
                 <span
                   className={cn(
-                    "cursor-pointer sm:hover:text-primary transition-colors text-base leading-relaxed select-none break-all",
-                    item.completed && "line-through text-muted-foreground"
+                    "text-[15px] leading-relaxed select-none break-all py-0.5 font-medium transition-all duration-200",
+                    "group-hover:text-primary/90",
+                    item.completed ? "text-muted-foreground/70" : "text-foreground"
                   )}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -359,49 +354,56 @@ export function ChecklistItemComponent({
                   {item.name}
                 </span>
               )}
-
-              {/* Subitems preview */}
-              {!expanded && item.rows && item.rows.length > 0 && (
-                <div className="flex flex-wrap gap-x-2 text-sm leading-relaxed text-muted-foreground pointer-events-none">
-                  {item.rows.map((row, index) => (
-                    <span
-                      key={
-                        row.id
-                          ? `checklistItem-row-${row.id}`
-                          : `checklistItem-row-temp-${index}`
-                      }
-                      className={cn(
-                        "break-all",
-                        row.completed && "line-through opacity-60"
-                      )}
-                    >
-                      {row.name}
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
+
 
           {/* Delete button */}
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => deleteItem(item.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteItem(item.id);
+            }}
             aria-label="Delete item"
-            className="h-9 w-9 shrink-0 touch-manipulation text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            className="h-8 w-8 shrink-0 touch-manipulation text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
 
+        {/* Subitems preview */}
+        {!expanded && item.rows && item.rows.length > 0 && (
+          <div 
+            className="flex flex-wrap gap-x-2 text-sm leading-relaxed text-muted-foreground pointer-events-none"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {item.rows.map((row, index) => (
+              <span
+                key={
+                  row.id
+                    ? `checklistItem-row-${row.id}`
+                    : `checklistItem-row-temp-${index}`
+                }
+                className={cn(
+                  "break-all",
+                  row.completed && "line-through opacity-60"
+                )}
+              >
+                {row.name}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Expanded subitems content */}
         <CollapsibleContent>
-          <div className="pl-1 pt-4 space-y-3">
+          <div className="pt-4 space-y-3 pl-3 -ml-5">
             {item.rows?.map((row, index) => (
               <div
                 key={row.id ?? `temp-${index}`}
-                className="flex items-start justify-between group min-h-[40px] gap-2"
+                className="flex items-start justify-between group min-h-[40px] gap-3 transition-all duration-200 hover:translate-x-0.5"
               >
                 <div className="flex items-start gap-3 flex-grow min-w-0">
                   {/* Sub-item checkbox */}
@@ -409,17 +411,17 @@ export function ChecklistItemComponent({
                     onClick={() => handleRowCompleted(row, !row.completed)}
                     disabled={!row.id || row.id <= 0}
                     className={cn(
-                      "w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 touch-manipulation",
+                      "w-5 h-5 mt-0.5 rounded border-2 flex items-center justify-center transition-all duration-200 touch-manipulation shrink-0",
                       row.completed
-                        ? "bg-primary border-primary"
-                        : "border-border hover:border-primary/50 bg-transparent",
+                        ? "bg-accent border-accent"
+                        : "border-border hover:border-accent/60 bg-card hover:bg-accent/5",
                       (!row.id || row.id <= 0) && "opacity-50 cursor-not-allowed"
                     )}
                     aria-label={`Mark sub-item ${row.name} as complete`}
                   >
                     {row.completed && (
                       <svg
-                        className="w-3 h-3 text-primary-foreground"
+                        className="w-3 h-3 text-accent-foreground"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -436,7 +438,7 @@ export function ChecklistItemComponent({
 
                   {/* Editable row name */}
                   {editingRowId === row.id ? (
-                    <div className="flex items-end gap-2 flex-grow min-w-0">
+                    <div className="flex flex-col gap-2 flex-1 min-w-0">
                       <Textarea
                         ref={rowInputRef}
                         value={rowEditValue}
@@ -446,33 +448,36 @@ export function ChecklistItemComponent({
                         }}
                         onKeyDown={handleRowKeyDown}
                         onBlur={saveRowEdit}
-                        className="min-h-[32px] max-h-[120px] py-1 text-sm flex-grow border-none shadow-none bg-transparent px-0 focus-visible:ring-1 focus-visible:ring-primary resize-none overflow-hidden"
-                        rows={1}
+                        className="min-h-[60px] max-h-[150px] py-2 px-3 text-base w-full border border-border rounded-md bg-card focus-visible:ring-primary resize-none overflow-hidden"
+                        rows={2}
                       />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={saveRowEdit}
-                        className="h-7 w-7 shrink-0 touch-manipulation"
-                        aria-label="Save edit"
-                      >
-                        <Check className="h-3.5 w-3.5 text-primary" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={cancelRowEdit}
-                        className="h-7 w-7 shrink-0 touch-manipulation"
-                        aria-label="Cancel edit"
-                      >
-                        <X className="h-3.5 w-3.5 text-muted-foreground" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={saveRowEdit}
+                          className="h-8 w-8 shrink-0 touch-manipulation"
+                          aria-label="Save edit"
+                        >
+                          <Check className="h-4 w-4 text-primary" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={cancelRowEdit}
+                          className="h-8 w-8 shrink-0 touch-manipulation"
+                          aria-label="Cancel edit"
+                        >
+                          <X className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <span
                       className={cn(
-                        "text-sm cursor-pointer sm:hover:text-primary transition-colors leading-relaxed select-none break-all",
-                        row.completed && "line-through text-muted-foreground"
+                        "text-[14px] cursor-pointer transition-all duration-200 leading-relaxed select-none break-all py-1",
+                        "hover:text-primary/90",
+                        row.completed ? "text-muted-foreground/70 line-through" : "text-foreground/90"
                       )}
                       onClick={() => startRowEdit(row)}
                       onTouchStart={() => handleRowTouchStart(row)}
@@ -489,7 +494,7 @@ export function ChecklistItemComponent({
                   size="icon"
                   tabIndex={-1}
                   onClick={() => deleteRow(item.id, row.id!)}
-                  className="h-7 w-7 shrink-0 touch-manipulation text-muted-foreground hover:text-destructive hover:bg-destructive/10 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+                  className="h-7 w-7 shrink-0 touch-manipulation text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 transition-all duration-200"
                   aria-label="Delete sub-item"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -498,7 +503,7 @@ export function ChecklistItemComponent({
             ))}
 
             {/* New sub-item form */}
-            <form onSubmit={handleAddRowItem} className="flex items-end gap-2 pt-2">
+            <form onSubmit={handleAddRowItem} className="flex items-end gap-2 pt-3 pb-1">
               <Textarea
                 ref={subItemTextareaRef}
                 value={newSubItemText}
@@ -517,7 +522,7 @@ export function ChecklistItemComponent({
                   }
                 }}
                 placeholder={t('item.addSubItem')}
-                className="min-h-[40px] max-h-[120px] py-2 text-sm flex-grow touch-manipulation resize-none overflow-hidden"
+                className="min-h-[40px] max-h-[120px] py-2 text-base sm:text-sm flex-grow touch-manipulation resize-none overflow-hidden bg-muted/30 border-border/50 focus:bg-card"
                 rows={1}
               />
               <Button

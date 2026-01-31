@@ -61,11 +61,11 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
     const error = params.get('error');
 
     if (error === 'session_expired') {
-      setErrorMessage('Your session has expired. Please sign in again.');
+      setErrorMessage(t('auth.sessionExpired'));
     } else if (error === 'oauth_error') {
-      setErrorMessage('Authentication failed. Please try again.');
+      setErrorMessage(t('auth.authenticationFailed'));
     } else if (error) {
-      setErrorMessage('An error occurred. Please try signing in again.');
+      setErrorMessage(t('auth.unknownError'));
     }
 
     if (error) {
@@ -73,7 +73,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
       newUrl.searchParams.delete('error');
       window.history.replaceState({}, '', newUrl.toString());
     }
-  }, []);
+  }, [t]);
 
   React.useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -207,7 +207,7 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
                 onClick={handleDevLogin}
                 className="mt-3 w-full px-5 py-2.5 border border-dashed border-border rounded-xl text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors"
               >
-                Dev Login (Skip Auth)
+                {t('auth.devLogin')}
               </button>
             )}
 

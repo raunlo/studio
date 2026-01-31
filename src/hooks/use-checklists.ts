@@ -1,9 +1,9 @@
 "use client";
 
 import useSWR from "swr";
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import { AxiosError } from "axios";
-import type { ChecklistResponse, ChecklistWithStats, CreateChecklistRequest } from "@/api/checklistServiceV1.schemas";
+import type { ChecklistResponse, ChecklistWithStats } from "@/api/checklistServiceV1.schemas";
 import {
   getAllChecklists,
   createChecklist as createChecklistAPI,
@@ -12,28 +12,16 @@ import {
 } from "@/api/checklist/checklist";
 import { createLogger } from "@/lib/logger";
 import { toast } from "@/hooks/use-toast";
-import { useEffect } from "react";
 
 const logger = createLogger('UseChecklists');
 
-// Request deduplication map
-const inFlightRequests = new Map<string, Promise<unknown>>();
+// Counter for generating unique temporary IDs
+let tempIdCounter = 0;
 
-async function dedupeRequest<T>(key: string, fn: () => Promise<T>): Promise<T> {
-  if (inFlightRequests.has(key)) {
-    return inFlightRequests.get(key)! as Promise<T>;
-  }
-  const promise = fn().finally(() => inFlightRequests.delete(key));
-  inFlightRequests.set(key, promise);
-  return promise;
+function generateTempId(): number {
+  return -(++tempIdCounter);
 }
 
-/**
- * Retryable request wrapper
- * @param fn - Function to execute
- * @param maxRetries - Maximum number of retries (default: 1)
- * @returns Promise with retry logic
- */
 async function retryableRequest<T>(
   fn: () => Promise<T>,
   maxRetries: number = 1
@@ -54,7 +42,6 @@ async function retryableRequest<T>(
         }
       }
 
-      // Log retry attempt
       if (attempt < maxRetries) {
         logger.debug(`Request failed, retrying (attempt ${attempt + 1}/${maxRetries})...`);
       }
@@ -82,28 +69,18 @@ export function useChecklists(
 ): ChecklistsHookResult {
   const { refreshInterval = 10000 } = options;
 
-  // Refs to track checklists and recent operations to prevent duplicates
+  // Refs to track checklists and recent deletions to prevent UI flickering
   const checklistsRef = useRef<ChecklistWithStats[]>([]);
-  const recentlyCreatedChecklistsRef = useRef<Set<number>>(new Set());
-  const recentlyDeletedChecklistsRef = useRef<Set<number>>(new Set());
-  const recentlyRenamedChecklistsRef = useRef<Map<number, string>>(new Map());
-
-  // Ref to track rapid operations and debounce refetching
+  const recentlyDeletedRef = useRef<Set<number>>(new Set());
   const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: checklists, mutate: mutateChecklists, isLoading, error } = useSWR<ChecklistWithStats[]>(
     ['checklists'],
     async (): Promise<ChecklistWithStats[]> => {
-      const res = await dedupeRequest<ChecklistWithStats[]>(
-        'get-all-checklists',
-        async () => {
-          const response = await getAllChecklists();
-          return response.checklists;
-        }
-      );
+      const response = await getAllChecklists();
       // Filter out recently deleted checklists to prevent flickering
-      return res.filter((checklist) =>
-        !recentlyDeletedChecklistsRef.current.has(checklist.id)
+      return response.checklists.filter(
+        (checklist) => !recentlyDeletedRef.current.has(checklist.id)
       );
     },
     {
@@ -118,72 +95,62 @@ export function useChecklists(
     checklistsRef.current = checklists ?? [];
   }, [checklists]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (refetchTimeoutRef.current) {
+        clearTimeout(refetchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Helper to filter out recently deleted checklists from any list
-  const filterDeletedChecklists = useCallback((list: ChecklistWithStats[]): ChecklistWithStats[] => {
-    return list.filter(c => !recentlyDeletedChecklistsRef.current.has(c.id));
+  const filterDeleted = useCallback((list: ChecklistWithStats[]): ChecklistWithStats[] => {
+    return list.filter(c => !recentlyDeletedRef.current.has(c.id));
   }, []);
 
   /**
-   * Schedule a debounced refetch
-   * Optionally update UI immediately, then refetch after 1500ms
+   * Schedule a debounced refetch after 1500ms
    */
-  const scheduleRefetch = useCallback((options: { updatedChecklists?: ChecklistWithStats[] } = {}) => {
-    const { updatedChecklists } = options;
-
-    logger.debug('scheduleRefetch called with options:', options);
-
-    // Update the UI immediately if provided, always filtering out deleted items
-    if (updatedChecklists) {
-      mutateChecklists(filterDeletedChecklists(updatedChecklists), { revalidate: false });
-    }
-
-    // Debounced API call
+  const scheduleRefetch = useCallback(() => {
     if (refetchTimeoutRef.current) {
       clearTimeout(refetchTimeoutRef.current);
     }
 
     refetchTimeoutRef.current = setTimeout(() => {
-      logger.debug('Calling API after debounce.');
-      void (async () => {
-        try {
-          mutateChecklists(); // Fetch fresh data from API
-        } catch (e) {
-          logger.error('Error during API call:', e);
-        }
-      })();
-    }, 1500); // 1500ms debounce
+      logger.debug('Refetching checklists after debounce');
+      mutateChecklists();
+    }, 1500);
   }, [mutateChecklists]);
 
   /**
    * Create a new checklist with optimistic update
    */
   const createChecklist = useCallback(async (name: string): Promise<ChecklistResponse | void> => {
-    if (!name.trim()) {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
       logger.warn('Attempted to create checklist with empty name');
       return;
     }
 
-    // Generate temporary negative ID
-    const tempId = -Date.now() - Math.random() * 1000;
+    const tempId = generateTempId();
 
     // Create optimistic checklist
     const optimisticChecklist: ChecklistWithStats = {
       id: tempId,
-      name: name.trim(),
+      name: trimmedName,
       isOwner: true,
       isShared: false,
       stats: { totalItems: 0, completedItems: 0 },
     };
 
     // Optimistic update - add to list
-    const updatedChecklists = [...checklistsRef.current, optimisticChecklist];
-    mutateChecklists(updatedChecklists, { revalidate: false });
+    mutateChecklists([...checklistsRef.current, optimisticChecklist], { revalidate: false });
 
     try {
-      // API call with retry wrapper
-      const created = await retryableRequest<ChecklistResponse>(
-        () => createChecklistAPI({ name: name.trim() }),
-        1 // max 1 retry
+      const created = await retryableRequest(
+        () => createChecklistAPI({ name: trimmedName }),
+        1
       );
 
       logger.info('Checklist created successfully:', created);
@@ -192,29 +159,20 @@ export function useChecklists(
       const finalChecklists = checklistsRef.current.map(c =>
         c.id === tempId ? created : c
       );
-
-      // Track created checklist to prevent SSE duplication (for future SSE support)
-      recentlyCreatedChecklistsRef.current.add(created.id);
-      setTimeout(() => {
-        recentlyCreatedChecklistsRef.current.delete(created.id);
-      }, 5000);
-
-      // Update UI with real data
       mutateChecklists(finalChecklists, { revalidate: false });
 
-      // Debounced refetch to get authoritative state
       scheduleRefetch();
-
       return created;
 
     } catch (error) {
       logger.error('Failed to create checklist:', error);
 
       // Rollback optimistic update
-      const rolledBack = checklistsRef.current.filter(c => c.id !== tempId);
-      mutateChecklists(rolledBack, { revalidate: false });
+      mutateChecklists(
+        checklistsRef.current.filter(c => c.id !== tempId),
+        { revalidate: false }
+      );
 
-      // Show error toast
       toast({
         title: 'Failed to create checklist',
         description: error instanceof Error ? error.message : 'Please try again',
@@ -232,94 +190,79 @@ export function useChecklists(
     logger.info('Deleting checklist:', checklistId);
 
     // Track deleted checklist immediately to prevent flickering
-    recentlyDeletedChecklistsRef.current.add(checklistId);
+    recentlyDeletedRef.current.add(checklistId);
 
     // Store previous state for rollback
     const previousChecklists = [...checklistsRef.current];
 
     // Optimistic update - remove from list
-    const updatedChecklists = filterDeletedChecklists(checklistsRef.current);
-    mutateChecklists(updatedChecklists, { revalidate: false });
+    mutateChecklists(filterDeleted(checklistsRef.current), { revalidate: false });
 
-    // Fire API call without blocking (parallel execution)
-    retryableRequest(
-      () => deleteChecklistById(checklistId),
-      1 // max 1 retry
-    ).then(() => {
+    try {
+      await retryableRequest(() => deleteChecklistById(checklistId), 1);
+
       logger.info('Checklist deleted successfully:', checklistId);
 
       // Clean up tracking after 10 seconds
       setTimeout(() => {
-        recentlyDeletedChecklistsRef.current.delete(checklistId);
+        recentlyDeletedRef.current.delete(checklistId);
       }, 10000);
 
-      // Show success toast
-      toast({
-        title: 'Checklist deleted',
-      });
-    }).catch((error) => {
+      toast({ title: 'Checklist deleted' });
+      scheduleRefetch();
+
+    } catch (error) {
       logger.error('Failed to delete checklist:', error);
 
       // Remove from deleted tracking so it can reappear
-      recentlyDeletedChecklistsRef.current.delete(checklistId);
+      recentlyDeletedRef.current.delete(checklistId);
 
       // Rollback optimistic update
       mutateChecklists(previousChecklists, { revalidate: false });
 
-      // Show error toast
       toast({
         title: 'Failed to delete checklist',
         description: error instanceof Error ? error.message : 'Please try again',
         variant: 'destructive',
       });
-    });
 
-    // Debounced refetch to sync authoritative state
-    scheduleRefetch();
-  }, [mutateChecklists, scheduleRefetch, filterDeletedChecklists]);
+      throw error;
+    }
+  }, [mutateChecklists, scheduleRefetch, filterDeleted]);
 
   /**
    * Rename a checklist with optimistic update
    */
   const renameChecklist = useCallback(async (checklistId: number, newName: string): Promise<void> => {
-    if (!newName.trim()) {
+    const trimmedName = newName.trim();
+    if (!trimmedName) {
       logger.warn('Attempted to rename checklist with empty name');
       return;
     }
 
-    logger.info('Renaming checklist:', checklistId, 'to:', newName);
+    logger.info('Renaming checklist:', checklistId, 'to:', trimmedName);
 
     // Store previous state for rollback
     const previousChecklists = [...checklistsRef.current];
 
     // Optimistic update - rename in list
-    const updatedChecklists = checklistsRef.current.map(c =>
-      c.id === checklistId ? { ...c, name: newName.trim() } : c
+    mutateChecklists(
+      checklistsRef.current.map(c =>
+        c.id === checklistId ? { ...c, name: trimmedName } : c
+      ),
+      { revalidate: false }
     );
-    mutateChecklists(updatedChecklists, { revalidate: false });
 
     try {
-      // API call with retry wrapper
       await retryableRequest(
-        () => updateChecklistById(checklistId, { name: newName.trim() }),
-        1 // max 1 retry
+        () => updateChecklistById(checklistId, { name: trimmedName }),
+        1
       );
 
       logger.info('Checklist renamed successfully:', checklistId);
 
-      // Track renamed checklist to prevent SSE duplication (for future SSE support)
-      recentlyRenamedChecklistsRef.current.set(checklistId, newName.trim());
-      setTimeout(() => {
-        recentlyRenamedChecklistsRef.current.delete(checklistId);
-      }, 5000);
-
-      // Debounced refetch to sync authoritative state
+      toast({ title: 'Checklist renamed' });
       scheduleRefetch();
-
-      // Show success toast
-      toast({
-        title: 'Checklist renamed',
-      });
 
     } catch (error) {
       logger.error('Failed to rename checklist:', error);
@@ -327,7 +270,6 @@ export function useChecklists(
       // Rollback optimistic update
       mutateChecklists(previousChecklists, { revalidate: false });
 
-      // Show error toast
       toast({
         title: 'Failed to rename checklist',
         description: error instanceof Error ? error.message : 'Please try again',

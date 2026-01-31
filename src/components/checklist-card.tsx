@@ -42,36 +42,27 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
     toggleCompletion
    } = useChecklist(checklist.id, { refreshInterval: 10000 });
 
-  // Track items pending deletion (for undo functionality)
-  const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<number>>(new Set());
-  const deleteTimeoutsRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
-
   // Mobile detection for swipe gestures
   const isMobile = useIsMobile();
 
-  // Filter out items pending deletion from display
-  const availableItems = useMemo(() =>
-    items.filter(item => item.id === null || !pendingDeleteIds.has(item.id))
-  , [items, pendingDeleteIds]);
-
   // Filter counts for the filter bar
   const filterCounts = useMemo(() => ({
-    all: availableItems.length,
-    active: availableItems.filter(item => !item.completed).length,
-    completed: availableItems.filter(item => item.completed).length,
-  }), [availableItems]);
+    all: items.length,
+    active: items.filter(item => !item.completed).length,
+    completed: items.filter(item => item.completed).length,
+  }), [items]);
 
   // Apply active filter
   const displayedItems = useMemo(() => {
     switch (activeFilter) {
       case 'active':
-        return availableItems.filter(item => !item.completed);
+        return items.filter(item => !item.completed);
       case 'completed':
-        return availableItems.filter(item => item.completed);
+        return items.filter(item => item.completed);
       default:
-        return availableItems;
+        return items;
     }
-  }, [availableItems, activeFilter]);
+  }, [items, activeFilter]);
 
   useImperativeHandle(ref, () => ({
       async handleReorder(filteredFrom: number, filteredTo: number) {
@@ -131,7 +122,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
     }
   };
 
-  // Delete with undo functionality
+  // Delete with undo functionality - deletes immediately and recreates on undo
   const handleDeleteItem = async (itemId: number | null) => {
     if (!itemId) return;
 
@@ -139,35 +130,37 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
     const deletedItem = items.find(i => i.id === itemId);
     if (!deletedItem) return;
 
-    // Cancel any existing timeout for this item
-    const existingTimeout = deleteTimeoutsRef.current.get(itemId);
-    if (existingTimeout) {
-      clearTimeout(existingTimeout);
-      deleteTimeoutsRef.current.delete(itemId);
-    }
+    // Save a deep copy of the deleted item for undo
+    const itemSnapshot = {
+      name: deletedItem.name,
+      completed: deletedItem.completed,
+      orderNumber: deletedItem.orderNumber,
+      rows: deletedItem.rows ? [...deletedItem.rows] : null,
+    };
 
-    // Add to pending deletes (hides from UI immediately)
-    setPendingDeleteIds(prev => new Set(prev).add(itemId));
+    // Delete immediately from backend
+    await deleteItemFn(itemId);
 
     // Show toast with undo action
     toast({
       title: `🗑️ ${t('detail.itemDeleted')}`,
-      description: deletedItem.name,
+      description: itemSnapshot.name,
       action: (
         <ToastAction
           altText={t('detail.undo')}
-          onClick={() => {
-            // Cancel the scheduled deletion
-            const timeout = deleteTimeoutsRef.current.get(itemId);
-            if (timeout) {
-              clearTimeout(timeout);
-              deleteTimeoutsRef.current.delete(itemId);
+          onClick={async () => {
+            // Prevent duplicate undo clicks
+            if (items.some(i => i.name === itemSnapshot.name && i._isPending)) {
+              return; // Already restoring this item
             }
-            // Restore item to UI by removing from pending deletes
-            setPendingDeleteIds(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(itemId);
-              return newSet;
+            
+            // Recreate the item with the same data
+            await addItem({
+              id: null,
+              name: itemSnapshot.name,
+              completed: itemSnapshot.completed,
+              orderNumber: itemSnapshot.orderNumber,
+              rows: itemSnapshot.rows,
             });
           }}
         >
@@ -175,23 +168,6 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
         </ToastAction>
       ),
     });
-
-    // Schedule actual deletion after toast duration
-    const timeout = setTimeout(async () => {
-      // Remove from pending deletes
-      setPendingDeleteIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(itemId);
-        return newSet;
-      });
-      // Actually delete from backend
-      await deleteItemFn(itemId);
-      // Clean up timeout ref
-      deleteTimeoutsRef.current.delete(itemId);
-    }, 5000); // Default toast duration is 5 seconds
-
-    // Store timeout ref
-    deleteTimeoutsRef.current.set(itemId, timeout);
   };
 
   // Show error state if hook failed to load
@@ -237,13 +213,13 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
           )}
         </CardHeader>
         <CardContent className="pt-0 pb-4 sm:pb-6 px-4 sm:px-6 flex-grow">
-          {/* Add item form - sticky at top */}
-          <div className="pb-4 border-b mb-4">
+          {/* Add item form */}
+          <div className="pb-3 border-b mb-2">
             <AddItemForm onFormSubmit={handleFormSubmit} />
           </div>
 
           {/* Filter bar - only show if there are items */}
-          {availableItems.length > 0 && onFilterChange && (
+          {items.length > 0 && onFilterChange && (
             <ChecklistFilterBar
               activeFilter={activeFilter}
               onFilterChange={onFilterChange}
@@ -258,12 +234,19 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                 <div
                   {...provided.droppableProps}
                   ref={provided.innerRef}
-                  className="space-y-3 sm:space-y-4 min-h-[10px] w-full pt-4"
+                  className="space-y-2 sm:space-y-3 min-h-[10px] w-full pt-2"
                 >
-                  {displayedItems.map((item: ChecklistItem, index: number) => (
+                  {displayedItems.map((item: ChecklistItem, index: number) => {
+                    // Use stable key based on _originalTempId to prevent duplicate renders
+                    // When temp item gets real ID, _originalTempId stays the same, so React key doesn't change
+                    const itemKey = item._originalTempId 
+                      ? `temp-${Math.abs(item._originalTempId)}` // Stable key for temp->real transition
+                      : `item-${item.id}`; // Normal ID-based key
+                    
+                    return (
                     <Draggable
-                      key={item.id ? `checklistItem-${item.id}` :`checklistItem-temp-${index}`}
-                      draggableId={item.id ? String(item.id) : `temp-${index}`}
+                      key={itemKey}
+                      draggableId={item.id ? String(item.id) : `temp-${item.name}-${index}`}
                       index={index}
                     >
                       {(provided, snapshot) => (
@@ -295,7 +278,8 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                         </div>
                       )}
                     </Draggable>
-                  ))}
+                    );
+                  })}
                   {provided.placeholder}
 
                   {/* Empty states */}
@@ -328,12 +312,19 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                 <div
                   {...provided.droppableProps}
                   ref={provided.innerRef}
-                  className="space-y-3 min-h-[10px] w-full pt-4"
+                  className="space-y-2 min-h-[10px] w-full pt-2"
                 >
-                  {displayedItems.map((item: ChecklistItem, index: number) => (
+                  {displayedItems.map((item: ChecklistItem, index: number) => {
+                    // Use stable key based on _originalTempId to prevent duplicate renders
+                    // When temp item gets real ID, _originalTempId stays the same, so React key doesn't change
+                    const itemKey = item._originalTempId 
+                      ? `temp-${Math.abs(item._originalTempId)}` // Stable key for temp->real transition
+                      : `item-${item.id}`; // Normal ID-based key
+                    
+                    return (
                     <Draggable
-                      key={item.id ? `checklistItem-${item.id}` : `checklistItem-temp-${index}`}
-                      draggableId={item.id ? String(item.id) : `temp-${index}`}
+                      key={itemKey}
+                      draggableId={item.id ? String(item.id) : `temp-${item.name}-${index}`}
                       index={index}
                     >
                       {(provided, snapshot) => (
@@ -348,9 +339,9 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                           {/* Drag handle - visible on mobile */}
                           <div
                             {...provided.dragHandleProps}
-                            className="flex items-center justify-center w-10 shrink-0 bg-muted/30 touch-none active:bg-muted/50"
+                            className="flex items-center justify-center w-6 shrink-0 bg-muted/20 touch-none active:bg-muted/40"
                           >
-                            <GripVertical className="w-4 h-4 text-muted-foreground/60" />
+                            <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50" />
                           </div>
                           {/* Swipeable content */}
                           <SwipeableItem
@@ -358,7 +349,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                             onSwipeDelete={() => handleDeleteItem(item.id)}
                             isCompleted={item.completed}
                           >
-                            <div className="w-full p-3">
+                            <div className="w-full py-2.5 px-2">
                               <ChecklistItemComponent
                                 item={item}
                                 checklistId={checklist.id}
@@ -373,7 +364,8 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                         </div>
                       )}
                     </Draggable>
-                  ))}
+                    );
+                  })}
                   {provided.placeholder}
 
                   {/* Empty state */}

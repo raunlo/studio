@@ -1,6 +1,7 @@
 "use client";
 
 import useSWR from "swr";
+import { useSWRConfig } from "swr";
 import { useRef, useCallback, useEffect, useMemo } from "react";
 import {
   ChecklistItemResponse,
@@ -85,7 +86,8 @@ export function useChecklist(
 
   const { data: items = [], mutate: mutateItems, isLoading, error } = useSWR<ChecklistItem[]>(
     checklistId ? ["checklist-items", checklistId] : null,
-    async () => {
+    async ([, ], options?: { previousData?: ChecklistItem[] }) => {
+      const previousData = options?.previousData;
       const res = await dedupeRequest(
         `checklist-items-${checklistId}`,
         () =>
@@ -94,7 +96,7 @@ export function useChecklist(
             { completed: undefined }
           ),
       );
-      const mappedItems = res.map((i: ChecklistItemResponse) => ({
+      const mappedItems: ChecklistItem[] = res.map((i: ChecklistItemResponse) => ({
         id: i.id,
         name: i.name,
         completed: i.completed,
@@ -107,9 +109,24 @@ export function useChecklist(
           })) ?? null,
       }));
       // Filter out recently deleted items to prevent flickering
-      return mappedItems.filter((item: ChecklistItem) =>
+      let finalItems: ChecklistItem[] = mappedItems.filter((item) =>
         item.id === null || !recentlyDeletedItemsRef.current.has(item.id)
       );
+
+      // Preserve pending items that haven't been synced yet
+      if (previousData) {
+        const pendingItems = previousData.filter(
+          (item) => item.id !== null && recentlyAddedItemsRef.current.has(item.id)
+        );
+        // Add pending items that aren't in the server response yet (at the front)
+        for (const pendingItem of pendingItems) {
+          const existsInServer = finalItems.some(i => i.id === pendingItem.id || i.name === pendingItem.name);
+          if (!existsInServer) {
+            finalItems = [pendingItem, ...finalItems];
+          }
+        }
+      }
+      return finalItems;
     },
     { refreshInterval },
   );
@@ -128,7 +145,8 @@ export function useChecklist(
 
     // Update the UI immediately, always filtering out recently deleted items
     if (items) {
-      mutateItems(filterDeletedItems(items), { revalidate: false });
+      const filtered = filterDeletedItems(items);
+      mutateItems(filtered, { revalidate: false });
     }
 
     // Debounced API call
@@ -137,14 +155,7 @@ export function useChecklist(
     }
 
     refetchTimeoutRef.current = setTimeout(() => {
-      console.debug('Calling API after debounce.');
-      void (async () => {
-        try {
-          mutateItems(); // Fetch fresh data from API (fetcher also filters deleted items)
-        } catch (e) {
-          logger.error('Error during API call:', e);
-        }
-      })();
+      mutateItems();
     }, 1500);
   }, [mutateItems, checklistId]);
 
@@ -183,15 +194,21 @@ export function useChecklist(
           if (newItem.id && recentlyDeletedItemsRef.current.has(newItem.id)) {
             return;
           }
-          const firstCompletedIndex = itemsRef.current.findIndex(item => item.completed);
-          const insertIndex = firstCompletedIndex === -1 ? itemsRef.current.length : firstCompletedIndex;
+          // Don't add if it's in the recently added list (we already have it via optimistic update)
+          if (newItem.id && recentlyAddedItemsRef.current.has(newItem.id)) {
+            return;
+          }
+          // Don't add if item already exists (by ID or by name for pending items)
+          const alreadyExists = itemsRef.current.some(
+            item => item.id === newItem.id || (item._isPending && item.name === newItem.name)
+          );
+          if (alreadyExists) {
+            return;
+          }
           const highlightedItem = markItemHighlighted(newItem);
-          const updatedItems = [
-        ...itemsRef.current.slice(0, insertIndex),
-        highlightedItem,
-        ...itemsRef.current.slice(insertIndex)
-          ];
-          scheduleRefetch({ updatedItems: updatedItems });
+          // Insert new items at the front
+          const updatedItems = [highlightedItem, ...itemsRef.current];
+          scheduleRefetch({ updatedItems });
         }
 
   const handleItemUpdatedMessageFromChecklistItemUpdates = (payload: ChecklistItem)  => {
@@ -242,7 +259,8 @@ export function useChecklist(
      const currentItems = itemsRef.current;
       const item = currentItems.find((i) => i.id === payload.itemId);
       if (item) {
-        const newRows = [...(item.rows || []), payload.row];
+        // Insert new rows at the front
+        const newRows = [payload.row, ...(item.rows || [])];
         const updatedItem = markItemHighlighted({ ...item, rows: newRows });
         const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
         scheduleRefetch({ updatedItems: newItemsArray });
@@ -265,6 +283,21 @@ export function useChecklist(
     itemsRef.current = items;
   }, [items]);
 
+  // Refresh data when page becomes visible again (e.g., after phone unlock)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        logger.debug('Page became visible, refreshing data');
+        mutateItems();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [mutateItems]);
+
   const handleRealtimeMessageFromSSE: MessageHandlers = {
     itemUpdated: handleItemUpdatedMessageFromChecklistItemUpdates,
     itemCreated: handleItemCreatedMessageFromChecklistItemUpdates,
@@ -278,10 +311,26 @@ export function useChecklist(
 
   const addItem = async (item: ChecklistItem) => {
     if (!checklistId) return;
-    
+
+    const tempId = -Date.now();
+
+    const optimisticItem: ChecklistItem = {
+      ...item,
+      id: tempId,
+      orderNumber: (items.length + 1),
+      _isPending: true,
+      _originalTempId: tempId,
+    };
+
+    recentlyAddedItemsRef.current.add(tempId);
+
+    // Optimistic update - insert at the front
+    const current = itemsRef.current ?? [];
+    mutateItems([optimisticItem, ...current], { revalidate: false });
+
     try {
       const res = await dedupeRequest(
-        `add-item-${checklistId}-${item.name}`,
+        `add-item-${checklistId}-${item.name}-${Date.now()}`,
         () =>
           createChecklistItem(
             checklistId,
@@ -296,7 +345,7 @@ export function useChecklist(
           ),
       );
       const created = res;
-      
+
       const newItem: ChecklistItem = {
         id: created.id,
         name: created.name,
@@ -308,25 +357,43 @@ export function useChecklist(
             name: r.name,
             completed: r.completed,
           })) ?? null,
+        _originalTempId: tempId, // Preserve temp ID for stable React key
       };
-      
-      // Insert the new item before the first completed item so it lands
-      // at the bottom of incomplete items but at the top of completed ones.
-      {
-        const current = items ?? [];
-        const firstCompletedIndex = current.findIndex((i) => i.completed);
-        const insertIndex = firstCompletedIndex === -1 ? current.length : firstCompletedIndex;
-        const newItems = [
-          ...current.slice(0, insertIndex),
-          newItem,
-          ...current.slice(insertIndex),
-        ];
-        mutateItems(newItems, { revalidate: false });
-      }
-    
-      
+
+      // Remove temp tracking and add real ID tracking
+      recentlyAddedItemsRef.current.delete(tempId);
+      recentlyAddedItemsRef.current.add(created.id);
+
+      // Update temp item with real data
+      mutateItems(
+        (currentItems) => {
+          if (!currentItems) return [newItem];
+          return currentItems.map(item =>
+            item.id === tempId
+              ? { ...item, ...newItem, _originalTempId: item._originalTempId || tempId, _isPending: false }
+              : item
+          );
+        },
+        { revalidate: false }
+      );
+
+      // Clean up tracking after a longer delay
+      setTimeout(() => {
+        recentlyAddedItemsRef.current.delete(created.id);
+      }, 15000);
+
     } catch (error) {
       logger.error('❌ Failed to add item:', error);
+      // Remove optimistic item on error
+      recentlyAddedItemsRef.current.delete(tempId);
+      mutateItems(
+        (currentItems) => {
+          const result = currentItems?.filter(i => i.id !== tempId) ?? [];
+          itemsRef.current = result;
+          return result;
+        },
+        { revalidate: false }
+      );
     }
   };
 
@@ -368,7 +435,7 @@ export function useChecklist(
     recentlyDeletedItemsRef.current.add(itemId);
 
     // Optimistic update - remove from UI immediately
-    mutateItems(filterDeletedItems(items), false);
+    mutateItems(filterDeletedItems(items));
 
     // Fire API call without waiting (parallel execution)
     dedupeRequest(
@@ -388,7 +455,7 @@ export function useChecklist(
     });
 
     // Debounced refetch to sync with server
-    scheduleRefetch();
+    //scheduleRefetch();
   };
 
   const reorderItem = async (from: number, to: number) => {
@@ -501,7 +568,7 @@ export function useChecklist(
           ? {
               ...item,
               completed: false, // Adding a sub-item marks parent as incomplete
-              rows: [...(item.rows ?? []), optimisticRow],
+              rows: [optimisticRow, ...(item.rows ?? [])], // Insert at front
             }
           : item,
       ),

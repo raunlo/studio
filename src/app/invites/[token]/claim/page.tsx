@@ -5,10 +5,12 @@ import { useParams, useRouter } from 'next/navigation';
 import { useClaimInvite } from '@/api/invite/invite';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 type ClaimStatus = 'loading' | 'success' | 'error';
 
 export default function ClaimInvitePage() {
+  const { t } = useTranslation();
   const params = useParams();
   const router = useRouter();
   const token = params.token as string;
@@ -42,7 +44,7 @@ export default function ClaimInvitePage() {
       setStatus('error');
 
       // Parse error message
-      const message = error?.response?.data?.message || error?.message || 'Failed to claim invite';
+      const message = error?.response?.data?.message || error?.message || t('invite.failedToClaim');
       setErrorMessage(message);
 
       // Check if it's an auth error
@@ -58,7 +60,7 @@ export default function ClaimInvitePage() {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-          <p className="text-lg text-muted-foreground">Joining checklist...</p>
+          <p className="text-lg text-muted-foreground">{t('invite.joiningChecklist')}</p>
         </div>
       </div>
     );
@@ -69,8 +71,8 @@ export default function ClaimInvitePage() {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <CheckCircle2 className="h-16 w-16 mx-auto text-green-500" />
-          <h2 className="text-2xl font-semibold">You&apos;ve joined the checklist!</h2>
-          <p className="text-muted-foreground">Redirecting...</p>
+          <h2 className="text-2xl font-semibold">{t('invite.successfullyJoined')}</h2>
+          <p className="text-muted-foreground">{t('invite.redirecting')}</p>
         </div>
       </div>
     );
@@ -82,11 +84,11 @@ export default function ClaimInvitePage() {
         <div className="text-center space-y-6 max-w-md">
           <XCircle className="h-16 w-16 mx-auto text-destructive" />
           <div className="space-y-2">
-            <h2 className="text-2xl font-semibold">Unable to Join Checklist</h2>
+            <h2 className="text-2xl font-semibold">{t('invite.unableToJoin')}</h2>
             <p className="text-muted-foreground">{errorMessage}</p>
           </div>
           <Button onClick={() => router.push('/checklist')}>
-            Back to Home
+            {t('invite.backToHome')}
           </Button>
         </div>
       </div>

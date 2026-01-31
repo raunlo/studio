@@ -2,6 +2,7 @@
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 
 export type FilterType = 'all' | 'active' | 'completed';
 
@@ -20,12 +21,14 @@ export function ChecklistFilterBar({
   onFilterChange,
   counts,
 }: ChecklistFilterBarProps) {
+  const { t } = useTranslation();
+
   return (
-    <div className="sticky top-0 z-10 bg-card border-b pb-3 -mx-4 sm:-mx-6 px-4 sm:px-6 pt-3">
+    <div className="sticky top-0 z-10 bg-card -mx-4 sm:-mx-6 px-4 sm:px-6 py-2">
       <Tabs value={activeFilter} onValueChange={(value) => onFilterChange(value as FilterType)}>
-        <TabsList className="grid w-full grid-cols-3 h-11 sm:h-10 touch-manipulation">
+        <TabsList className="grid w-full grid-cols-3 h-9 sm:h-10 touch-manipulation">
           <TabsTrigger value="all" className="text-sm sm:text-base">
-            All
+            {t('filter.all')}
             {counts && counts.all > 0 && (
               <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
                 {counts.all}
@@ -33,7 +36,7 @@ export function ChecklistFilterBar({
             )}
           </TabsTrigger>
           <TabsTrigger value="active" className="text-sm sm:text-base">
-            Active
+            {t('filter.active')}
             {counts && counts.active > 0 && (
               <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
                 {counts.active}
@@ -41,7 +44,7 @@ export function ChecklistFilterBar({
             )}
           </TabsTrigger>
           <TabsTrigger value="completed" className="text-sm sm:text-base">
-            Done
+            {t('filter.done')}
             {counts && counts.completed > 0 && (
               <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
                 {counts.completed}

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useSWRConfig } from "swr";
 import { ChecklistCard } from "@/components/checklist-card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -21,6 +22,7 @@ export default function ChecklistDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { t } = useTranslation();
+  const { mutate } = useSWRConfig();
   const checklistId = params.id as string;
   const checklistCardRef = useRef<ChecklistCardHandle>(null);
 
@@ -66,6 +68,13 @@ export default function ChecklistDetailPage() {
     }
   };
 
+  const handleBackToOverview = useCallback(async () => {
+    // Force revalidate checklists cache to get fresh stats from server
+    // This ensures stats are always up-to-date when navigating back
+    await mutate(['checklists'], undefined, { revalidate: true });
+    router.push('/checklist');
+  }, [mutate, router]);
+
   const onDragEnd = useCallback(async (result: DropResult) => {
     const { source, destination } = result;
 
@@ -95,7 +104,7 @@ export default function ChecklistDetailPage() {
         <div className="mb-4 sm:mb-6 flex items-center justify-between gap-4">
           <Button
             variant="ghost"
-            onClick={() => router.push('/checklist')}
+            onClick={handleBackToOverview}
             className="gap-2 h-11 px-3 sm:px-4 touch-manipulation"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -134,7 +143,7 @@ export default function ChecklistDetailPage() {
                 {t('detail.errorDescription')}
               </p>
               <Button
-                onClick={() => router.push('/checklist')}
+                onClick={handleBackToOverview}
                 className="mt-4"
               >
                 {t('detail.backToOverview')}

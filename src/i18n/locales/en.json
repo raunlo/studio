@@ -1,4 +1,83 @@
 {
+  "common": {
+    "close": "Close",
+    "retry": "Retry",
+    "loading": "Loading...",
+    "somethingWentWrong": "Something went wrong"
+  },
+  "filter": {
+    "all": "All",
+    "active": "Active",
+    "done": "Done"
+  },
+  "quickAdd": {
+    "bread": "Bread",
+    "milk": "Milk",
+    "eggs": "Eggs",
+    "apples": "Apples",
+    "butter": "Butter",
+    "coffee": "Coffee"
+  },
+  "share": {
+    "title": "Share Checklist",
+    "description": "Create invite links to share this checklist with others",
+    "createNewInviteLink": "Create New Invite Link",
+    "nameOptional": "Name (optional)",
+    "namePlaceholder": "e.g., For John, Team members",
+    "nameHelperText": "Give this invite a friendly name to help you remember who it's for",
+    "singleUseOnly": "Single use only",
+    "expiresIn": "Expires in",
+    "expiryNever": "Never",
+    "expiry1day": "1 day",
+    "expiry7days": "7 days",
+    "expiry30days": "30 days",
+    "generateInviteLink": "Generate Invite Link",
+    "generating": "Generating...",
+    "activeInvites": "Active Invites",
+    "loadingInvites": "Loading invites...",
+    "noActiveInvites": "No active invites. Generate a link to share this checklist.",
+    "singleUse": "Single use",
+    "reusable": "Reusable",
+    "claimed": "Claimed",
+    "share": "Share",
+    "copyLink": "Copy Link",
+    "revoking": "Revoking...",
+    "revoke": "Revoke",
+    "inviteLinkCopied": "Invite link copied!",
+    "inviteLinkCopiedDescription": "The invite link has been copied to your clipboard.",
+    "linkGenerated": "Link generated",
+    "failedToGenerateInvite": "Failed to generate invite",
+    "linkCopied": "Link copied!",
+    "pasteToShare": "Paste it anywhere to share",
+    "copyFailed": "Copy failed - here is your link:",
+    "joinChecklist": "Join checklist",
+    "shareMessage": "Join my checklist on DailyChexly!",
+    "sharedSuccessfully": "Shared successfully!",
+    "revokeConfirmation": "Are you sure you want to revoke this invite link? Anyone with this link will no longer be able to use it.",
+    "inviteRevoked": "Invite revoked",
+    "failedToRevoke": "Failed to revoke invite"
+  },
+  "invite": {
+    "joiningChecklist": "Joining checklist...",
+    "successfullyJoined": "You've joined the checklist!",
+    "redirecting": "Redirecting...",
+    "unableToJoin": "Unable to Join Checklist",
+    "failedToClaim": "Failed to claim invite",
+    "backToHome": "Back to Home"
+  },
+  "toast": {
+    "leftChecklist": "Left checklist",
+    "leftChecklistDescription": "You have successfully left the shared checklist",
+    "failedToLeave": "Failed to leave checklist"
+  },
+  "confirm": {
+    "deleteChecklist": "Are you sure you want to delete this checklist? This action cannot be undone.",
+    "leaveChecklist": "Are you sure you want to leave this shared checklist? You can rejoin using the invite link."
+  },
+  "error": {
+    "apiConnectionError": "Could not connect to the server. Please ensure the API is running and accessible.",
+    "loadError": "Failed to load data"
+  },
   "welcome": "Welcome to",
   "appName": "Daily Chexly",
   "tagline": "Keep your lists always at hand",
@@ -37,6 +116,10 @@
     "signIn": "Sign in with Google",
     "signOut": "Sign out",
     "hello": "Hello",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "authenticationFailed": "Authentication failed. Please try again.",
+    "unknownError": "An error occurred. Please try signing in again.",
+    "devLogin": "Dev Login (Skip Auth)",
     "welcome": "Welcome to",
     "appName": "Checklist",
     "tagline": "Keep your lists always at hand",
@@ -91,7 +174,11 @@
     "sharedWithMe": "Shared with me",
     "delete": "Delete",
     "cannotDelete": "Cannot delete",
-    "deleteAllItemsFirst": "Delete all items first"
+    "deleteAllItemsFirst": "Delete all items first",
+    "rename": "Rename",
+    "share": "Share",
+    "leave": "Leave",
+    "complete": "Complete"
   },
   "item": {
     "editTitle": "Rename",

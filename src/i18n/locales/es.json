@@ -1,4 +1,83 @@
 {
+  "common": {
+    "close": "Cerrar",
+    "retry": "Reintentar",
+    "loading": "Cargando...",
+    "somethingWentWrong": "Algo salió mal"
+  },
+  "filter": {
+    "all": "Todos",
+    "active": "Activos",
+    "done": "Hechos"
+  },
+  "quickAdd": {
+    "bread": "Pan",
+    "milk": "Leche",
+    "eggs": "Huevos",
+    "apples": "Manzanas",
+    "butter": "Mantequilla",
+    "coffee": "Café"
+  },
+  "share": {
+    "title": "Compartir lista",
+    "description": "Crea enlaces de invitación para compartir esta lista con otros",
+    "createNewInviteLink": "Crear nuevo enlace de invitación",
+    "nameOptional": "Nombre (opcional)",
+    "namePlaceholder": "Ej: Para Juan, Miembros del equipo",
+    "nameHelperText": "Dale un nombre amigable a esta invitación para recordar para quién es",
+    "singleUseOnly": "Solo un uso",
+    "expiresIn": "Expira en",
+    "expiryNever": "Nunca",
+    "expiry1day": "1 día",
+    "expiry7days": "7 días",
+    "expiry30days": "30 días",
+    "generateInviteLink": "Generar enlace de invitación",
+    "generating": "Generando...",
+    "activeInvites": "Invitaciones activas",
+    "loadingInvites": "Cargando invitaciones...",
+    "noActiveInvites": "No hay invitaciones activas. Genera un enlace para compartir esta lista.",
+    "singleUse": "Un solo uso",
+    "reusable": "Reutilizable",
+    "claimed": "Reclamado",
+    "share": "Compartir",
+    "copyLink": "Copiar enlace",
+    "revoking": "Revocando...",
+    "revoke": "Revocar",
+    "inviteLinkCopied": "¡Enlace de invitación copiado!",
+    "inviteLinkCopiedDescription": "El enlace de invitación ha sido copiado al portapapeles.",
+    "linkGenerated": "Enlace generado",
+    "failedToGenerateInvite": "Error al generar invitación",
+    "linkCopied": "¡Enlace copiado!",
+    "pasteToShare": "Pégalo en cualquier lugar para compartir",
+    "copyFailed": "Error al copiar - aquí está tu enlace:",
+    "joinChecklist": "Unirse a lista",
+    "shareMessage": "¡Únete a mi lista en DailyChexly!",
+    "sharedSuccessfully": "¡Compartido exitosamente!",
+    "revokeConfirmation": "¿Estás seguro de que quieres revocar este enlace de invitación? Nadie con este enlace podrá usarlo más.",
+    "inviteRevoked": "Invitación revocada",
+    "failedToRevoke": "Error al revocar invitación"
+  },
+  "invite": {
+    "joiningChecklist": "Uniéndose a la lista...",
+    "successfullyJoined": "¡Te has unido a la lista!",
+    "redirecting": "Redirigiendo...",
+    "unableToJoin": "No se puede unir a la lista",
+    "failedToClaim": "Error al reclamar invitación",
+    "backToHome": "Volver al inicio"
+  },
+  "toast": {
+    "leftChecklist": "Saliste de la lista",
+    "leftChecklistDescription": "Has salido exitosamente de la lista compartida",
+    "failedToLeave": "Error al salir de la lista"
+  },
+  "confirm": {
+    "deleteChecklist": "¿Estás seguro de que quieres eliminar esta lista? Esta acción no se puede deshacer.",
+    "leaveChecklist": "¿Estás seguro de que quieres salir de esta lista compartida? Puedes volver a unirte usando el enlace de invitación."
+  },
+  "error": {
+    "apiConnectionError": "No se pudo conectar al servidor. Por favor verifica que la API esté funcionando y accesible.",
+    "loadError": "Error al cargar datos"
+  },
   "welcome": "Bienvenido a",
   "appName": "Daily Chexly",
   "tagline": "Mantén tus listas siempre a mano",
@@ -37,6 +116,10 @@
     "signIn": "Iniciar sesión con Google",
     "signOut": "Cerrar sesión",
     "hello": "Hola",
+    "sessionExpired": "Tu sesión ha expirado. Por favor inicia sesión de nuevo.",
+    "authenticationFailed": "Autenticación fallida. Por favor intenta de nuevo.",
+    "unknownError": "Ocurrió un error. Por favor intenta iniciar sesión de nuevo.",
+    "devLogin": "Login de desarrollo",
     "welcome": "Bienvenido a",
     "appName": "Checklist",
     "tagline": "Mantén tus listas siempre a mano",
@@ -91,7 +174,11 @@
     "sharedWithMe": "Compartido conmigo",
     "delete": "Eliminar",
     "cannotDelete": "No se puede eliminar",
-    "deleteAllItemsFirst": "Elimina todos los elementos primero"
+    "deleteAllItemsFirst": "Elimina todos los elementos primero",
+    "rename": "Renombrar",
+    "share": "Compartir",
+    "leave": "Salir",
+    "complete": "Completo"
   },
   "item": {
     "editTitle": "Cambiar nombre",
