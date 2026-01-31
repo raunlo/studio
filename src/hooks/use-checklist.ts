@@ -126,7 +126,6 @@ export function useChecklist(
           }
         }
       }
-      console.log('✅ Fetched checklist items:', finalItems);
       return finalItems;
     },
     { refreshInterval },
@@ -156,14 +155,7 @@ export function useChecklist(
     }
 
     refetchTimeoutRef.current = setTimeout(() => {
-      console.debug('Calling API after debounce.');
-      void (async () => {
-        try {
-          mutateItems(); // Fetch fresh data from API (fetcher also filters deleted items)
-        } catch (e) {
-          logger.error('Error during API call:', e);
-        }
-      })();
+      mutateItems();
     }, 1500);
   }, [mutateItems, checklistId]);
 
@@ -198,22 +190,12 @@ export function useChecklist(
   }, [clearSseHighlight]);
 
   const handleItemCreatedMessageFromChecklistItemUpdates = (newItem: ChecklistItem)  => {
-          logger.info('📡 SSE: itemCreated received', { 
-            itemId: newItem.id, 
-            itemName: newItem.name 
-          });
-          
           // Don't add if it's in the recently deleted list
           if (newItem.id && recentlyDeletedItemsRef.current.has(newItem.id)) {
-            logger.info('⏭️ SSE: skipping (recently deleted)');
             return;
           }
           // Don't add if it's in the recently added list (we already have it via optimistic update)
           if (newItem.id && recentlyAddedItemsRef.current.has(newItem.id)) {
-            logger.info('⏭️ SSE: skipping (recently added)', { 
-              trackingSize: recentlyAddedItemsRef.current.size,
-              tracking: Array.from(recentlyAddedItemsRef.current)
-            });
             return;
           }
           // Don't add if item already exists (by ID or by name for pending items)
@@ -221,11 +203,8 @@ export function useChecklist(
             item => item.id === newItem.id || (item._isPending && item.name === newItem.name)
           );
           if (alreadyExists) {
-            logger.info('⏭️ SSE: skipping (already exists)');
             return;
           }
-          
-          logger.info('✅ SSE: adding item via SSE');
           const highlightedItem = markItemHighlighted(newItem);
           // Insert new items at the front
           const updatedItems = [highlightedItem, ...itemsRef.current];
@@ -301,7 +280,6 @@ export function useChecklist(
 
   // Keep itemsRef in sync with items
   useEffect(() => {
-    console.log('📝 itemsRef updated:', items);
     itemsRef.current = items;
   }, [items]);
 
@@ -333,29 +311,22 @@ export function useChecklist(
 
   const addItem = async (item: ChecklistItem) => {
     if (!checklistId) return;
-    logger.info('ERRRRRRRRRRRRRR:::: ', itemsRef.current);
-    // Generate a temporary ID for optimistic update
+
     const tempId = -Date.now();
-    logger.info('➕ addItem: starting with optimistic update', { tempId, itemName: item.name });
-    
+
     const optimisticItem: ChecklistItem = {
       ...item,
       id: tempId,
       orderNumber: (items.length + 1),
       _isPending: true,
-      _originalTempId: tempId, // Store original temp ID for stable React key
+      _originalTempId: tempId,
     };
 
-    // Track this pending item
     recentlyAddedItemsRef.current.add(tempId);
-    logger.info('📝 addItem: added to tracking', { tempId, trackingSize: recentlyAddedItemsRef.current.size });
 
     // Optimistic update - insert at the front
     const current = itemsRef.current ?? [];
-    const optimisticItems = [optimisticItem, ...current];
-
-    logger.info('KRT kas siin on error????', items);
-    mutateItems(optimisticItems, { revalidate: false });
+    mutateItems([optimisticItem, ...current], { revalidate: false });
 
     try {
       const res = await dedupeRequest(
@@ -374,11 +345,6 @@ export function useChecklist(
           ),
       );
       const created = res;
-      
-      logger.info('📥 addItem: received response from API', { 
-        createdId: created.id, 
-        createdName: created.name 
-      });
 
       const newItem: ChecklistItem = {
         id: created.id,
@@ -397,44 +363,16 @@ export function useChecklist(
       // Remove temp tracking and add real ID tracking
       recentlyAddedItemsRef.current.delete(tempId);
       recentlyAddedItemsRef.current.add(created.id);
-      logger.info('📝 addItem: updated tracking', { 
-        removedTempId: tempId, 
-        addedRealId: created.id, 
-        trackingSize: recentlyAddedItemsRef.current.size 
-      });
 
-      // Update temp item with real data while preserving _originalTempId for stable key
+      // Update temp item with real data
       mutateItems(
         (currentItems) => {
-          if (!currentItems) {
-            logger.info('✅ addItem: no current items, returning new item');
-            return [newItem];
-          }
-          console.log('🔍 Before mapping - tempId:', tempId, 'currentItems:', currentItems.map(i => ({ id: i.id, name: i.name, _isPending: i._isPending })));
-          // Find and update the temp item by mapping over array
-          const result = currentItems.map(item => {
-            // Check if this is our temp item (only by temp ID, not by name)
-            if (item.id === tempId) {
-              logger.info('✅ addItem: found temp item, updating properties', { 
-                oldId: item.id, 
-                newId: newItem.id 
-              });
-              // Return new object with updated properties but preserve _originalTempId
-              return {
-                ...item,           // Keep existing properties
-                ...newItem,        // Override with new properties from server
-                _originalTempId: item._originalTempId || tempId, // Preserve original temp ID
-                _isPending: false, // Clear pending flag
-              };
-            }
-            return item; // Keep other items unchanged
-          });
-          
-          console.log('🔍 Result after mapping:', result.map(i => ({ id: i.id, name: i.name, _isPending: i._isPending })));
-          
-          // Successfully updated temp item -> real item
-          logger.info('✅ addItem: successfully updated temp item to real item');
-          return result;
+          if (!currentItems) return [newItem];
+          return currentItems.map(item =>
+            item.id === tempId
+              ? { ...item, ...newItem, _originalTempId: item._originalTempId || tempId, _isPending: false }
+              : item
+          );
         },
         { revalidate: false }
       );
@@ -495,12 +433,9 @@ export function useChecklist(
 
     // Track deleted item to prevent flickering on revalidation
     recentlyDeletedItemsRef.current.add(itemId);
-    console.log('🔍 Before optimistic update - recentlyAddedItems:', recentlyAddedItemsRef.current);
-    console.log('🔍 Before optimistic update - filteredItems:', filterDeletedItems(items));
+
     // Optimistic update - remove from UI immediately
-    mutateItems(filterDeletedItems(items), );
-    console.log("TADAAAA!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    console.log('🔍 Before optimistic update - filteredItems:', items);
+    mutateItems(filterDeletedItems(items));
 
     // Fire API call without waiting (parallel execution)
     dedupeRequest(
