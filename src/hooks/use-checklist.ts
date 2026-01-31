@@ -118,18 +118,11 @@ export function useChecklist(
         const pendingItems = previousData.filter(
           (item) => item.id !== null && recentlyAddedItemsRef.current.has(item.id)
         );
-        // Add pending items that aren't in the server response yet
+        // Add pending items that aren't in the server response yet (at the front)
         for (const pendingItem of pendingItems) {
           const existsInServer = finalItems.some(i => i.id === pendingItem.id || i.name === pendingItem.name);
           if (!existsInServer) {
-            // Insert pending item at correct position
-            const firstCompletedIndex = finalItems.findIndex(i => i.completed);
-            const insertIndex = firstCompletedIndex === -1 ? finalItems.length : firstCompletedIndex;
-            finalItems = [
-              ...finalItems.slice(0, insertIndex),
-              pendingItem,
-              ...finalItems.slice(insertIndex),
-            ];
+            finalItems = [pendingItem, ...finalItems];
           }
         }
       }
@@ -233,15 +226,10 @@ export function useChecklist(
           }
           
           logger.info('✅ SSE: adding item via SSE');
-          const firstCompletedIndex = itemsRef.current.findIndex(item => item.completed);
-          const insertIndex = firstCompletedIndex === -1 ? itemsRef.current.length : firstCompletedIndex;
           const highlightedItem = markItemHighlighted(newItem);
-          const updatedItems = [
-        ...itemsRef.current.slice(0, insertIndex),
-        highlightedItem,
-        ...itemsRef.current.slice(insertIndex)
-          ];
-          scheduleRefetch({ updatedItems: updatedItems });
+          // Insert new items at the front
+          const updatedItems = [highlightedItem, ...itemsRef.current];
+          scheduleRefetch({ updatedItems });
         }
 
   const handleItemUpdatedMessageFromChecklistItemUpdates = (payload: ChecklistItem)  => {
@@ -292,7 +280,8 @@ export function useChecklist(
      const currentItems = itemsRef.current;
       const item = currentItems.find((i) => i.id === payload.itemId);
       if (item) {
-        const newRows = [...(item.rows || []), payload.row];
+        // Insert new rows at the front
+        const newRows = [payload.row, ...(item.rows || [])];
         const updatedItem = markItemHighlighted({ ...item, rows: newRows });
         const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
         scheduleRefetch({ updatedItems: newItemsArray });
@@ -361,15 +350,9 @@ export function useChecklist(
     recentlyAddedItemsRef.current.add(tempId);
     logger.info('📝 addItem: added to tracking', { tempId, trackingSize: recentlyAddedItemsRef.current.size });
 
-    // Optimistic update - add immediately before POST
+    // Optimistic update - insert at the front
     const current = itemsRef.current ?? [];
-    const firstCompletedIndex = current.findIndex((i) => i.completed);
-    const insertIndex = firstCompletedIndex === -1 ? current.length : firstCompletedIndex;
-    const optimisticItems = [
-      ...current.slice(0, insertIndex),
-      optimisticItem,
-      ...current.slice(insertIndex),
-    ];
+    const optimisticItems = [optimisticItem, ...current];
 
     logger.info('KRT kas siin on error????', items);
     mutateItems(optimisticItems, { revalidate: false });
@@ -650,7 +633,7 @@ export function useChecklist(
           ? {
               ...item,
               completed: false, // Adding a sub-item marks parent as incomplete
-              rows: [...(item.rows ?? []), optimisticRow],
+              rows: [optimisticRow, ...(item.rows ?? [])], // Insert at front
             }
           : item,
       ),
