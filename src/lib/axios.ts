@@ -14,11 +14,12 @@ function newId() {
   return 'cid-' + Date.now() + '-' + Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
-// Backend URL
-export const NEXT_PUBLIC_API_BASE_URL = 
-  process.env.NEXT_PUBLIC_DIRECT_BACKEND_URL || 
-  process.env.NEXT_PUBLIC_BACKEND_URL || 
-  'https://checklist-app-go-qqzjtedwva-ez.a.run.app';
+// Backend URL - required at build time
+if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
+  throw new Error('Missing required environment variable: NEXT_PUBLIC_BACKEND_URL');
+}
+
+export const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 // Axios instance with keep-alive and cookies
 const axiousProps: AxiosRequestConfig = {
