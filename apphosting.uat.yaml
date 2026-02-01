@@ -20,7 +20,7 @@ env:
       - BUILD
   
   # Public API URL for client-side requests
-  - variable: NEXT_PUBLIC_API_URL
+  - variable: NEXT_PUBLIC_BACKEND_URL
     value: https://uat-api.dailychexly.com
     availability:
       - BUILD

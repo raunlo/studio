@@ -27,8 +27,8 @@ env:
     availability:
       - RUNTIME
       - BUILD
-  - variable: NEXT_PUBLIC_DIRECT_BACKEND_URL
-    value: https://checklist-app-go-qqzjtedwva-ez.a.run.app
+  - variable: NEXT_PUBLIC_BACKEND_URL
+    value: https://api.dailychexly.com
     availability:
       - BUILD
       - RUNTIME

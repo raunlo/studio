@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_DIRECT_BACKEND_URL ||
-  process.env.NEXT_PUBLIC_BACKEND_URL
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+
+if (!BACKEND_URL) {
+  throw new Error('Missing required environment variable: NEXT_PUBLIC_BACKEND_URL');
+}
 
 export async function POST(request: NextRequest) {
   try {
