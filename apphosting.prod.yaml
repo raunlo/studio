@@ -5,38 +5,22 @@
 location: europe-west4
 
 runConfig:
-  minInstances: 1  # Production should have at least 1 instance to avoid cold starts
-  maxInstances: 3  # Allow more scaling for production
-  cpu: 2
+  minInstances: 0 
+  maxInstances: 1  # Allow more scaling for production
+  cpu: 1
   memoryMiB: 1024
+
 env:
-  - variable: PRIVATE_API_BASE_URL
-    value: https://checklist-app-go
-    availability:
-      - RUNTIME
-      - BUILD
+  # Backend API URL for server-side requests
   - variable: BACKEND_URL
-    value: https://checklist-app-go-qqzjtedwva-ez.a.run.app/
+    value: https://api.dailychexly.com
     availability:
       - RUNTIME
       - BUILD
-  - variable: NEXT_PUBLIC_DIRECT_BACKEND_URL
-    value: https://checklist-app-go-qqzjtedwva-ez.a.run.app
+  
+  # Public API URL for client-side requests
+  - variable: NEXT_PUBLIC_API_URL
+    value: https://api.dailychexly.com
     availability:
       - BUILD
       - RUNTIME
-  - variable: GOOGLE_CLIENT_ID
-    secret: GOOGLE_CLIENT_ID_PROD
-    availability:
-      - RUNTIME
-      - BUILD
-  - variable: GOOGLE_CLIENT_SECRET
-    secret: GOOGLE_CLIENT_SECRET_PROD
-    availability:
-      - RUNTIME
-      - BUILD
-  - variable: NEXTAUTH_URL
-    value: https://app.dailychexly.com
-    availability:
-      - RUNTIME
-      - BUILD

@@ -5,45 +5,23 @@
 location: europe-west4
 
 runConfig:
-  # By setting minInstances to 1, you ensure that there is always at least one
-  # running instance of your application, which significantly reduces "cold starts"
-  # and improves request response times.
+  # UAT environment - minimal resources for cost savings
   minInstances: 0
-  # This setting is the most important for cost control.
-  # By setting maxInstances to 1, you prevent the system
-  # from automatically scaling up to handle more traffic.
   maxInstances: 1
-  # Explicitly set the CPU and memory to low values.
   cpu: 1
-  memoryMiB: 512
+  memoryMiB: 1024  # Increased from 512 for Next.js stability
+
 env:
-  - variable: PRIVATE_API_BASE_URL
-    value: https://uat.dailychexly.com
-    availability:
-      - RUNTIME
-      - BUILD
+  # Backend API URL for server-side requests
   - variable: BACKEND_URL
-    value: https://uat.dailychexly.com
+    value: https://uat-api.dailychexly.com
     availability:
       - RUNTIME
       - BUILD
-  - variable: NEXT_PUBLIC_DIRECT_BACKEND_URL
+  
+  # Public API URL for client-side requests
+  - variable: NEXT_PUBLIC_API_URL
     value: https://uat-api.dailychexly.com
     availability:
       - BUILD
       - RUNTIME
-  - variable: GOOGLE_CLIENT_ID
-    secret: UAT-Google-SSO-ID
-    availability:
-      - RUNTIME
-      - BUILD
-  - variable: GOOGLE_CLIENT_SECRET
-    secret: DailyChexly-GoogleSSO-Secret-UAT
-    availability:
-      - RUNTIME
-      - BUILD
-  - variable: NEXTAUTH_URL
-    value: https://uat.dailychexly.com
-    availability:
-      - RUNTIME
-      - BUILD
