@@ -1,16 +1,12 @@
 "use client";
 
 import useSWR from "swr";
-import { useSWRConfig } from "swr";
-import { useRef, useCallback, useEffect, useMemo } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import {
   ChecklistItemResponse,
   ChecklistItemRowResponse,
   CreateChecklistItemRequest,
   UpdateChecklistItemRequest,
-  ChecklistItemReorderedEventPayload,
-  ChecklistItemRowDeletedEventPayload,
-  ChecklistItemRowAddedEventPayload
 } from "@/api/checklistServiceV1.schemas";
 import {
   getAllChecklistItems,
@@ -21,12 +17,14 @@ import {
   createChecklistItemRow,
   deleteChecklistItemRow,
   toggleChecklistItemComplete,
+  restoreChecklistItem,
 } from "@/api/checklist-item/checklist-item";
 import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
 import { useSSE } from './use-checklist-item-updates';
-import type { MessageHandlers } from './use-checklist-item-updates';
 import { createLogger } from "@/lib/logger";
-import { getClientId } from "@/lib/axios";
+import { toast } from "@/hooks/use-toast";
+import { useChecklistTracking } from "./use-checklist-tracking";
+import { createSSEHandlers } from "./use-checklist-sse-handlers";
 
 const logger = createLogger('UseChecklist');
 // SSE used for realtime updates
@@ -51,7 +49,8 @@ interface ChecklistHookResult {
   error: Error | null;
   addItem: (item: ChecklistItem) => Promise<void>;
   updateItem: (item: ChecklistItem) => Promise<void>;
-  deleteItem: (itemId: number | null) => Promise<void>;
+  deleteItem: (itemId: number | null) => Promise<{ deletedItemId: number; deletedItemName: string } | null>;
+  restoreItem: (itemId: number) => Promise<void>;
   reorderItem: (from: number, to: number) => Promise<void>;
   addRow: (itemId: number | null, row: ChecklistItemRow) => Promise<void>;
   deleteRow: (itemId: number | null, rowId: number | null) => Promise<void>;
@@ -67,22 +66,22 @@ export function useChecklist(
   options: ChecklistHookOptions = {},
 ): ChecklistHookResult {
   const { refreshInterval } = options;
-  
-  // Refs to track items and recent operations to prevent duplicates
-  const itemsRef = useRef<ChecklistItem[]>([]);
-  const recentlyAddedItemsRef = useRef<Set<number>>(new Set()); // Track recently added item IDs
-  const recentlyReorderedItemsRef = useRef<Set<string>>(new Set()); // Track recently reordered items
-  const recentlyDeletedItemsRef = useRef<Set<number>>(new Set()); // Track recently deleted item IDs
-  const clientIdRef = useRef<string>(''); // Persistent client ID - initialized lazily
-  const highlightTimeoutsRef = useRef<Map<number, NodeJS.Timeout>>(new Map()); // Track highlight clear timeouts
 
-  // Initialize client ID lazily to avoid SSR issues
-  if (typeof window !== 'undefined' && !clientIdRef.current) {
-    clientIdRef.current = getClientId();
-  }
-  
-  // Ref to track rapid operations and debounce refetching
-  const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Use extracted tracking hook for refs and cleanup
+  const {
+    recentlyAddedItemsRef,
+    recentlyReorderedItemsRef,
+    recentlyDeletedItemsRef,
+    recentlyToggledItemsRef,
+    highlightTimeoutsRef,
+    cleanupTimeoutsRef,
+    refetchTimeoutRef,
+    clientIdRef,
+    createTrackedTimeout,
+  } = useChecklistTracking();
+
+  // Ref to track items for SSE handlers
+  const itemsRef = useRef<ChecklistItem[]>([]);
 
   const { data: items = [], mutate: mutateItems, isLoading, error } = useSWR<ChecklistItem[]>(
     checklistId ? ["checklist-items", checklistId] : null,
@@ -189,95 +188,6 @@ export function useChecklist(
     return { ...item, _sseHighlight: true };
   }, [clearSseHighlight]);
 
-  const handleItemCreatedMessageFromChecklistItemUpdates = (newItem: ChecklistItem)  => {
-          // Don't add if it's in the recently deleted list
-          if (newItem.id && recentlyDeletedItemsRef.current.has(newItem.id)) {
-            return;
-          }
-          // Don't add if it's in the recently added list (we already have it via optimistic update)
-          if (newItem.id && recentlyAddedItemsRef.current.has(newItem.id)) {
-            return;
-          }
-          // Don't add if item already exists (by ID or by name for pending items)
-          const alreadyExists = itemsRef.current.some(
-            item => item.id === newItem.id || (item._isPending && item.name === newItem.name)
-          );
-          if (alreadyExists) {
-            return;
-          }
-          const highlightedItem = markItemHighlighted(newItem);
-          // Insert new items at the front
-          const updatedItems = [highlightedItem, ...itemsRef.current];
-          scheduleRefetch({ updatedItems });
-        }
-
-  const handleItemUpdatedMessageFromChecklistItemUpdates = (payload: ChecklistItem)  => {
-          // Don't update if it's in the recently deleted list
-          if (payload.id && recentlyDeletedItemsRef.current.has(payload.id)) {
-            return;
-          }
-          const highlightedItem = markItemHighlighted(payload);
-          scheduleRefetch({ updatedItems: (itemsRef.current ?? []).map(item => item.id === payload.id ? highlightedItem : item) });
-  }
-  const handleItemReorderedMessageFromChecklistItemUpdates = (payload: ChecklistItemReorderedEventPayload)  => {
-          const itemId = payload.itemId;
-          const newOrderNumber = payload.newOrderNumber;
-
-          // Copy current items
-          const itemsCopy = [...(itemsRef.current ?? [])];
-          const movedIndex = itemsCopy.findIndex(item => item.id === itemId);
-          if (movedIndex === -1) return;
-
-          // Remove the moved item
-          const [movedItem] = itemsCopy.splice(movedIndex, 1);
-
-          // Find the target index for the new order number
-          let targetIndex = itemsCopy.findIndex(item => item.orderNumber === newOrderNumber);
-
-          // If not found, put at the end
-          if (targetIndex === -1) {
-            targetIndex = itemsCopy.length;
-          }
-
-          // Insert the moved item at the target index with highlight
-          const highlightedItem = markItemHighlighted({ ...movedItem, orderNumber: newOrderNumber });
-          itemsCopy.splice(targetIndex, 0, highlightedItem);
-
-          // Reassign orderNumbers to ensure correct sequence
-          const sortedItems = itemsCopy.map((item, idx) => ({
-            ...item,
-            orderNumber: idx + 1,
-          }));
-
-          scheduleRefetch({ updatedItems: sortedItems });
-  }
-  const handleItemDeletedMessageFromChecklistItemUpdates = (payload: { itemId: number })  => {
-          const updatedItems = itemsRef.current.filter(item => item.id !== payload.itemId);
-          scheduleRefetch({ updatedItems });
-  }
-  const handleItemRowAddedMessageFromChecklistItemUpdates = (payload: ChecklistItemRowAddedEventPayload)  => {
-     const currentItems = itemsRef.current;
-      const item = currentItems.find((i) => i.id === payload.itemId);
-      if (item) {
-        // Insert new rows at the front
-        const newRows = [payload.row, ...(item.rows || [])];
-        const updatedItem = markItemHighlighted({ ...item, rows: newRows });
-        const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
-        scheduleRefetch({ updatedItems: newItemsArray });
-      }
-    }
-  const handleItemRowDeletedMessageFromChecklistItemUpdates = (data: ChecklistItemRowDeletedEventPayload)  => {
-    const currentItems = itemsRef.current;
-      const item = currentItems.find((i) => i.id === data.itemId);
-      if (item) {
-        const newRows = (item.rows || []).filter((r) => r.id !== data.rowId);
-        const updatedItem = markItemHighlighted({ ...item, rows: newRows });
-        const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
-        scheduleRefetch({ updatedItems: newItemsArray });
-      }
-    }
-
-
   // Keep itemsRef in sync with items
   useEffect(() => {
     itemsRef.current = items;
@@ -298,16 +208,17 @@ export function useChecklist(
     };
   }, [mutateItems]);
 
-  const handleRealtimeMessageFromSSE: MessageHandlers = {
-    itemUpdated: handleItemUpdatedMessageFromChecklistItemUpdates,
-    itemCreated: handleItemCreatedMessageFromChecklistItemUpdates,
-    itemReordered: handleItemReorderedMessageFromChecklistItemUpdates,
-    itemDeleted: handleItemDeletedMessageFromChecklistItemUpdates,
-    itemRowAdded: handleItemRowAddedMessageFromChecklistItemUpdates,
-    itemRowDeleted: handleItemRowDeletedMessageFromChecklistItemUpdates,
-  }
+  // Create SSE handlers using the factory (cleanup is handled by useChecklistTracking)
+  const sseHandlers = createSSEHandlers({
+    itemsRef,
+    recentlyDeletedItemsRef,
+    recentlyAddedItemsRef,
+    recentlyToggledItemsRef,
+    scheduleRefetch,
+    markItemHighlighted,
+  });
 
-  useSSE(handleRealtimeMessageFromSSE, checklistId, [checklistId]);
+  useSSE(sseHandlers, checklistId, [checklistId]);
 
   const addItem = async (item: ChecklistItem) => {
     if (!checklistId) return;
@@ -352,7 +263,7 @@ export function useChecklist(
         completed: created.completed,
         orderNumber: created.orderNumber,
         rows:
-          created.rows?.map((r: any) => ({
+          created.rows?.map((r: ChecklistItemRowResponse) => ({
             id: r.id,
             name: r.name,
             completed: r.completed,
@@ -378,7 +289,7 @@ export function useChecklist(
       );
 
       // Clean up tracking after a longer delay
-      setTimeout(() => {
+      createTrackedTimeout(() => {
         recentlyAddedItemsRef.current.delete(created.id);
       }, 15000);
 
@@ -394,6 +305,12 @@ export function useChecklist(
         },
         { revalidate: false }
       );
+      // Show error toast
+      toast({
+        title: "Failed to add item",
+        description: "Please try again",
+        variant: "destructive",
+      });
     }
   };
 
@@ -428,8 +345,12 @@ export function useChecklist(
     }
   };
 
-  const deleteItem = async (itemId: number | null) => {
-    if (!checklistId || !itemId) return;
+  const deleteItem = async (itemId: number | null): Promise<{ deletedItemId: number; deletedItemName: string } | null> => {
+    if (!checklistId || !itemId) return null;
+
+    // Get the item info before deleting (for undo functionality)
+    const deletedItem = itemsRef.current.find(item => item.id === itemId);
+    if (!deletedItem) return null;
 
     // Track deleted item to prevent flickering on revalidation
     recentlyDeletedItemsRef.current.add(itemId);
@@ -442,20 +363,88 @@ export function useChecklist(
       `delete-item-${checklistId}-${itemId}`,
       () => deleteChecklistItemById(checklistId, itemId),
     ).then(() => {
-      // Clean up tracking after 10 seconds (longer to handle slow networks)
-      setTimeout(() => {
+      // Clean up tracking after 30 seconds (longer to allow time for undo)
+      createTrackedTimeout(() => {
         recentlyDeletedItemsRef.current.delete(itemId);
-      }, 10000);
+      }, 30000);
     }).catch((error) => {
       logger.error('Failed to delete item:', error);
       // On error, remove from deleted tracking so it can reappear
       recentlyDeletedItemsRef.current.delete(itemId);
       // Refetch to restore state
       mutateItems();
+      // Show error toast
+      toast({
+        title: "Failed to delete item",
+        description: "The item has been restored",
+        variant: "destructive",
+      });
     });
 
-    // Debounced refetch to sync with server
-    //scheduleRefetch();
+    // Return deleted item info for undo toast
+    return {
+      deletedItemId: itemId,
+      deletedItemName: deletedItem.name,
+    };
+  };
+
+  const restoreItem = async (itemId: number) => {
+    if (!checklistId) return;
+
+    logger.debug('🔄 restoreItem called:', { checklistId, itemId });
+
+    // Remove from recently deleted tracking immediately
+    recentlyDeletedItemsRef.current.delete(itemId);
+
+    try {
+      logger.debug('📡 Calling restoreChecklistItem API...');
+      const res = await dedupeRequest(
+        `restore-item-${checklistId}-${itemId}`,
+        () => restoreChecklistItem(checklistId, itemId),
+      );
+      logger.debug('✅ restoreChecklistItem API returned:', res);
+
+      const restoredItem: ChecklistItem = {
+        id: res.id,
+        name: res.name,
+        completed: res.completed,
+        orderNumber: res.orderNumber,
+        rows: res.rows?.map((r: ChecklistItemRowResponse) => ({
+          id: r.id,
+          name: r.name,
+          completed: r.completed,
+        })) ?? null,
+      };
+
+      // Add restored item back to the list with highlight
+      const highlightedItem = markItemHighlighted(restoredItem);
+      
+      // Insert at correct position based on completed status and orderNumber
+      // (matches server ORDER BY: COMPLETED ASC, POSITION ASC)
+      const updatedItems = [...itemsRef.current, highlightedItem].sort((a, b) => {
+        // First sort by completed status (incomplete first)
+        if (a.completed !== b.completed) {
+          return a.completed ? 1 : -1;
+        }
+        // Then by orderNumber
+        return (a.orderNumber ?? 0) - (b.orderNumber ?? 0);
+      });
+      
+      mutateItems(updatedItems, { revalidate: false });
+      
+      // Schedule a refetch to ensure consistency
+      scheduleRefetch();
+    } catch (error) {
+      logger.error('Failed to restore item:', error);
+      // Refetch to get the current state
+      mutateItems();
+      // Show error toast
+      toast({
+        title: "Failed to restore item",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
   };
 
   const reorderItem = async (from: number, to: number) => {
@@ -533,7 +522,7 @@ export function useChecklist(
           );
 
           // Clean up the tracking after 5 seconds
-          setTimeout(() => {
+          createTrackedTimeout(() => {
             recentlyReorderedItemsRef.current.delete(reorderKey);
             if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
               // eslint-disable-next-line no-console
@@ -643,37 +632,52 @@ export function useChecklist(
 
   const toggleCompletion = async (itemId: number | null) => {
     if (!checklistId || !itemId) return;
-    
+
     // Optimistic update
     const currentItem = itemsRef.current.find((item) => item.id === itemId);
     if (!currentItem) return;
-    
+
     const newCompletedStatus = !currentItem.completed;
     const updatedItem = { ...currentItem, completed: newCompletedStatus };
-    
+
+    // Track this item as recently toggled to prevent SSE from reverting optimistic update
+    recentlyToggledItemsRef.current.add(itemId);
+
     // Keep items in their current order for optimistic update
     // This prevents jumping during rapid clicking
-    mutateItems(
-      items.map((item) => (item.id === itemId ? updatedItem : item)),
-      false,
-    );
-    
+    const updatedItems = items.map((item) => (item.id === itemId ? updatedItem : item));
+    mutateItems(updatedItems, false);
+    // Update itemsRef immediately so subsequent clicks see the new state
+    // (useEffect would be too slow for rapid clicking)
+    itemsRef.current = updatedItems;
+
     try {
       await dedupeRequest(
-        `toggle-completion-${checklistId}-${itemId}`,
+        `toggle-completion-${checklistId}-${itemId}-${newCompletedStatus}`,
         () => toggleChecklistItemComplete(checklistId, itemId, { completed: newCompletedStatus }),
       );
-      
-  // Use debounced refetch to prevent UI jumping during rapid operations
-  // Only update completed field, do not move items
-  scheduleRefetch({ updatedItems: items.map((item) => item.id === itemId ? updatedItem : item) });
+
+      // Remove from recently toggled after a delay (allow SSE to settle)
+      createTrackedTimeout(() => {
+        recentlyToggledItemsRef.current.delete(itemId);
+      }, 2000);
+
+      // Use debounced refetch to prevent UI jumping during rapid operations
+      // Only update completed field, do not move items
+      scheduleRefetch({ updatedItems: items.map((item) => item.id === itemId ? updatedItem : item) });
 
     } catch (error) {
       // Revert optimistic update on error
-      mutateItems(
-        items.map((item) => (item.id === itemId ? currentItem : item)),
-        false,
-      );
+      recentlyToggledItemsRef.current.delete(itemId);
+      const revertedItems = items.map((item) => (item.id === itemId ? currentItem : item));
+      mutateItems(revertedItems, false);
+      itemsRef.current = revertedItems;
+      // Show error toast
+      toast({
+        title: "Failed to update item",
+        description: "Please try again",
+        variant: "destructive",
+      });
       throw error;
     }
   };
@@ -686,6 +690,7 @@ export function useChecklist(
     addItem,
     updateItem,
     deleteItem,
+    restoreItem,
     reorderItem,
     addRow,
     deleteRow,

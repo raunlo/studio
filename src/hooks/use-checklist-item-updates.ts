@@ -1,4 +1,4 @@
-import { EventEnvelopeType, EventEnvelope, ChecklistItemResponse, ChecklistItemRowDeletedEventPayload, ChecklistItemRowAddedEventPayload, ChecklistItemDeletedEventPayload, ChecklistItemReorderedEventPayload } from '@/api/checklistServiceV1.schemas';
+import { EventEnvelopeType, EventEnvelope, ChecklistItemResponse, ChecklistItemRowDeletedEventPayload, ChecklistItemRowAddedEventPayload, ChecklistItemDeletedEventPayload, ChecklistItemReorderedEventPayload, ChecklistItemSoftDeletedEventPayload, ChecklistItemRestoredEventPayload } from '@/api/checklistServiceV1.schemas';
 import { getClientId } from '@/lib/axios';
 import { useEffect, useRef } from 'react';
 import { NEXT_PUBLIC_API_BASE_URL } from '@/lib/axios';
@@ -14,6 +14,8 @@ export type MessageHandlers = {
   itemReordered: (data: ChecklistItemReorderedEventPayload) => void;
   itemRowAdded: (data: ChecklistItemRowAddedEventPayload) => void;
   itemRowDeleted: (data: ChecklistItemRowDeletedEventPayload) => void;
+  itemSoftDeleted: (data: ChecklistItemSoftDeletedEventPayload) => void;
+  itemRestored: (data: ChecklistItemRestoredEventPayload) => void;
 }
 
 
@@ -75,6 +77,10 @@ export function useSSE(messageHandlers: MessageHandlers, checklistId: number, de
         messageHandlers.itemRowAdded(data.payload as ChecklistItemRowAddedEventPayload);
       } else if (data.type === EventEnvelopeType.checklistItemRowDeleted) {
         messageHandlers.itemRowDeleted(data.payload as ChecklistItemRowDeletedEventPayload);
+      } else if (data.type === EventEnvelopeType.checklistItemSoftDeleted) {
+        messageHandlers.itemSoftDeleted(data.payload as ChecklistItemSoftDeletedEventPayload);
+      } else if (data.type === EventEnvelopeType.checklistItemRestored) {
+        messageHandlers.itemRestored(data.payload as ChecklistItemRestoredEventPayload);
       } else {
         logger.error('Unknown SSE event type', data.type);
       }

@@ -251,6 +251,7 @@ export function ChecklistItemComponent({
     >
       {/* Custom checkbox with satisfying animation */}
       <button
+       // onPointerDown={(e) => e.stopPropagation()}
         onClick={() => handleItemCompleted(!item.completed)}
         className={cn(
           "w-7 h-7 mt-0.5 rounded-md border-2 flex items-center justify-center transition-all duration-300 touch-manipulation shrink-0 relative overflow-hidden group",
@@ -364,10 +365,11 @@ export function ChecklistItemComponent({
             size="icon"
             onClick={(e) => {
               e.stopPropagation();
+              (e.target as HTMLElement).blur();
               deleteItem(item.id);
             }}
-            aria-label="Delete item"
-            className="h-8 w-8 shrink-0 touch-manipulation text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
+            aria-label={t('item.deleteItem')}
+            className="h-8 w-8 shrink-0 touch-manipulation text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 active:bg-transparent transition-all duration-200"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -408,6 +410,7 @@ export function ChecklistItemComponent({
                 <div className="flex items-start gap-3 flex-grow min-w-0">
                   {/* Sub-item checkbox */}
                   <button
+                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={() => handleRowCompleted(row, !row.completed)}
                     disabled={!row.id || row.id <= 0}
                     className={cn(
@@ -492,10 +495,10 @@ export function ChecklistItemComponent({
                 <Button
                   variant="ghost"
                   size="icon"
-                  tabIndex={-1}
-                  onClick={() => deleteRow(item.id, row.id!)}
-                  className="h-7 w-7 shrink-0 touch-manipulation text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 transition-all duration-200"
-                  aria-label="Delete sub-item"
+                  onClick={() => row.id && deleteRow(item.id, row.id)}
+                  disabled={!row.id}
+                  className="h-7 w-7 shrink-0 touch-manipulation text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label={t('item.deleteSubItem')}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>

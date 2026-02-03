@@ -188,6 +188,18 @@
     "save": "Guardar",
     "cancel": "Cancelar"
   },
+  "pwa": {
+    "installTitle": "Instalar DailyChexly",
+    "installDescription": "Añadir a pantalla de inicio para acceso rápido",
+    "installButton": "Instalar App",
+    "dontShowAgain": "No mostrar más",
+    "iosStep1": "Toca Share",
+    "iosStep2": "Toca ••• (Edit Actions)",
+    "iosStep3": "Toca \"Add to Home Screen\"",
+    "androidStep1": "Toca",
+    "androidStep1Icon": "menú",
+    "androidStep2": "Toca \"Añadir a pantalla de inicio\""
+  },
   "detail": {
     "back": "Volver a listas",
     "delete": "Eliminar",

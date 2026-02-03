@@ -188,6 +188,18 @@
     "save": "Save",
     "cancel": "Cancel"
   },
+  "pwa": {
+    "installTitle": "Install DailyChexly",
+    "installDescription": "Add to your home screen for quick access",
+    "installButton": "Install App",
+    "dontShowAgain": "Don't show again",
+    "iosStep1": "Tap Share",
+    "iosStep2": "Tap ••• (Edit Actions)",
+    "iosStep3": "Tap \"Add to Home Screen\"",
+    "androidStep1": "Tap",
+    "androidStep1Icon": "menu",
+    "androidStep2": "Tap \"Add to Home screen\""
+  },
   "detail": {
     "back": "Back to checklists",
     "delete": "Delete",

@@ -219,6 +219,8 @@ export const EventEnvelopeType = {
   checklistItemCreated: 'checklistItemCreated',
   checklistItemUpdated: 'checklistItemUpdated',
   checklistItemDeleted: 'checklistItemDeleted',
+  checklistItemSoftDeleted: 'checklistItemSoftDeleted',
+  checklistItemRestored: 'checklistItemRestored',
   checklistItemRowAdded: 'checklistItemRowAdded',
   checklistItemRowUpdated: 'checklistItemRowUpdated',
   checklistItemRowDeleted: 'checklistItemRowDeleted',
@@ -228,13 +230,14 @@ export const EventEnvelopeType = {
 /**
  * Payload structure depends on event type:
   - checklistItemCreated, checklistItemUpdated: ChecklistItemResponse
-  - checklistItemDeleted: ChecklistItemDeletedEventPayload
+  - checklistItemDeleted, checklistItemSoftDeleted: ChecklistItemDeletedEventPayload
+  - checklistItemRestored: ChecklistItemRestoredEventPayload
   - checklistItemRowAdded, checklistItemRowUpdated: ChecklistItemRowResponse
   - checklistItemRowDeleted: ChecklistItemRowDeletedEventPayload
   - checklistItemReordered: ChecklistItemReorderedEventPayload
 
  */
-export type EventEnvelopePayload = ChecklistItemResponse | ChecklistItemRowResponse | ChecklistItemRowDeletedEventPayload | ChecklistItemRowAddedEventPayload | ChecklistItemDeletedEventPayload | ChecklistItemReorderedEventPayload;
+export type EventEnvelopePayload = ChecklistItemResponse | ChecklistItemRowResponse | ChecklistItemRowDeletedEventPayload | ChecklistItemRowAddedEventPayload | ChecklistItemDeletedEventPayload | ChecklistItemSoftDeletedEventPayload | ChecklistItemRestoredEventPayload | ChecklistItemReorderedEventPayload;
 
 /**
  * Envelope for SSE events; sent as JSON in the SSE data field.
@@ -243,6 +246,8 @@ The expected structure of `payload` for each `type` is as follows:
   - checklistItemCreated: ChecklistItemResponse
   - checklistItemUpdated: ChecklistItemResponse
   - checklistItemDeleted: ChecklistItemDeletedEventPayload
+  - checklistItemSoftDeleted: ChecklistItemSoftDeletedEventPayload
+  - checklistItemRestored: ChecklistItemRestoredEventPayload
   - checklistItemRowAdded: ChecklistItemRowResponse
   - checklistItemRowUpdated: ChecklistItemRowResponse
   - checklistItemRowDeleted: ChecklistItemRowDeletedEventPayload
@@ -256,7 +261,8 @@ export interface EventEnvelope {
   type: EventEnvelopeType;
   /** Payload structure depends on event type:
   - checklistItemCreated, checklistItemUpdated: ChecklistItemResponse
-  - checklistItemDeleted: ChecklistItemDeletedEventPayload
+  - checklistItemDeleted, checklistItemSoftDeleted: ChecklistItemDeletedEventPayload
+  - checklistItemRestored: ChecklistItemRestoredEventPayload
   - checklistItemRowAdded, checklistItemRowUpdated: ChecklistItemRowResponse
   - checklistItemRowDeleted: ChecklistItemRowDeletedEventPayload
   - checklistItemReordered: ChecklistItemReorderedEventPayload
@@ -288,6 +294,23 @@ export interface ChecklistItemDeletedEventPayload {
    * @minimum 1
    */
   itemId: number;
+}
+
+/**
+ * Sent when an item is soft-deleted (can be undone via restore)
+ */
+export interface ChecklistItemSoftDeletedEventPayload {
+  /**
+   * @minimum 1
+   */
+  itemId: number;
+}
+
+/**
+ * Sent when a soft-deleted item is restored (undo delete)
+ */
+export interface ChecklistItemRestoredEventPayload {
+  item: ChecklistItemResponse;
 }
 
 export interface ChecklistItemReorderedEventPayload {
@@ -401,14 +424,6 @@ export interface UserDataExport {
   /** Timestamp of data export */
   exportedAt: string;
   checklists: UserDataExportChecklistsItem[];
-}
-
-/**
- * Response containing a server-generated client ID
- */
-export interface ClientIdResponse {
-  /** Secure, server-validated client ID for SSE connections */
-  clientId: string;
 }
 
 /**

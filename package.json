@@ -11,6 +11,7 @@
     "generate:api": "orval"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@genkit-ai/googleai": "^1.14.1",
     "@genkit-ai/next": "^1.14.1",
     "@hello-pangea/dnd": "^16.6.0",
@@ -79,6 +80,7 @@
     "genkit-cli": "^1.14.1",
     "orval": "^7.13.2",
     "postcss": "^8",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }

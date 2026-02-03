@@ -188,6 +188,18 @@
     "save": "Salvesta",
     "cancel": "Tühista"
   },
+  "pwa": {
+    "installTitle": "Paigalda DailyChexly",
+    "installDescription": "Lisa avakuvale kiireks ligipääsuks",
+    "installButton": "Paigalda äpp",
+    "dontShowAgain": "Ära näita enam",
+    "iosStep1": "Vajuta Share",
+    "iosStep2": "Vajuta ••• (Edit Actions)",
+    "iosStep3": "Vajuta \"Add to Home Screen\"",
+    "androidStep1": "Vajuta",
+    "androidStep1Icon": "menüüd",
+    "androidStep2": "Vajuta \"Lisa avakuvale\""
+  },
   "detail": {
     "back": "Tagasi nimekirjade juurde",
     "delete": "Kustuta",

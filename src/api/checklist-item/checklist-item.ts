@@ -419,6 +419,53 @@ export const useCreateChecklistItemRow = <TError = Error | Error | Error>(
   }
 }
 /**
+ * @summary Restore a soft-deleted checklist item (undo delete)
+ */
+export const restoreChecklistItem = (
+    checklistId: number,
+    itemId: number,
+ ) => {
+    return customInstance<ChecklistItemResponse>(
+    {url: `/api/v1/checklists/${checklistId}/items/${itemId}/restore`, method: 'POST'
+    },
+    );
+  }
+
+
+
+export const getRestoreChecklistItemMutationFetcher = (checklistId: number,
+    itemId: number, ) => {
+  return (_: Key, __: { arg: Arguments }) => {
+    return restoreChecklistItem(checklistId, itemId);
+  }
+}
+export const getRestoreChecklistItemMutationKey = (checklistId: number,
+    itemId: number,) => [`/api/v1/checklists/${checklistId}/items/${itemId}/restore`] as const;
+
+export type RestoreChecklistItemMutationResult = NonNullable<Awaited<ReturnType<typeof restoreChecklistItem>>>
+export type RestoreChecklistItemMutationError = Error | Error
+
+/**
+ * @summary Restore a soft-deleted checklist item (undo delete)
+ */
+export const useRestoreChecklistItem = <TError = Error | Error>(
+  checklistId: number,
+    itemId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof restoreChecklistItem>>, TError, Key, Arguments, Awaited<ReturnType<typeof restoreChecklistItem>>> & { swrKey?: string }, }
+) => {
+
+  const {swr: swrOptions} = options ?? {}
+
+  const swrKey = swrOptions?.swrKey ?? getRestoreChecklistItemMutationKey(checklistId,itemId);
+  const swrFn = getRestoreChecklistItemMutationFetcher(checklistId,itemId);
+
+  const query = useSWRMutation(swrKey, swrFn, swrOptions)
+
+  return {
+    swrKey,
+    ...query
+  }
+}
+/**
  * @summary Delete checklist item row by checklistId, itemId and rowId
  */
 export const deleteChecklistItemRow = (

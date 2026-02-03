@@ -1,24 +1,22 @@
 
 "use client";
 
-import {cn} from "@/lib/utils"
-import { forwardRef, useImperativeHandle, useMemo, useState, useRef } from "react";
+import { forwardRef, useImperativeHandle, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Trash2, GripVertical } from "lucide-react";
-import { ChecklistItemComponent } from "@/components/checklist-item";
-import { Droppable, Draggable } from "@hello-pangea/dnd";
+import { Trash2 } from "lucide-react";
+import { Droppable } from "@hello-pangea/dnd";
 import { AddItemForm } from "@/components/add-item-form";
 import { ChecklistResponse } from "@/api/checklistServiceV1.schemas";
 import { ChecklistCardHandle, ChecklistItem } from "@/components/shared/types";
 import { useChecklist } from "@/hooks/use-checklist";
-import { SwipeableItem } from "@/components/checklist-item-swipeable";
 import { useIsMobile } from "@/lib/hooks/use-media-query";
 import { QuickAddChips } from "@/components/quick-add-chips";
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { useTranslation } from 'react-i18next';
 import { ChecklistFilterBar, FilterType } from "@/components/checklist-filter-bar";
+import { DraggableChecklistItem, getItemKey } from "@/components/draggable-checklist-item";
 
 type ChecklistCardProps = {
   checklist: ChecklistResponse;
@@ -39,29 +37,49 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
     updateItem: updateItemFn,
     addRow: addRowFn,
     deleteItem: deleteItemFn,
+    restoreItem: restoreItemFn,
     toggleCompletion
    } = useChecklist(checklist.id, { refreshInterval: 10000 });
 
   // Mobile detection for swipe gestures
   const isMobile = useIsMobile();
 
-  // Filter counts for the filter bar
-  const filterCounts = useMemo(() => ({
-    all: items.length,
-    active: items.filter(item => !item.completed).length,
-    completed: items.filter(item => item.completed).length,
-  }), [items]);
+  // Single-pass filter: calculate counts and filtered items together
+  const { filterCounts, displayedItems } = useMemo(() => {
+    let activeCount = 0;
+    let completedCount = 0;
+    const active: ChecklistItem[] = [];
+    const completed: ChecklistItem[] = [];
 
-  // Apply active filter
-  const displayedItems = useMemo(() => {
+    for (const item of items) {
+      if (item.completed) {
+        completedCount++;
+        completed.push(item);
+      } else {
+        activeCount++;
+        active.push(item);
+      }
+    }
+
+    const counts = {
+      all: items.length,
+      active: activeCount,
+      completed: completedCount,
+    };
+
+    let filtered: ChecklistItem[];
     switch (activeFilter) {
       case 'active':
-        return items.filter(item => !item.completed);
+        filtered = active;
+        break;
       case 'completed':
-        return items.filter(item => item.completed);
+        filtered = completed;
+        break;
       default:
-        return items;
+        filtered = items;
     }
+
+    return { filterCounts: counts, displayedItems: filtered };
   }, [items, activeFilter]);
 
   useImperativeHandle(ref, () => ({
@@ -122,52 +140,65 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
     }
   };
 
-  // Delete with undo functionality - deletes immediately and recreates on undo
+  // Delete with undo functionality - uses soft delete and restore
   const handleDeleteItem = async (itemId: number | null) => {
     if (!itemId) return;
 
-    // Find the item to save for undo
-    const deletedItem = items.find(i => i.id === itemId);
-    if (!deletedItem) return;
+    // Find the item before deleting to get its name for the toast
+    const deletingItem = items.find(i => i.id === itemId);
+    const itemName = deletingItem?.name ?? '';
 
-    // Save a deep copy of the deleted item for undo
-    const itemSnapshot = {
-      name: deletedItem.name,
-      completed: deletedItem.completed,
-      orderNumber: deletedItem.orderNumber,
-      rows: deletedItem.rows ? [...deletedItem.rows] : null,
+    // Fire delete without awaiting to prevent scroll jump
+    // The deleteItemFn handles optimistic updates internally
+    const resultPromise = deleteItemFn(itemId);
+
+    // Track if undo was already triggered to prevent duplicates
+    let undoTriggered = false;
+    let dismissToast: (() => void) | null = null;
+
+    const handleUndo = async () => {
+      if (undoTriggered) return;
+      undoTriggered = true;
+
+      console.log('🔄 Undo clicked, restoring item:', itemId);
+
+      // Dismiss toast immediately
+      dismissToast?.();
+
+      // Restore the soft-deleted item
+      try {
+        await restoreItemFn(itemId);
+        console.log('✅ Item restored successfully:', itemId);
+      } catch (error) {
+        console.error('❌ Failed to restore item:', itemId, error);
+      }
     };
 
-    // Delete immediately from backend
-    await deleteItemFn(itemId);
-
-    // Show toast with undo action
-    toast({
+    // Show toast with undo action immediately (don't wait for API)
+    const { dismiss } = toast({
       title: `🗑️ ${t('detail.itemDeleted')}`,
-      description: itemSnapshot.name,
+      description: itemName,
       action: (
         <ToastAction
           altText={t('detail.undo')}
-          onClick={async () => {
-            // Prevent duplicate undo clicks
-            if (items.some(i => i.name === itemSnapshot.name && i._isPending)) {
-              return; // Already restoring this item
-            }
-            
-            // Recreate the item with the same data
-            await addItem({
-              id: null,
-              name: itemSnapshot.name,
-              completed: itemSnapshot.completed,
-              orderNumber: itemSnapshot.orderNumber,
-              rows: itemSnapshot.rows,
-            });
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            (e.target as HTMLElement).blur();
+            handleUndo();
+          }}
+          onClick={(e) => {
+            (e.target as HTMLElement).blur();
+            handleUndo();
           }}
         >
           {t('detail.undo')}
         </ToastAction>
       ),
     });
+    dismissToast = dismiss;
+
+    // Wait for delete to complete in background
+    await resultPromise;
   };
 
   // Show error state if hook failed to load
@@ -228,174 +259,74 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
           )}
 
           {/* Items list - Swipe on mobile, drag-drop on desktop */}
-          {!isMobile ? (
-            <Droppable droppableId={String(checklist.id)} type="items">
-              {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="space-y-2 sm:space-y-3 min-h-[10px] w-full pt-2"
-                >
-                  {displayedItems.map((item: ChecklistItem, index: number) => {
-                    // Use stable key based on _originalTempId to prevent duplicate renders
-                    // When temp item gets real ID, _originalTempId stays the same, so React key doesn't change
-                    const itemKey = item._originalTempId 
-                      ? `temp-${Math.abs(item._originalTempId)}` // Stable key for temp->real transition
-                      : `item-${item.id}`; // Normal ID-based key
-                    
-                    return (
-                    <Draggable
-                      key={itemKey}
-                      draggableId={item.id ? String(item.id) : `temp-${item.name}-${index}`}
-                      index={index}
-                    >
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className={cn(
-                            "w-full rounded-lg border border-border p-3 sm:p-4 bg-card transition-all duration-200",
-                            snapshot.isDragging && "shadow-lg scale-105 opacity-90"
-                          )}
-                        >
-                          <div className="flex items-start gap-3 w-full">
-                            <div
-                              className="flex items-center w-full"
-                              {...provided.dragHandleProps}
-                            >
-                              <ChecklistItemComponent
-                                item={item}
-                                checklistId={checklist.id}
-                                deleteRow={deleteRowFn}
-                                updateItem={updateItemFn}
-                                addRow={addRowFn}
-                                deleteItem={handleDeleteItem}
-                                toggleCompletion={toggleCompletion}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </Draggable>
-                    );
-                  })}
-                  {provided.placeholder}
+          <Droppable droppableId={String(checklist.id)} type="items">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className={isMobile ? "space-y-2 min-h-[10px] w-full pt-2" : "space-y-2 sm:space-y-3 min-h-[10px] w-full pt-2"}
+              >
+                {displayedItems.map((item: ChecklistItem, index: number) => (
+                  <DraggableChecklistItem
+                    key={getItemKey(item)}
+                    item={item}
+                    index={index}
+                    checklistId={checklist.id}
+                    isMobile={isMobile}
+                    deleteRow={deleteRowFn}
+                    updateItem={updateItemFn}
+                    addRow={addRowFn}
+                    deleteItem={handleDeleteItem}
+                    toggleCompletion={toggleCompletion}
+                  />
+                ))}
+                {provided.placeholder}
 
-                  {/* Empty states */}
-                  {displayedItems.length === 0 && (
-                    <div className="text-center py-12 px-4">
-                      <div className="mb-6">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                          <span className="text-4xl">{activeFilter === 'completed' ? '✓' : activeFilter === 'active' ? '○' : '📋'}</span>
-                        </div>
-                        <h3 className="text-lg font-semibold text-foreground mb-2">
-                          {activeFilter === 'completed' ? t('detail.noCompletedItems') :
-                           activeFilter === 'active' ? t('detail.noActiveItems') :
-                           t('detail.emptyListTitle')}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-6">
-                          {activeFilter === 'completed' ? t('detail.noCompletedDescription') :
-                           activeFilter === 'active' ? t('detail.noActiveDescription') :
-                           t('detail.emptyListDescription')}
-                        </p>
-                      </div>
-                      {activeFilter === 'all' && <QuickAddChips onAdd={(itemName) => handleFormSubmit(itemName)} />}
-                    </div>
-                  )}
-                </div>
-              )}
-            </Droppable>
-          ) : (
-            <Droppable droppableId={String(checklist.id)} type="items">
-              {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="space-y-2 min-h-[10px] w-full pt-2"
-                >
-                  {displayedItems.map((item: ChecklistItem, index: number) => {
-                    // Use stable key based on _originalTempId to prevent duplicate renders
-                    // When temp item gets real ID, _originalTempId stays the same, so React key doesn't change
-                    const itemKey = item._originalTempId 
-                      ? `temp-${Math.abs(item._originalTempId)}` // Stable key for temp->real transition
-                      : `item-${item.id}`; // Normal ID-based key
-                    
-                    return (
-                    <Draggable
-                      key={itemKey}
-                      draggableId={item.id ? String(item.id) : `temp-${item.name}-${index}`}
-                      index={index}
-                    >
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          className={cn(
-                            "flex items-stretch bg-card rounded-lg border border-border overflow-hidden",
-                            snapshot.isDragging && "shadow-lg opacity-90 z-50"
-                          )}
+                {/* Empty state */}
+                {displayedItems.length === 0 && (
+                  <div className="text-center py-12 px-4">
+                    <div className="mb-6">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                        <span
+                          className="text-4xl"
+                          role="img"
+                          aria-label={
+                            activeFilter === 'completed'
+                              ? t('detail.completedIcon')
+                              : activeFilter === 'active'
+                              ? t('detail.activeIcon')
+                              : t('detail.emptyIcon')
+                          }
                         >
-                          {/* Drag handle - visible on mobile */}
-                          <div
-                            {...provided.dragHandleProps}
-                            className="flex items-center justify-center w-6 shrink-0 bg-muted/20 touch-none active:bg-muted/40"
-                          >
-                            <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50" />
-                          </div>
-                          {/* Swipeable content */}
-                          <SwipeableItem
-                            onSwipeComplete={() => toggleCompletion(item.id)}
-                            onSwipeDelete={() => handleDeleteItem(item.id)}
-                            isCompleted={item.completed}
-                          >
-                            <div className="w-full py-2.5 px-2">
-                              <ChecklistItemComponent
-                                item={item}
-                                checklistId={checklist.id}
-                                deleteRow={deleteRowFn}
-                                updateItem={updateItemFn}
-                                addRow={addRowFn}
-                                deleteItem={handleDeleteItem}
-                                toggleCompletion={toggleCompletion}
-                              />
-                            </div>
-                          </SwipeableItem>
-                        </div>
-                      )}
-                    </Draggable>
-                    );
-                  })}
-                  {provided.placeholder}
-
-                  {/* Empty state */}
-                  {displayedItems.length === 0 && (
-                    <div className="text-center py-12 px-4">
-                      <div className="mb-6">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                          <span className="text-4xl">{activeFilter === 'completed' ? '✓' : activeFilter === 'active' ? '○' : '📋'}</span>
-                        </div>
-                        <h3 className="text-lg font-semibold text-foreground mb-2">
-                          {activeFilter === 'completed' ? t('detail.noCompletedItems') :
-                           activeFilter === 'active' ? t('detail.noActiveItems') :
-                           t('detail.emptyListTitle')}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-6">
-                          {activeFilter === 'completed' ? t('detail.noCompletedDescription') :
-                           activeFilter === 'active' ? t('detail.noActiveDescription') :
-                           t('detail.emptyListDescription')}
-                        </p>
+                          {activeFilter === 'completed' ? '✓' : activeFilter === 'active' ? '○' : '📋'}
+                        </span>
                       </div>
-                      {activeFilter === 'all' && <QuickAddChips onAdd={(itemName) => handleFormSubmit(itemName)} />}
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        {activeFilter === 'completed'
+                          ? t('detail.noCompletedItems')
+                          : activeFilter === 'active'
+                          ? t('detail.noActiveItems')
+                          : t('detail.emptyListTitle')}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        {activeFilter === 'completed'
+                          ? t('detail.noCompletedDescription')
+                          : activeFilter === 'active'
+                          ? t('detail.noActiveDescription')
+                          : t('detail.emptyListDescription')}
+                      </p>
                     </div>
-                  )}
-                </div>
-              )}
-            </Droppable>
-          )}
+                    {activeFilter === 'all' && <QuickAddChips onAdd={(itemName) => handleFormSubmit(itemName)} />}
+                  </div>
+                )}
+              </div>
+            )}
+          </Droppable>
         </CardContent>
       </Card>
     </>
   );
 }
 );
+
+ChecklistCard.displayName = 'ChecklistCard';

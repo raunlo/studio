@@ -128,15 +128,17 @@ export function SwipeableItem({
           <Check className="text-white w-6 h-6" />
         </div>
 
-        {/* Right side - Delete button (red) - clickable when revealed */}
-        <button
-          onClick={handleDeleteClick}
-          className="h-full flex items-center justify-center bg-destructive pointer-events-auto active:bg-destructive/80 transition-colors"
-          style={{ width: deleteButtonWidth }}
-          aria-label="Delete"
-        >
-          <Trash2 className="text-white w-6 h-6" />
-        </button>
+        {/* Right side - Delete button (red) - only visible when revealed */}
+        {isDeleteRevealed && (
+          <button
+            onClick={handleDeleteClick}
+            className="h-full flex items-center justify-center bg-destructive pointer-events-auto active:bg-destructive/80 transition-colors"
+            style={{ width: deleteButtonWidth }}
+            aria-label="Delete"
+          >
+            <Trash2 className="text-white w-6 h-6" />
+          </button>
+        )}
       </div>
 
       {/* Draggable item */}
