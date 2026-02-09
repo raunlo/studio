@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { BookOpen } from "lucide-react";
 import { LanguageSelector } from "./LanguageSelector";
 
 interface HeaderProps {
@@ -25,7 +27,9 @@ function getInitials(name?: string): string {
 
 export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
   const { t } = useTranslation();
+  const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isRecipesActive = pathname === '/templates';
 
   return (
     <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border/50 animate-fade-in">
@@ -52,6 +56,22 @@ export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
 
         {/* Desktop navigation */}
         <div className="hidden sm:flex items-center gap-4" suppressHydrationWarning>
+          {user && (
+            <nav className="flex items-center gap-1">
+              <Link
+                href="/templates"
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  isRecipesActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>{t('nav.recipes')}</span>
+              </Link>
+            </nav>
+          )}
+
           <LanguageSelector />
 
           {user && (
@@ -135,6 +155,19 @@ export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
                       </p>
                     </div>
                   </div>
+
+                  <Link
+                    href="/templates"
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                      isRecipesActive
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-foreground hover:bg-muted/60'
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    {t('nav.recipes')}
+                  </Link>
 
                   <button
                     className="w-full px-4 py-3 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"

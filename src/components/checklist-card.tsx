@@ -117,13 +117,19 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
     await addItem(checklistItem);
   };
 
-  const handleFormSubmit = async (checklistItemName: string) => {
+  const handleFormSubmit = async (checklistItemName: string, rows?: { name: string }[]) => {
       const checklistItem: ChecklistItem = {
         completed: false,
         name: checklistItemName,
         id: null,
         orderNumber: null,
-        rows: []
+        rows: rows
+          ? rows.map(r => ({ id: null, name: r.name, completed: null }))
+          : []
+      }
+      // Reset filter so newly added item is always visible
+      if (activeFilter !== 'all') {
+        onFilterChange?.('all');
       }
      await addItem(checklistItem);
   };

@@ -6,7 +6,7 @@ import { ShareChecklistModal } from "@/components/share-checklist-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { leaveSharedChecklist } from "@/api/checklist/checklist";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, BookOpen, ArrowRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -19,7 +19,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { useChecklists } from "@/hooks/use-checklists";
+import { useGetAllRecipes } from "@/api/recipe/recipe";
 import { AxiosError } from "axios";
+import Link from "next/link";
 
 export function ChecklistOverview() {
   const { t } = useTranslation();
@@ -43,6 +45,10 @@ export function ChecklistOverview() {
   const [newName, setNewName] = useState("");
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedChecklist, setSelectedChecklist] = useState<{ id: number; name: string } | null>(null);
+
+  // Fetch recipes count for the banner
+  const { data: recipes } = useGetAllRecipes();
+  const recipeCount = (recipes ?? []).length;
 
   const checklists = data ?? [];
   const ownedChecklists = checklists.filter(c => c.isOwner);
@@ -231,6 +237,29 @@ export function ChecklistOverview() {
           <h1 className="text-2xl sm:text-3xl font-headline text-foreground">{t('overview.title')} {getTimeEmoji()}</h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">{t('overview.subtitle')}</p>
         </div>
+
+        {/* Recipes quick-access banner */}
+        <Link href="/templates" className="group block">
+          <div className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl border border-border/60 bg-card hover:border-primary/30 hover:shadow-[var(--shadow-subtle)] transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
+                <BookOpen className="w-4.5 h-4.5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                  {t('nav.recipes')}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {recipeCount > 0
+                    ? t('nav.recipesCount', { count: recipeCount })
+                    : t('nav.recipesEmpty')
+                  }
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+          </div>
+        </Link>
 
         {/* Checklists Grid */}
         {checklists.length === 0 ? (

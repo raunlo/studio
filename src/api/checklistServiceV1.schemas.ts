@@ -517,3 +517,91 @@ export type DeleteAccount200 = {
   message?: string;
 };
 
+export interface CreateRecipeRowRequest {
+  /**
+   * Row name (1-500 characters)
+   * @minLength 1
+   * @maxLength 500
+   */
+  name: string;
+}
+
+export interface UpdateRecipeRowRequest {
+  /**
+   * Row ID (0 for new rows)
+   * @minimum 1
+   */
+  id?: number;
+  /**
+   * Row name (1-500 characters)
+   * @minLength 1
+   * @maxLength 500
+   */
+  name: string;
+}
+
+export interface CreateRecipeRequest {
+  /**
+   * Recipe name (1-500 characters)
+   * @minLength 1
+   * @maxLength 500
+   */
+  name: string;
+  /**
+   * Recipe description (0-2000 characters)
+   * @maxLength 2000
+   * @nullable
+   */
+  description?: string | null;
+  /**
+   * Recipe rows (max 50 rows)
+   * @maxItems 50
+   */
+  rows?: CreateRecipeRowRequest[];
+}
+
+export interface UpdateRecipeRequest {
+  /**
+   * Recipe name (1-500 characters)
+   * @minLength 1
+   * @maxLength 500
+   */
+  name: string;
+  /**
+   * Recipe description (0-2000 characters)
+   * @maxLength 2000
+   * @nullable
+   */
+  description?: string | null;
+  /**
+   * Recipe rows (max 50 rows)
+   * @maxItems 50
+   */
+  rows: UpdateRecipeRowRequest[];
+}
+
+export interface RecipeRowResponse {
+  /**
+   * @minimum 0
+   */
+  id: number;
+  /**
+   * @minLength 1
+   */
+  name: string;
+}
+
+export interface RecipeResponse {
+  /**
+   * @minimum 1
+   */
+  id: number;
+  /**
+   * @minLength 1
+   */
+  name: string;
+  /** @nullable */
+  description?: string | null;
+  rows: RecipeRowResponse[];
+}
+
