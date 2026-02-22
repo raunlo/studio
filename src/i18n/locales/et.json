@@ -183,7 +183,7 @@
   "item": {
     "editTitle": "Muuda nime",
     "editDescription": "Sisesta uus nimi",
-    "editSubItem": "Muuda alamüksust",
+    "editSubItem": "Muuda nimekirja itemit",
     "namePlaceholder": "Nimi...",
     "addSubItem": "Lisa...",
     "save": "Salvesta",
