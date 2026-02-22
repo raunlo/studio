@@ -271,5 +271,14 @@
     "noCompletedDescription": "Los elementos completados aparecerán aquí",
     "noActiveItems": "¡Todo listo!",
     "noActiveDescription": "Has completado todos los elementos de esta lista"
+  },
+  "recipeBrowser": {
+    "title": "Explorar Recetas",
+    "description": "Agrega recetas a tu lista",
+    "browse": "Explorar recetas",
+    "searchPlaceholder": "Buscar recetas...",
+    "added": "Agregado a la lista",
+    "noResults": "No se encontraron recetas",
+    "noResultsDescription": "Prueba con otro término de búsqueda"
   }
 }

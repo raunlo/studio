@@ -271,5 +271,14 @@
     "noCompletedDescription": "Tehtud elemendid ilmuvad siia",
     "noActiveItems": "Kõik tehtud!",
     "noActiveDescription": "Oled kõik selles nimekirjas ära teinud"
+  },
+  "recipeBrowser": {
+    "title": "Sirvi retsepte",
+    "description": "Lisa retsepte oma nimekirja",
+    "browse": "Sirvi retsepte",
+    "searchPlaceholder": "Otsi retsepte...",
+    "added": "Lisatud nimekirja",
+    "noResults": "Retsepte ei leitud",
+    "noResultsDescription": "Proovi muud otsingusõna"
   }
 }

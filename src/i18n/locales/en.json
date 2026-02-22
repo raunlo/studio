@@ -271,5 +271,14 @@
     "noCompletedDescription": "Items you complete will appear here",
     "noActiveItems": "All done!",
     "noActiveDescription": "You've completed all items in this list"
+  },
+  "recipeBrowser": {
+    "title": "Browse Recipes",
+    "description": "Add recipes to your checklist",
+    "browse": "Browse recipes",
+    "searchPlaceholder": "Search recipes...",
+    "added": "Added to checklist",
+    "noResults": "No recipes found",
+    "noResultsDescription": "Try a different search term"
   }
 }

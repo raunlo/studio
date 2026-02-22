@@ -4,10 +4,12 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus } from "lucide-react";
+import { Plus, BookOpen } from "lucide-react";
 import { PredefinedItemsDropdown, DropdownItem } from "./predefined-items-dropdown";
 import { TemplatePreviewDialog } from "./template-preview-dialog";
+import { RecipeBrowser } from "./recipe-browser";
 import { useGetAllRecipes } from "@/api/recipe/recipe";
+import { toast } from "@/hooks/use-toast";
 
 type AddItemFormProps = {
   onFormSubmit: (text: string, rows?: { name: string }[]) => void;
@@ -22,6 +24,7 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
   const [pendingRows, setPendingRows] = useState<{ name: string }[] | undefined>(undefined);
   const [previewItem, setPreviewItem] = useState<DropdownItem | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isRecipeBrowserOpen, setIsRecipeBrowserOpen] = useState(false);
 
   const suppressNextOpenRef = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -135,6 +138,18 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
     setPreviewItem(null);
   };
 
+  const handleRecipeBrowserAdd = (item: DropdownItem) => {
+    if (item.subItems.length > 0) {
+      onFormSubmit(item.text, item.subItems.map(sub => ({ name: sub.text })));
+    } else {
+      onFormSubmit(item.text);
+    }
+    toast({
+      title: t('recipeBrowser.added'),
+      description: item.text,
+    });
+  };
+
   return (
     <form onSubmit={handleSubmit} className="relative flex gap-2 w-full" ref={formRef}>
       <div className="flex-grow relative">
@@ -173,6 +188,16 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
         )}
       </div>
       <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-12 w-12 sm:h-10 sm:w-10 touch-manipulation shrink-0 text-muted-foreground hover:text-primary"
+        onClick={() => setIsRecipeBrowserOpen(true)}
+        aria-label={ready ? t('recipeBrowser.browse') : 'Browse recipes'}
+      >
+        <BookOpen className="h-5 w-5 sm:h-4 sm:w-4" />
+      </Button>
+      <Button
         type="submit"
         size="sm"
         className="h-12 w-12 sm:h-10 sm:w-10 touch-manipulation shrink-0"
@@ -185,6 +210,12 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
         item={previewItem}
         onConfirm={handlePreviewConfirm}
         onCancel={handlePreviewCancel}
+      />
+      <RecipeBrowser
+        open={isRecipeBrowserOpen}
+        onOpenChange={setIsRecipeBrowserOpen}
+        items={allDropdownItems}
+        onAddRecipe={handleRecipeBrowserAdd}
       />
     </form>
   );
