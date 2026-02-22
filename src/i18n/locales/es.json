@@ -183,6 +183,7 @@
   "item": {
     "editTitle": "Cambiar nombre",
     "editDescription": "Ingresa un nuevo nombre",
+    "editSubItem": "Editar sub-elemento",
     "namePlaceholder": "Nombre...",
     "addSubItem": "Añadir...",
     "save": "Guardar",

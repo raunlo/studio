@@ -55,7 +55,9 @@ export function ChecklistItemComponent({
   const [rowEditValue, setRowEditValue] = useState("");
 
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const mobileTitleInputRef = useRef<HTMLInputElement>(null);
   const rowInputRef = useRef<HTMLTextAreaElement>(null);
+  const mobileRowInputRef = useRef<HTMLInputElement>(null);
   const subItemTextareaRef = useRef<HTMLTextAreaElement>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const longPressDuration = 500; // ms
@@ -83,6 +85,25 @@ export function ChecklistItemComponent({
       titleInputRef.current.select();
     }
   }, [isEditingTitle, isMobile]);
+
+  // Auto-focus mobile drawer inputs after drawer animation completes
+  useEffect(() => {
+    if (isEditingTitle && isMobile && mobileTitleInputRef.current) {
+      const timer = setTimeout(() => {
+        mobileTitleInputRef.current?.focus();
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [isEditingTitle, isMobile]);
+
+  useEffect(() => {
+    if (editingRowId && isMobile && mobileRowInputRef.current) {
+      const timer = setTimeout(() => {
+        mobileRowInputRef.current?.focus();
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [editingRowId, isMobile]);
 
   useEffect(() => {
     if (editingRowId && rowInputRef.current) {
@@ -436,8 +457,8 @@ export function ChecklistItemComponent({
                     )}
                   </button>
 
-                  {/* Editable row name */}
-                  {editingRowId === row.id ? (
+                  {/* Editable row name - inline on desktop only */}
+                  {editingRowId === row.id && !isMobile ? (
                     <div className="flex flex-col gap-2 flex-1 min-w-0">
                       <Textarea
                         ref={rowInputRef}
@@ -541,14 +562,18 @@ export function ChecklistItemComponent({
 
       {/* Bottom Drawer for editing title - only on mobile */}
       {isMobile && (
-        <Drawer.Root open={isEditingTitle} onOpenChange={(open) => !open && cancelTitleEdit()}>
+        <Drawer.Root
+          open={isEditingTitle}
+          onOpenChange={(open) => !open && cancelTitleEdit()}
+          repositionInputs={false}
+        >
           <Drawer.Portal>
             <Drawer.Overlay className="fixed inset-0 bg-black/40 z-50" />
             <Drawer.Content className="bg-background flex flex-col rounded-t-[10px] h-auto fixed bottom-0 left-0 right-0 z-50 outline-none">
               {/* iOS-style drag handle */}
               <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted-foreground/30 mt-4 mb-6" />
-              
-              <div className="px-6 pb-6">
+
+              <div className="px-6 pb-6" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
                 <div className="mb-4">
                   <h2 className="text-lg font-semibold text-foreground mb-1">
                     {t('item.editTitle')}
@@ -557,9 +582,10 @@ export function ChecklistItemComponent({
                     {t('item.editDescription')}
                   </p>
                 </div>
-                
+
                 <div className="py-4">
                   <Input
+                    ref={mobileTitleInputRef}
                     value={titleEditValue}
                     onChange={(e) => setTitleEditValue(e.target.value)}
                     onKeyDown={handleTitleKeyDown}
@@ -567,7 +593,7 @@ export function ChecklistItemComponent({
                     className="h-12 text-lg w-full"
                   />
                 </div>
-                
+
                 <div className="flex flex-row gap-3">
                   <Button
                     variant="outline"
@@ -578,6 +604,66 @@ export function ChecklistItemComponent({
                   </Button>
                   <Button
                     onClick={saveTitleEdit}
+                    className="flex-1 h-12 touch-manipulation"
+                  >
+                    {t('item.save')}
+                  </Button>
+                </div>
+              </div>
+            </Drawer.Content>
+          </Drawer.Portal>
+        </Drawer.Root>
+      )}
+
+      {/* Bottom Drawer for editing row - only on mobile */}
+      {isMobile && (
+        <Drawer.Root
+          open={editingRowId !== null}
+          onOpenChange={(open) => !open && cancelRowEdit()}
+          repositionInputs={false}
+        >
+          <Drawer.Portal>
+            <Drawer.Overlay className="fixed inset-0 bg-black/40 z-50" />
+            <Drawer.Content className="bg-background flex flex-col rounded-t-[10px] h-auto fixed bottom-0 left-0 right-0 z-50 outline-none">
+              {/* iOS-style drag handle */}
+              <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted-foreground/30 mt-4 mb-6" />
+
+              <div className="px-6 pb-6" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+                <div className="mb-4">
+                  <h2 className="text-lg font-semibold text-foreground mb-1">
+                    {t('item.editSubItem')}
+                  </h2>
+                </div>
+
+                <div className="py-4">
+                  <Input
+                    ref={mobileRowInputRef}
+                    value={rowEditValue}
+                    onChange={(e) => setRowEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        saveRowEdit();
+                      } else if (e.key === "Escape") {
+                        e.preventDefault();
+                        cancelRowEdit();
+                      }
+                    }}
+                    placeholder={t('item.namePlaceholder')}
+                    className="h-12 text-lg w-full"
+                  />
+                </div>
+
+                <div className="flex flex-row gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={cancelRowEdit}
+                    className="flex-1 h-12 touch-manipulation"
+                  >
+                    {t('item.cancel')}
+                  </Button>
+                  <Button
+                    onClick={saveRowEdit}
                     className="flex-1 h-12 touch-manipulation"
                   >
                     {t('item.save')}

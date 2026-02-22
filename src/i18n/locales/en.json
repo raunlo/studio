@@ -183,6 +183,7 @@
   "item": {
     "editTitle": "Rename",
     "editDescription": "Enter a new name",
+    "editSubItem": "Edit sub-item",
     "namePlaceholder": "Name...",
     "addSubItem": "Add...",
     "save": "Save",
