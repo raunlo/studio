@@ -9,7 +9,7 @@ import { Trash2, GripVertical } from "lucide-react";
 import { ChecklistItemComponent } from "@/components/checklist-item";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 import { AddItemForm } from "@/components/add-item-form";
-import { ChecklistResponse } from "@/api/checklistServiceV1.schemas";
+import { ChecklistResponse, ChecklistWithStats } from "@/api/checklistServiceV1.schemas";
 import { ChecklistCardHandle, ChecklistItem } from "@/components/shared/types";
 import { useChecklist } from "@/hooks/use-checklist";
 import { SwipeableItem } from "@/components/checklist-item-swipeable";
@@ -21,13 +21,13 @@ import { useTranslation } from 'react-i18next';
 import { ChecklistFilterBar, FilterType } from "@/components/checklist-filter-bar";
 
 type ChecklistCardProps = {
-  checklist: ChecklistResponse;
+  checklist: ChecklistResponse | ChecklistWithStats;
   activeFilter?: FilterType;
   onFilterChange?: (filter: FilterType) => void;
 };
 
 export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>(
-  ({ checklist, activeFilter = 'all', onFilterChange }, ref): JSX.Element => {
+  ({ checklist, activeFilter = 'all', onFilterChange }, ref) => {
   const { t } = useTranslation();
   const {
     items,
