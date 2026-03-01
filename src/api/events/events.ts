@@ -6,61 +6,64 @@
  * OpenAPI spec version: 1.0.0
  */
 import useSwr from 'swr';
-import type {
-  Key,
-  SWRConfiguration
-} from 'swr';
+import type { Key, SWRConfiguration } from 'swr';
 
 import type {
   EventEnvelope,
-  GetEventsStreamForChecklistItemsParams
+  GetEventsStreamForChecklistItemsParams,
 } from '../checklistServiceV1.schemas';
 
 import { customInstance } from '../../lib/axios';
 
-
-  
-  
-  
 /**
  * @summary Server-Sent Events stream for real-time updates for checklist items, filtered by checklistId
  */
 export const getEventsStreamForChecklistItems = (
-    checklistId: number,
-    params?: GetEventsStreamForChecklistItemsParams,
- ) => {
-    return customInstance<EventEnvelope>(
-    {url: `/v1/events/checklist-item-updates/${checklistId}`, method: 'GET',
-        params
-    },
-    );
-  }
+  checklistId: number,
+  params?: GetEventsStreamForChecklistItemsParams,
+) => {
+  return customInstance<EventEnvelope>({
+    url: `/v1/events/checklist-item-updates/${checklistId}`,
+    method: 'GET',
+    params,
+  });
+};
 
+export const getGetEventsStreamForChecklistItemsKey = (
+  checklistId: number,
+  params?: GetEventsStreamForChecklistItemsParams,
+) => [`/v1/events/checklist-item-updates/${checklistId}`, ...(params ? [params] : [])] as const;
 
-
-export const getGetEventsStreamForChecklistItemsKey = (checklistId: number,
-    params?: GetEventsStreamForChecklistItemsParams,) => [`/v1/events/checklist-item-updates/${checklistId}`, ...(params ? [params]: [])] as const;
-
-export type GetEventsStreamForChecklistItemsQueryResult = NonNullable<Awaited<ReturnType<typeof getEventsStreamForChecklistItems>>>
-export type GetEventsStreamForChecklistItemsQueryError = unknown
+export type GetEventsStreamForChecklistItemsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getEventsStreamForChecklistItems>>
+>;
+export type GetEventsStreamForChecklistItemsQueryError = unknown;
 
 /**
  * @summary Server-Sent Events stream for real-time updates for checklist items, filtered by checklistId
  */
 export const useGetEventsStreamForChecklistItems = <TError = unknown>(
   checklistId: number,
-    params?: GetEventsStreamForChecklistItemsParams, options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getEventsStreamForChecklistItems>>, TError> & { swrKey?: Key, enabled?: boolean },  }
+  params?: GetEventsStreamForChecklistItemsParams,
+  options?: {
+    swr?: SWRConfiguration<Awaited<ReturnType<typeof getEventsStreamForChecklistItems>>, TError> & {
+      swrKey?: Key;
+      enabled?: boolean;
+    };
+  },
 ) => {
-  const {swr: swrOptions} = options ?? {}
+  const { swr: swrOptions } = options ?? {};
 
-  const isEnabled = swrOptions?.enabled !== false && !!(checklistId)
-  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetEventsStreamForChecklistItemsKey(checklistId,params) : null);
-  const swrFn = () => getEventsStreamForChecklistItems(checklistId,params)
+  const isEnabled = swrOptions?.enabled !== false && !!checklistId;
+  const swrKey =
+    swrOptions?.swrKey ??
+    (() => (isEnabled ? getGetEventsStreamForChecklistItemsKey(checklistId, params) : null));
+  const swrFn = () => getEventsStreamForChecklistItems(checklistId, params);
 
-  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
+  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions);
 
   return {
     swrKey,
-    ...query
-  }
-}
+    ...query,
+  };
+};

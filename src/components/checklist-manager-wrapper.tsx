@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { ChecklistManager } from "./checklist-manager";
+import { ChecklistManager } from './checklist-manager';
 
 // Wrapper component to ensure stable hook order
 export function ChecklistManagerWrapper() {

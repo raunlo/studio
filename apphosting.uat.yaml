@@ -9,7 +9,7 @@ runConfig:
   minInstances: 0
   maxInstances: 1
   cpu: 1
-  memoryMiB: 1024  # Increased from 512 for Next.js stability
+  memoryMiB: 1024 # Increased from 512 for Next.js stability
 
 env:
   # Backend API URL for server-side requests
@@ -18,7 +18,7 @@ env:
     availability:
       - RUNTIME
       - BUILD
-  
+
   # Public API URL for client-side requests
   - variable: NEXT_PUBLIC_BACKEND_URL
     value: https://uat-api.dailychexly.com

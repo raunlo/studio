@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { ListChecks, Search, CheckCircle } from "lucide-react";
+import { ListChecks, Search, CheckCircle } from 'lucide-react';
 
 type EmptyStateVariant = 'no-items' | 'no-results' | 'all-completed';
 
@@ -33,12 +33,12 @@ export function ChecklistEmptyState({ variant, searchQuery }: ChecklistEmptyStat
   const { icon: Icon, title, description } = content[variant];
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-      <div className="rounded-full bg-muted p-4 mb-4">
+    <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
+      <div className="mb-4 rounded-full bg-muted p-4">
         <Icon className="h-8 w-8 text-muted-foreground" />
       </div>
-      <h3 className="text-base font-medium text-foreground mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground max-w-sm">{description}</p>
+      <h3 className="mb-2 text-base font-medium text-foreground">{title}</h3>
+      <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
     </div>
   );
 }

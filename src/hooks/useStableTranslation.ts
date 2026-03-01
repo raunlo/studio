@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 // Stable translation hook that prevents hooks order issues
 export function useStableTranslation() {
   const { t, ready, i18n } = useI18nTranslation();
-  
+
   // Memoize translation function to prevent re-renders
   const stableT = useMemo(() => {
     return (key: string, fallback?: string) => {
@@ -14,12 +14,12 @@ export function useStableTranslation() {
       return t(key);
     };
   }, [t, ready]);
-  
+
   return {
     t: stableT,
     ready,
     i18n,
-    changeLanguage: i18n.changeLanguage
+    changeLanguage: i18n.changeLanguage,
   };
 }
 

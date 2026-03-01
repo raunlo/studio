@@ -1,13 +1,12 @@
+'use client';
 
-"use client";
-
-import { useRef, useCallback } from "react";
-import { useTranslation } from "react-i18next";
-import { ChecklistCard } from "@/components/checklist-card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DragDropContext, DropResult } from "@hello-pangea/dnd";
-import { ChecklistCardHandle } from "@/components/shared/types";
-import { useGetAllChecklists } from "@/api/checklist/checklist";
+import { useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ChecklistCard } from '@/components/checklist-card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { ChecklistCardHandle } from '@/components/shared/types';
+import { useGetAllChecklists } from '@/api/checklist/checklist';
 
 // --- START: Frontend-specific types ---
 // We create local types to match what the UI components expect (e.g., checklistId, title).
@@ -15,14 +14,12 @@ import { useGetAllChecklists } from "@/api/checklist/checklist";
 
 // --- END: Frontend-specific types ---
 
-
-
 export function ChecklistManager() {
   // All hooks must be called at the top level, in the same order every time
   const { t } = useTranslation();
   const checklistCardRefs = useRef<Record<string, ChecklistCardHandle>>({});
   const { data, isLoading, error } = useGetAllChecklists({
-    swr: { refreshInterval: 10000 }
+    swr: { refreshInterval: 10000 },
   });
 
   // useCallback must be defined after other hooks but before conditional returns
@@ -37,7 +34,7 @@ export function ChecklistManager() {
     if (checklistRef) {
       await checklistRef.handleReorder(source.index, destination.index); // ✅ invoke method on the child
     } else {
-      console.warn("Checklist ref not found for", checklistId);
+      console.warn('Checklist ref not found for', checklistId);
     }
   }, []);
 
@@ -45,23 +42,23 @@ export function ChecklistManager() {
 
   const checklists = data?.checklists ?? [];
 
-
-
   if (isLoading) {
     return (
-        <div className="space-y-8">
-            <div className="space-y-4">
-                <Skeleton className="h-48 w-full" />
-            </div>
+      <div className="space-y-8">
+        <div className="space-y-4">
+          <Skeleton className="h-48 w-full" />
         </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg border-destructive">
-          <h3 className="text-xl font-semibold text-destructive">{t('main.error')}</h3>
-          <p className="text-muted-foreground mt-2">Could not connect to the server. Please ensure the API is running and accessible.</p>
+      <div className="rounded-lg border-2 border-dashed border-destructive px-4 py-16 text-center">
+        <h3 className="text-xl font-semibold text-destructive">{t('main.error')}</h3>
+        <p className="mt-2 text-muted-foreground">
+          Could not connect to the server. Please ensure the API is running and accessible.
+        </p>
       </div>
     );
   }
@@ -84,10 +81,12 @@ export function ChecklistManager() {
             />
           ))}
           {checklists.length === 0 && (
-              <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg">
-                  <h3 className="text-xl font-semibold text-muted-foreground">{t('main.empty')}</h3>
-                  <p className="text-muted-foreground mt-2">Create your first checklist to get started.</p>
-              </div>
+            <div className="rounded-lg border-2 border-dashed px-4 py-16 text-center">
+              <h3 className="text-xl font-semibold text-muted-foreground">{t('main.empty')}</h3>
+              <p className="mt-2 text-muted-foreground">
+                Create your first checklist to get started.
+              </p>
+            </div>
           )}
         </div>
       </DragDropContext>

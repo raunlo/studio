@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 if (!BACKEND_URL) {
   throw new Error('Missing required environment variable: NEXT_PUBLIC_BACKEND_URL');
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const backendResponse = await fetch(`${BACKEND_URL}/api/v1/auth/logout`, {
       method: 'POST',
       headers: {
-        'Cookie': cookieHeader,
+        Cookie: cookieHeader,
         'Content-Type': 'application/json',
       },
     });
@@ -49,9 +49,6 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Logout error:', error);
-    return NextResponse.json(
-      { error: 'Logout failed' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Logout failed' }, { status: 500 });
   }
 }

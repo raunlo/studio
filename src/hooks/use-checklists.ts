@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import useSWR from "swr";
-import { useRef, useCallback, useEffect } from "react";
-import { AxiosError } from "axios";
-import type { ChecklistResponse, ChecklistWithStats } from "@/api/checklistServiceV1.schemas";
+import useSWR from 'swr';
+import { useRef, useCallback, useEffect } from 'react';
+import { AxiosError } from 'axios';
+import type { ChecklistResponse, ChecklistWithStats } from '@/api/checklistServiceV1.schemas';
 import {
   getAllChecklists,
   createChecklist as createChecklistAPI,
   deleteChecklistById,
   updateChecklistById,
-} from "@/api/checklist/checklist";
-import { createLogger } from "@/lib/logger";
-import { toast } from "@/hooks/use-toast";
+} from '@/api/checklist/checklist';
+import { createLogger } from '@/lib/logger';
+import { toast } from '@/hooks/use-toast';
 
 const logger = createLogger('UseChecklists');
 
@@ -19,13 +19,10 @@ const logger = createLogger('UseChecklists');
 let tempIdCounter = 0;
 
 function generateTempId(): number {
-  return -(++tempIdCounter);
+  return -++tempIdCounter;
 }
 
-async function retryableRequest<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 1
-): Promise<T> {
+async function retryableRequest<T>(fn: () => Promise<T>, maxRetries: number = 1): Promise<T> {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -64,9 +61,7 @@ interface ChecklistsHookOptions {
   refreshInterval?: number; // Default: 10000 (10 seconds for multi-user sync)
 }
 
-export function useChecklists(
-  options: ChecklistsHookOptions = {}
-): ChecklistsHookResult {
+export function useChecklists(options: ChecklistsHookOptions = {}): ChecklistsHookResult {
   const { refreshInterval = 10000 } = options;
 
   // Refs to track checklists and recent deletions to prevent UI flickering
@@ -74,20 +69,25 @@ export function useChecklists(
   const recentlyDeletedRef = useRef<Set<number>>(new Set());
   const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { data: checklists, mutate: mutateChecklists, isLoading, error } = useSWR<ChecklistWithStats[]>(
+  const {
+    data: checklists,
+    mutate: mutateChecklists,
+    isLoading,
+    error,
+  } = useSWR<ChecklistWithStats[]>(
     ['checklists'],
     async (): Promise<ChecklistWithStats[]> => {
       const response = await getAllChecklists();
       // Filter out recently deleted checklists to prevent flickering
       return response.checklists.filter(
-        (checklist) => !recentlyDeletedRef.current.has(checklist.id)
+        (checklist) => !recentlyDeletedRef.current.has(checklist.id),
       );
     },
     {
       refreshInterval,
       revalidateOnFocus: true,
       keepPreviousData: true,
-    }
+    },
   );
 
   // Keep ref in sync with SWR data
@@ -106,7 +106,7 @@ export function useChecklists(
 
   // Helper to filter out recently deleted checklists from any list
   const filterDeleted = useCallback((list: ChecklistWithStats[]): ChecklistWithStats[] => {
-    return list.filter(c => !recentlyDeletedRef.current.has(c.id));
+    return list.filter((c) => !recentlyDeletedRef.current.has(c.id));
   }, []);
 
   /**
@@ -126,159 +126,155 @@ export function useChecklists(
   /**
    * Create a new checklist with optimistic update
    */
-  const createChecklist = useCallback(async (name: string): Promise<ChecklistResponse | void> => {
-    const trimmedName = name.trim();
-    if (!trimmedName) {
-      logger.warn('Attempted to create checklist with empty name');
-      return;
-    }
+  const createChecklist = useCallback(
+    async (name: string): Promise<ChecklistResponse | void> => {
+      const trimmedName = name.trim();
+      if (!trimmedName) {
+        logger.warn('Attempted to create checklist with empty name');
+        return;
+      }
 
-    const tempId = generateTempId();
+      const tempId = generateTempId();
 
-    // Create optimistic checklist
-    const optimisticChecklist: ChecklistWithStats = {
-      id: tempId,
-      name: trimmedName,
-      isOwner: true,
-      isShared: false,
-      stats: { totalItems: 0, completedItems: 0 },
-    };
+      // Create optimistic checklist
+      const optimisticChecklist: ChecklistWithStats = {
+        id: tempId,
+        name: trimmedName,
+        isOwner: true,
+        isShared: false,
+        stats: { totalItems: 0, completedItems: 0 },
+      };
 
-    // Optimistic update - add to list
-    mutateChecklists([...checklistsRef.current, optimisticChecklist], { revalidate: false });
+      // Optimistic update - add to list
+      mutateChecklists([...checklistsRef.current, optimisticChecklist], { revalidate: false });
 
-    try {
-      const created = await retryableRequest(
-        () => createChecklistAPI({ name: trimmedName }),
-        1
-      );
+      try {
+        const created = await retryableRequest(() => createChecklistAPI({ name: trimmedName }), 1);
 
-      logger.info('Checklist created successfully:', created);
+        logger.info('Checklist created successfully:', created);
 
-      // Replace temp ID with real ID
-      const finalChecklists = checklistsRef.current.map(c =>
-        c.id === tempId ? created : c
-      );
-      mutateChecklists(finalChecklists, { revalidate: false });
+        // Replace temp ID with real ID
+        const finalChecklists = checklistsRef.current.map((c) => (c.id === tempId ? created : c));
+        mutateChecklists(finalChecklists, { revalidate: false });
 
-      scheduleRefetch();
-      return created;
+        scheduleRefetch();
+        return created;
+      } catch (error) {
+        logger.error('Failed to create checklist:', error);
 
-    } catch (error) {
-      logger.error('Failed to create checklist:', error);
+        // Rollback optimistic update
+        mutateChecklists(
+          checklistsRef.current.filter((c) => c.id !== tempId),
+          { revalidate: false },
+        );
 
-      // Rollback optimistic update
-      mutateChecklists(
-        checklistsRef.current.filter(c => c.id !== tempId),
-        { revalidate: false }
-      );
+        toast({
+          title: 'Failed to create checklist',
+          description: error instanceof Error ? error.message : 'Please try again',
+          variant: 'destructive',
+        });
 
-      toast({
-        title: 'Failed to create checklist',
-        description: error instanceof Error ? error.message : 'Please try again',
-        variant: 'destructive',
-      });
-
-      throw error;
-    }
-  }, [mutateChecklists, scheduleRefetch]);
+        throw error;
+      }
+    },
+    [mutateChecklists, scheduleRefetch],
+  );
 
   /**
    * Delete a checklist with optimistic update
    */
-  const deleteChecklist = useCallback(async (checklistId: number): Promise<void> => {
-    logger.info('Deleting checklist:', checklistId);
+  const deleteChecklist = useCallback(
+    async (checklistId: number): Promise<void> => {
+      logger.info('Deleting checklist:', checklistId);
 
-    // Track deleted checklist immediately to prevent flickering
-    recentlyDeletedRef.current.add(checklistId);
+      // Track deleted checklist immediately to prevent flickering
+      recentlyDeletedRef.current.add(checklistId);
 
-    // Store previous state for rollback
-    const previousChecklists = [...checklistsRef.current];
+      // Store previous state for rollback
+      const previousChecklists = [...checklistsRef.current];
 
-    // Optimistic update - remove from list
-    mutateChecklists(filterDeleted(checklistsRef.current), { revalidate: false });
+      // Optimistic update - remove from list
+      mutateChecklists(filterDeleted(checklistsRef.current), { revalidate: false });
 
-    try {
-      await retryableRequest(() => deleteChecklistById(checklistId), 1);
+      try {
+        await retryableRequest(() => deleteChecklistById(checklistId), 1);
 
-      logger.info('Checklist deleted successfully:', checklistId);
+        logger.info('Checklist deleted successfully:', checklistId);
 
-      // Clean up tracking after 10 seconds
-      setTimeout(() => {
+        // Clean up tracking after 10 seconds
+        setTimeout(() => {
+          recentlyDeletedRef.current.delete(checklistId);
+        }, 10000);
+
+        toast({ title: 'Checklist deleted' });
+        scheduleRefetch();
+      } catch (error) {
+        logger.error('Failed to delete checklist:', error);
+
+        // Remove from deleted tracking so it can reappear
         recentlyDeletedRef.current.delete(checklistId);
-      }, 10000);
 
-      toast({ title: 'Checklist deleted' });
-      scheduleRefetch();
+        // Rollback optimistic update
+        mutateChecklists(previousChecklists, { revalidate: false });
 
-    } catch (error) {
-      logger.error('Failed to delete checklist:', error);
+        toast({
+          title: 'Failed to delete checklist',
+          description: error instanceof Error ? error.message : 'Please try again',
+          variant: 'destructive',
+        });
 
-      // Remove from deleted tracking so it can reappear
-      recentlyDeletedRef.current.delete(checklistId);
-
-      // Rollback optimistic update
-      mutateChecklists(previousChecklists, { revalidate: false });
-
-      toast({
-        title: 'Failed to delete checklist',
-        description: error instanceof Error ? error.message : 'Please try again',
-        variant: 'destructive',
-      });
-
-      throw error;
-    }
-  }, [mutateChecklists, scheduleRefetch, filterDeleted]);
+        throw error;
+      }
+    },
+    [mutateChecklists, scheduleRefetch, filterDeleted],
+  );
 
   /**
    * Rename a checklist with optimistic update
    */
-  const renameChecklist = useCallback(async (checklistId: number, newName: string): Promise<void> => {
-    const trimmedName = newName.trim();
-    if (!trimmedName) {
-      logger.warn('Attempted to rename checklist with empty name');
-      return;
-    }
+  const renameChecklist = useCallback(
+    async (checklistId: number, newName: string): Promise<void> => {
+      const trimmedName = newName.trim();
+      if (!trimmedName) {
+        logger.warn('Attempted to rename checklist with empty name');
+        return;
+      }
 
-    logger.info('Renaming checklist:', checklistId, 'to:', trimmedName);
+      logger.info('Renaming checklist:', checklistId, 'to:', trimmedName);
 
-    // Store previous state for rollback
-    const previousChecklists = [...checklistsRef.current];
+      // Store previous state for rollback
+      const previousChecklists = [...checklistsRef.current];
 
-    // Optimistic update - rename in list
-    mutateChecklists(
-      checklistsRef.current.map(c =>
-        c.id === checklistId ? { ...c, name: trimmedName } : c
-      ),
-      { revalidate: false }
-    );
-
-    try {
-      await retryableRequest(
-        () => updateChecklistById(checklistId, { name: trimmedName }),
-        1
+      // Optimistic update - rename in list
+      mutateChecklists(
+        checklistsRef.current.map((c) => (c.id === checklistId ? { ...c, name: trimmedName } : c)),
+        { revalidate: false },
       );
 
-      logger.info('Checklist renamed successfully:', checklistId);
+      try {
+        await retryableRequest(() => updateChecklistById(checklistId, { name: trimmedName }), 1);
 
-      toast({ title: 'Checklist renamed' });
-      scheduleRefetch();
+        logger.info('Checklist renamed successfully:', checklistId);
 
-    } catch (error) {
-      logger.error('Failed to rename checklist:', error);
+        toast({ title: 'Checklist renamed' });
+        scheduleRefetch();
+      } catch (error) {
+        logger.error('Failed to rename checklist:', error);
 
-      // Rollback optimistic update
-      mutateChecklists(previousChecklists, { revalidate: false });
+        // Rollback optimistic update
+        mutateChecklists(previousChecklists, { revalidate: false });
 
-      toast({
-        title: 'Failed to rename checklist',
-        description: error instanceof Error ? error.message : 'Please try again',
-        variant: 'destructive',
-      });
+        toast({
+          title: 'Failed to rename checklist',
+          description: error instanceof Error ? error.message : 'Please try again',
+          variant: 'destructive',
+        });
 
-      throw error;
-    }
-  }, [mutateChecklists, scheduleRefetch]);
+        throw error;
+      }
+    },
+    [mutateChecklists, scheduleRefetch],
+  );
 
   return {
     checklists,

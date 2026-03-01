@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useTranslation } from "react-i18next";
-import { ChecklistOverviewCard } from "@/components/checklist-overview-card";
-import { ShareChecklistModal } from "@/components/share-checklist-modal";
-import { Skeleton } from "@/components/ui/skeleton";
-import { leaveSharedChecklist } from "@/api/checklist/checklist";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
+import { ChecklistOverviewCard } from '@/components/checklist-overview-card';
+import { ShareChecklistModal } from '@/components/share-checklist-modal';
+import { Skeleton } from '@/components/ui/skeleton';
+import { leaveSharedChecklist } from '@/api/checklist/checklist';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -15,11 +15,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { toast } from "@/hooks/use-toast";
-import { useChecklists } from "@/hooks/use-checklists";
-import { AxiosError } from "axios";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
+import { useChecklists } from '@/hooks/use-checklists';
+import { AxiosError } from 'axios';
 
 export function ChecklistOverview() {
   const { t } = useTranslation();
@@ -35,27 +35,31 @@ export function ChecklistOverview() {
   });
 
   const [isCreating, setIsCreating] = useState(false);
-  const [newChecklistName, setNewChecklistName] = useState("");
+  const [newChecklistName, setNewChecklistName] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
-  const [renamingChecklist, setRenamingChecklist] = useState<{ id: number; name: string } | null>(null);
-  const [newName, setNewName] = useState("");
+  const [renamingChecklist, setRenamingChecklist] = useState<{ id: number; name: string } | null>(
+    null,
+  );
+  const [newName, setNewName] = useState('');
   const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [selectedChecklist, setSelectedChecklist] = useState<{ id: number; name: string } | null>(null);
+  const [selectedChecklist, setSelectedChecklist] = useState<{ id: number; name: string } | null>(
+    null,
+  );
 
   const checklists = data ?? [];
-  const ownedChecklists = checklists.filter(c => c.isOwner);
-  const sharedChecklists = checklists.filter(c => !c.isOwner);
+  const ownedChecklists = checklists.filter((c) => c.isOwner);
+  const sharedChecklists = checklists.filter((c) => !c.isOwner);
 
   // Time-based emoji for a touch of warmth
   const getTimeEmoji = () => {
     const hour = new Date().getHours();
-    if (hour < 6) return "🌙";
-    if (hour < 12) return "☀️";
-    if (hour < 18) return "🌤️";
-    if (hour < 21) return "🌅";
-    return "🌙";
+    if (hour < 6) return '🌙';
+    if (hour < 12) return '☀️';
+    if (hour < 18) return '🌤️';
+    if (hour < 21) return '🌅';
+    return '🌙';
   };
 
   // Redirect to home page on authentication errors - MUST be before any conditional returns
@@ -79,17 +83,17 @@ export function ChecklistOverview() {
     setIsCreating(true);
     try {
       await createChecklistMutation(newChecklistName.trim());
-      setNewChecklistName("");
+      setNewChecklistName('');
       setDialogOpen(false);
     } catch (error) {
-      console.error("Failed to create checklist:", error);
+      console.error('Failed to create checklist:', error);
     } finally {
       setIsCreating(false);
     }
   };
 
   const handleShare = (id: number) => {
-    const checklist = checklists.find(c => c.id === id);
+    const checklist = checklists.find((c) => c.id === id);
     if (checklist) {
       setSelectedChecklist({ id: checklist.id, name: checklist.name });
       setShareModalOpen(true);
@@ -97,7 +101,7 @@ export function ChecklistOverview() {
   };
 
   const handleRename = async (id: number) => {
-    const checklist = checklists.find(c => c.id === id);
+    const checklist = checklists.find((c) => c.id === id);
     if (!checklist) return;
 
     setRenamingChecklist({ id: checklist.id, name: checklist.name });
@@ -115,9 +119,9 @@ export function ChecklistOverview() {
       await renameChecklistMutation(renamingChecklist.id, newName.trim());
       setRenameDialogOpen(false);
       setRenamingChecklist(null);
-      setNewName("");
+      setNewName('');
     } catch (error) {
-      console.error("Failed to rename checklist:", error);
+      console.error('Failed to rename checklist:', error);
     } finally {
       setIsRenaming(false);
     }
@@ -133,7 +137,7 @@ export function ChecklistOverview() {
     try {
       await deleteChecklistMutation(id);
     } catch (error) {
-      console.error("Failed to delete checklist:", error);
+      console.error('Failed to delete checklist:', error);
     }
   };
 
@@ -165,12 +169,12 @@ export function ChecklistOverview() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="mb-2 h-8 w-48" />
             <Skeleton className="h-4 w-64" />
           </div>
           <Skeleton className="h-10 w-32" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Skeleton key={i} className="h-48 w-full" />
           ))}
@@ -181,7 +185,8 @@ export function ChecklistOverview() {
 
   if (error) {
     // Check if it's an auth error (will redirect via useEffect above)
-    const isAuthError = error instanceof AxiosError &&
+    const isAuthError =
+      error instanceof AxiosError &&
       (error.response?.status === 401 || error.response?.status === 403);
 
     if (isAuthError) {
@@ -190,7 +195,7 @@ export function ChecklistOverview() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="mb-2 h-8 w-48" />
               <Skeleton className="h-4 w-64" />
             </div>
           </div>
@@ -200,23 +205,20 @@ export function ChecklistOverview() {
 
     // Show error for non-auth errors
     const is500Error = error instanceof AxiosError && error.response?.status === 500;
-    const errorMessage = error instanceof AxiosError
-      ? error.response?.data?.message || error.response?.data?.error || error.message
-      : error?.message || 'Unknown error';
+    const errorMessage =
+      error instanceof AxiosError
+        ? error.response?.data?.message || error.response?.data?.error || error.message
+        : error?.message || 'Unknown error';
 
     return (
-      <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg border-destructive">
+      <div className="rounded-lg border-2 border-dashed border-destructive px-4 py-16 text-center">
         <h3 className="text-xl font-semibold text-destructive">{t('main.error')}</h3>
-        <p className="text-muted-foreground mt-2">
+        <p className="mt-2 text-muted-foreground">
           {is500Error
             ? `Server error: ${errorMessage}`
             : 'Could not connect to the server. Please ensure the API is running and accessible.'}
         </p>
-        <Button
-          variant="outline"
-          className="mt-4"
-          onClick={() => window.location.reload()}
-        >
+        <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
           {t('main.retry') || 'Retry'}
         </Button>
       </div>
@@ -228,28 +230,32 @@ export function ChecklistOverview() {
       <div className={`space-y-6 ${checklists.length > 0 ? 'pb-20 sm:pb-4' : 'pb-4'}`}>
         {/* Header Section - without button */}
         <div>
-          <h1 className="text-2xl sm:text-3xl font-headline text-foreground">{t('overview.title')} {getTimeEmoji()}</h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">{t('overview.subtitle')}</p>
+          <h1 className="font-headline text-2xl text-foreground sm:text-3xl">
+            {t('overview.title')} {getTimeEmoji()}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+            {t('overview.subtitle')}
+          </p>
         </div>
 
         {/* Checklists Grid */}
         {checklists.length === 0 ? (
-          <div className="text-center py-20 px-4 border-2 border-dashed border-border rounded-xl bg-card">
-            <div className="max-w-md mx-auto">
+          <div className="rounded-xl border-2 border-dashed border-border bg-card px-4 py-20 text-center">
+            <div className="mx-auto max-w-md">
               <button
                 onClick={() => setDialogOpen(true)}
-                className="w-16 h-16 mx-auto mb-4 rounded-xl bg-primary/10 flex items-center justify-center cursor-pointer hover:bg-primary/20 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                className="mx-auto mb-4 flex h-16 w-16 cursor-pointer items-center justify-center rounded-xl bg-primary/10 transition-all duration-200 hover:scale-105 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-95"
                 aria-label={t('overview.newChecklist')}
               >
-                <Plus className="w-8 h-8 text-primary" />
+                <Plus className="h-8 w-8 text-primary" />
               </button>
-              <h3 className="text-xl font-headline text-foreground">{t('overview.empty')}</h3>
-              <p className="text-muted-foreground mt-2 mb-6">{t('overview.emptyDescription')}</p>
+              <h3 className="font-headline text-xl text-foreground">{t('overview.empty')}</h3>
+              <p className="mb-6 mt-2 text-muted-foreground">{t('overview.emptyDescription')}</p>
               <Button
                 onClick={() => setDialogOpen(true)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="mr-2 h-4 w-4" />
                 {t('overview.createFirst')}
               </Button>
             </div>
@@ -261,9 +267,11 @@ export function ChecklistOverview() {
               <div>
                 {/* Only show section header if there are also shared checklists */}
                 {sharedChecklists.length > 0 && (
-                  <h2 className="text-xl font-headline text-foreground mb-4">{t('overview.myChecklists')}</h2>
+                  <h2 className="mb-4 font-headline text-xl text-foreground">
+                    {t('overview.myChecklists')}
+                  </h2>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
                   {ownedChecklists.map((checklist) => (
                     <ChecklistOverviewCard
                       key={checklist.id}
@@ -286,8 +294,10 @@ export function ChecklistOverview() {
             {/* Shared with me Section */}
             {sharedChecklists.length > 0 && (
               <div>
-                <h2 className="text-xl font-headline text-foreground mb-4">{t('overview.sharedWithMe')}</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                <h2 className="mb-4 font-headline text-xl text-foreground">
+                  {t('overview.sharedWithMe')}
+                </h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
                   {sharedChecklists.map((checklist) => (
                     <ChecklistOverviewCard
                       key={checklist.id}
@@ -312,20 +322,24 @@ export function ChecklistOverview() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
           <button
-            className="fixed bottom-6 right-6 w-14 h-14 sm:w-16 sm:h-16 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-[var(--shadow-elevated)] hover:shadow-xl transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center z-50 group"
+            className="group fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-elevated)] transition-all duration-200 hover:scale-110 hover:bg-primary/90 hover:shadow-xl active:scale-95 sm:h-16 sm:w-16"
             aria-label={t('overview.newChecklist')}
           >
-            <Plus className="w-6 h-6 sm:w-7 sm:h-7 group-hover:rotate-90 transition-transform duration-200" />
+            <Plus className="h-6 w-6 transition-transform duration-200 group-hover:rotate-90 sm:h-7 sm:w-7" />
           </button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[450px] p-6">
+        <DialogContent className="p-6 sm:max-w-[450px]">
           <DialogHeader className="space-y-3">
-            <DialogTitle className="text-2xl font-headline">{t('overview.createTitle')}</DialogTitle>
-            <DialogDescription className="text-base text-muted-foreground">{t('overview.createDescription')}</DialogDescription>
+            <DialogTitle className="font-headline text-2xl">
+              {t('overview.createTitle')}
+            </DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground">
+              {t('overview.createDescription')}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-6">
             <div className="space-y-3">
-              <label htmlFor="checklist-name" className="text-sm font-medium text-foreground block">
+              <label htmlFor="checklist-name" className="block text-sm font-medium text-foreground">
                 {t('overview.checklistNameLabel')}
               </label>
               <Input
@@ -339,7 +353,7 @@ export function ChecklistOverview() {
                   }
                 }}
                 autoFocus
-                className="text-base h-11"
+                className="h-11 text-base"
               />
             </div>
           </div>
@@ -348,7 +362,7 @@ export function ChecklistOverview() {
               variant="outline"
               onClick={() => {
                 setDialogOpen(false);
-                setNewChecklistName("");
+                setNewChecklistName('');
               }}
               disabled={isCreating}
               className="h-10 px-6"
@@ -358,7 +372,7 @@ export function ChecklistOverview() {
             <Button
               onClick={handleCreateChecklist}
               disabled={!newChecklistName.trim() || isCreating}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground h-10 px-6 min-w-[100px]"
+              className="h-10 min-w-[100px] bg-primary px-6 text-primary-foreground hover:bg-primary/90"
             >
               {isCreating ? t('overview.creating') : t('overview.create')}
             </Button>
@@ -381,16 +395,21 @@ export function ChecklistOverview() {
 
       {/* Rename Checklist Modal */}
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
-        <DialogContent className="sm:max-w-[450px] p-6">
+        <DialogContent className="p-6 sm:max-w-[450px]">
           <DialogHeader className="space-y-3">
-            <DialogTitle className="text-2xl font-headline">{t('overview.renameTitle')}</DialogTitle>
+            <DialogTitle className="font-headline text-2xl">
+              {t('overview.renameTitle')}
+            </DialogTitle>
             <DialogDescription className="text-base text-muted-foreground">
               {t('overview.renameDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-6">
             <div className="space-y-3">
-              <label htmlFor="rename-checklist-name" className="text-sm font-medium text-foreground block">
+              <label
+                htmlFor="rename-checklist-name"
+                className="block text-sm font-medium text-foreground"
+              >
                 {t('overview.checklistNameLabel')}
               </label>
               <Input
@@ -404,7 +423,7 @@ export function ChecklistOverview() {
                   }
                 }}
                 autoFocus
-                className="text-base h-11"
+                className="h-11 text-base"
               />
             </div>
           </div>
@@ -414,7 +433,7 @@ export function ChecklistOverview() {
               onClick={() => {
                 setRenameDialogOpen(false);
                 setRenamingChecklist(null);
-                setNewName("");
+                setNewName('');
               }}
               disabled={isRenaming}
               className="h-10 px-6"
@@ -424,7 +443,7 @@ export function ChecklistOverview() {
             <Button
               onClick={handleRenameSubmit}
               disabled={!newName.trim() || isRenaming || newName.trim() === renamingChecklist?.name}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground h-10 px-6 min-w-[100px]"
+              className="h-10 min-w-[100px] bg-primary px-6 text-primary-foreground hover:bg-primary/90"
             >
               {isRenaming ? t('overview.saving') : t('overview.save')}
             </Button>

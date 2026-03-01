@@ -1,16 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  useGetChecklistInvites,
-  useCreateChecklistInvite,
-} from '@/api/checklist/checklist';
+import { useGetChecklistInvites, useCreateChecklistInvite } from '@/api/checklist/checklist';
 import type { InviteResponse } from '@/api/checklistServiceV1.schemas';
-import {
-  copyToClipboard,
-  mapInviteToDisplay,
-  type InviteDisplayData,
-} from '@/lib/invite-utils';
+import { copyToClipboard, mapInviteToDisplay, type InviteDisplayData } from '@/lib/invite-utils';
 import { customInstance } from '@/lib/axios';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -64,8 +57,7 @@ export function ShareChecklistModal({
   });
 
   // Create invite mutation
-  const { trigger: createInvite, isMutating: isCreating } =
-    useCreateChecklistInvite(checklistId);
+  const { trigger: createInvite, isMutating: isCreating } = useCreateChecklistInvite(checklistId);
 
   const displayInvites: InviteDisplayData[] = invites.map(mapInviteToDisplay);
 
@@ -202,13 +194,15 @@ export function ShareChecklistModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-h-[95vh] sm:max-h-[90vh] flex flex-col gap-0 p-0"
+        className="flex max-h-[95vh] flex-col gap-0 p-0 sm:max-h-[90vh]"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <div className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-6 border-b sticky top-0 bg-background z-10">
+          <div className="sticky top-0 z-10 border-b bg-background p-4 sm:p-6">
             <DialogHeader>
-              <DialogTitle className="text-base sm:text-lg">{t('share.title')} &quot;{checklistName}&quot;</DialogTitle>
+              <DialogTitle className="text-base sm:text-lg">
+                {t('share.title')} &quot;{checklistName}&quot;
+              </DialogTitle>
               <DialogDescription className="text-xs sm:text-sm">
                 {t('share.description')}
               </DialogDescription>
@@ -217,11 +211,15 @@ export function ShareChecklistModal({
 
           <div className="space-y-6 p-4 sm:p-6">
             {/* Create New Invite Section */}
-            <div className="border rounded-lg p-3 sm:p-4 space-y-4">
-              <h3 className="font-semibold text-sm sm:text-base">{t('share.createNewInviteLink')}</h3>
+            <div className="space-y-4 rounded-lg border p-3 sm:p-4">
+              <h3 className="text-sm font-semibold sm:text-base">
+                {t('share.createNewInviteLink')}
+              </h3>
 
               <div className="space-y-2">
-                <Label htmlFor="invite-name" className="text-sm">{t('share.nameOptional')}</Label>
+                <Label htmlFor="invite-name" className="text-sm">
+                  {t('share.nameOptional')}
+                </Label>
                 <Input
                   id="invite-name"
                   type="text"
@@ -231,9 +229,7 @@ export function ShareChecklistModal({
                   maxLength={100}
                   className="text-sm"
                 />
-                <p className="text-xs text-muted-foreground">
-                  {t('share.nameHelperText')}
-                </p>
+                <p className="text-xs text-muted-foreground">{t('share.nameHelperText')}</p>
               </div>
 
               <div className="flex items-center space-x-2">
@@ -248,8 +244,13 @@ export function ShareChecklistModal({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="expiry" className="text-sm">{t('share.expiresIn')}</Label>
-                <Select value={selectedExpiry} onValueChange={(value) => setSelectedExpiry(value as ExpiryOption)}>
+                <Label htmlFor="expiry" className="text-sm">
+                  {t('share.expiresIn')}
+                </Label>
+                <Select
+                  value={selectedExpiry}
+                  onValueChange={(value) => setSelectedExpiry(value as ExpiryOption)}
+                >
                   <SelectTrigger id="expiry" className="text-sm">
                     <SelectValue />
                   </SelectTrigger>
@@ -269,99 +270,99 @@ export function ShareChecklistModal({
 
             {/* Active Invites Section */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-sm sm:text-base">
+              <h3 className="text-sm font-semibold sm:text-base">
                 {t('share.activeInvites')} ({displayInvites.length})
               </h3>
 
               {isLoading ? (
-                <div className="text-center py-4 text-muted-foreground text-sm">
+                <div className="py-4 text-center text-sm text-muted-foreground">
                   {t('share.loadingInvites')}
                 </div>
               ) : displayInvites.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">
+                <div className="py-8 text-center text-sm text-muted-foreground">
                   {t('share.noActiveInvites')}
                 </div>
               ) : (
                 <div className="space-y-3">
                   {displayInvites.map((invite) => {
-                    const inviteData = invites.find(i => i.id === invite.id);
+                    const inviteData = invites.find((i) => i.id === invite.id);
                     return (
-                    <div
-                      key={invite.id}
-                      className="border rounded-lg p-3 sm:p-4 space-y-3"
-                    >
-                      <div className="space-y-2">
-                        {inviteData?.name && (
-                          <div className="font-medium text-sm sm:text-base">
-                            {inviteData.name}
+                      <div key={invite.id} className="space-y-3 rounded-lg border p-3 sm:p-4">
+                        <div className="space-y-2">
+                          {inviteData?.name && (
+                            <div className="text-sm font-medium sm:text-base">
+                              {inviteData.name}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 rounded bg-muted p-2">
+                            <span className="shrink-0 text-xl">🔗</span>
+                            <input
+                              type="text"
+                              readOnly
+                              value={invite.url}
+                              className="min-w-0 flex-1 cursor-text border-none bg-transparent font-mono text-xs outline-none"
+                              onClick={(e) => e.currentTarget.select()}
+                              title="Click to select"
+                            />
                           </div>
-                        )}
-                        <div className="flex items-center gap-2 bg-muted rounded p-2">
-                          <span className="text-xl shrink-0">🔗</span>
-                          <input
-                            type="text"
-                            readOnly
-                            value={invite.url}
-                            className="flex-1 text-xs font-mono min-w-0 bg-transparent border-none outline-none cursor-text"
-                            onClick={(e) => e.currentTarget.select()}
-                            title="Click to select"
-                          />
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground sm:gap-2">
+                          <span>{invite.expiryLabel}</span>
+                          <span>•</span>
+                          <span>
+                            {invite.isSingleUse ? t('share.singleUse') : t('share.reusable')}
+                          </span>
+                          {invite.claimedAt && (
+                            <>
+                              <span>•</span>
+                              <span className="break-all">
+                                {t('share.claimed')} {invite.claimedAt.toLocaleDateString()}
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          {invite.status === 'active' && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => handleShare(invite.url, inviteData?.name)}
+                                className="text-xs sm:text-sm"
+                              >
+                                📤 {t('share.share')}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleCopyLink(invite.url)}
+                                className="text-xs sm:text-sm"
+                              >
+                                {t('share.copyLink')}
+                              </Button>
+                            </>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleRevoke(invite.id)}
+                            disabled={revokingId === invite.id}
+                            className="text-xs sm:text-sm"
+                          >
+                            {revokingId === invite.id ? t('share.revoking') : t('share.revoke')}
+                          </Button>
                         </div>
                       </div>
-
-                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs text-muted-foreground">
-                        <span>{invite.expiryLabel}</span>
-                        <span>•</span>
-                        <span>{invite.isSingleUse ? t('share.singleUse') : t('share.reusable')}</span>
-                        {invite.claimedAt && (
-                          <>
-                            <span>•</span>
-                            <span className="break-all">
-                              {t('share.claimed')} {invite.claimedAt.toLocaleDateString()}
-                            </span>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        {invite.status === 'active' && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => handleShare(invite.url, inviteData?.name)}
-                              className="text-xs sm:text-sm"
-                            >
-                              📤 {t('share.share')}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleCopyLink(invite.url)}
-                              className="text-xs sm:text-sm"
-                            >
-                              {t('share.copyLink')}
-                            </Button>
-                          </>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleRevoke(invite.id)}
-                          disabled={revokingId === invite.id}
-                          className="text-xs sm:text-sm"
-                        >
-                          {revokingId === invite.id ? t('share.revoking') : t('share.revoke')}
-                        </Button>
-                      </div>
-                    </div>
-                  );})}
+                    );
+                  })}
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex justify-end p-4 sm:p-6 border-t bg-background">
+          <div className="flex justify-end border-t bg-background p-4 sm:p-6">
             <Button variant="outline" onClick={onClose} className="text-sm">
               {t('common.close')}
             </Button>

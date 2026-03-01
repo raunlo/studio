@@ -1,4 +1,3 @@
-
 import Axios, { AxiosError, AxiosRequestConfig, CreateAxiosDefaults } from 'axios';
 import http from 'http';
 import https from 'https';
@@ -11,7 +10,14 @@ function newId() {
     return 'cid-' + Date.now() + '-' + crypto.randomUUID();
   }
   // Fallback for older environments
-  return 'cid-' + Date.now() + '-' + Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
+  return (
+    'cid-' +
+    Date.now() +
+    '-' +
+    Math.random().toString(36).slice(2) +
+    Date.now().toString(36) +
+    Math.random().toString(36).slice(2)
+  );
 }
 
 // Backend URL - required at build time
@@ -24,7 +30,7 @@ export const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 // Axios instance with keep-alive and cookies
 const axiousProps: AxiosRequestConfig = {
   baseURL: NEXT_PUBLIC_API_BASE_URL,
-  withCredentials: true,  // ⭐ OLULINE: Saadab cookies'id automaatselt!
+  withCredentials: true, // ⭐ OLULINE: Saadab cookies'id automaatselt!
   httpAgent: new http.Agent({ keepAlive: true }),
   httpsAgent: new https.Agent({ keepAlive: true }),
 };
@@ -133,7 +139,7 @@ async function ensureCsrfToken(): Promise<void> {
     if (response.ok) {
       logger.info('CSRF token preflight request completed');
       // Give browser a moment to process the Set-Cookie header
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
     }
   } catch (e) {
     logger.error('Failed to fetch CSRF token via preflight:', e);
@@ -143,7 +149,7 @@ async function ensureCsrfToken(): Promise<void> {
 // Client ID and CSRF interceptor
 axiosInstance.interceptors.request.use(async (cfg) => {
   try {
-    cfg.headers = cfg.headers ?? {} as Record<string, string>;
+    cfg.headers = cfg.headers ?? ({} as Record<string, string>);
 
     // Add client ID header
     (cfg.headers as Record<string, string>)['X-Client-Id'] = getClientId();
@@ -161,7 +167,11 @@ axiosInstance.interceptors.request.use(async (cfg) => {
     } else {
       // CSRF token not available - request will proceed without it
       // Backend should return 403 if CSRF protection is required
-      logger.warn('No CSRF token available for request:', cfg.url, '- proceeding without CSRF header');
+      logger.warn(
+        'No CSRF token available for request:',
+        cfg.url,
+        '- proceeding without CSRF header',
+      );
     }
 
     // Session cookie (session_id) is sent automatically via httpOnly cookies (withCredentials: true)
@@ -190,10 +200,7 @@ export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> 
 };
 
 // Fetch wrapper that automatically includes CSRF token
-export async function fetchWithCsrf(
-  url: string,
-  options: RequestInit = {}
-): Promise<Response> {
+export async function fetchWithCsrf(url: string, options: RequestInit = {}): Promise<Response> {
   const csrfToken = getCsrfToken();
   const headers = new Headers(options.headers || {});
 

@@ -1,6 +1,6 @@
-"use client";
-import React from "react";
-import { LoginPage } from "@/components/LoginPage";
+'use client';
+import React from 'react';
+import { LoginPage } from '@/components/LoginPage';
 
 export default function Page() {
   // This route is kept for backwards compatibility.

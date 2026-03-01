@@ -19,7 +19,7 @@ export interface InviteDisplayData {
  */
 export async function copyToClipboard(text: string): Promise<boolean> {
   console.log('Attempting to copy:', text);
-  
+
   // Try modern clipboard API
   if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
@@ -41,12 +41,12 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     textarea.style.top = '-999999px';
     textarea.setAttribute('readonly', '');
     document.body.appendChild(textarea);
-    
+
     // Select the text
     textarea.focus();
     textarea.select();
     textarea.setSelectionRange(0, textarea.value.length);
-    
+
     const success = document.execCommand('copy');
     console.log('Fallback copy result:', success);
     document.body.removeChild(textarea);
@@ -60,10 +60,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 /**
  * Get human-readable expiry label
  */
-export function getExpiryLabel(
-  expiresAt: Date | null,
-  isExpired: boolean
-): string {
+export function getExpiryLabel(expiresAt: Date | null, isExpired: boolean): string {
   if (!expiresAt) return 'Never expires';
   if (isExpired) return 'Expired';
 
@@ -94,9 +91,7 @@ export function getStatusLabel(status: InviteStatus): string {
 /**
  * Convert API response to display-friendly format
  */
-export function mapInviteToDisplay(
-  invite: InviteResponse
-): InviteDisplayData {
+export function mapInviteToDisplay(invite: InviteResponse): InviteDisplayData {
   const expiresAt = invite.expiresAt ? new Date(invite.expiresAt) : null;
   const claimedAt = invite.claimedAt ? new Date(invite.claimedAt) : null;
 
@@ -141,7 +136,7 @@ export function mapInviteToDisplay(
  */
 export function truncateUrl(url: string, maxLength: number = 40): string {
   if (url.length <= maxLength) return url;
-  
+
   // Extract the token part after /claim/
   const claimIndex = url.indexOf('/claim/');
   if (claimIndex !== -1) {
@@ -154,7 +149,7 @@ export function truncateUrl(url: string, maxLength: number = 40): string {
     const end = token.substring(token.length - 8);
     return `...${start}...${end}`;
   }
-  
+
   // Fallback: show end of URL
   return `...${url.substring(url.length - maxLength)}`;
 }

@@ -11,10 +11,26 @@ const COUNTRY_TO_LANGUAGE: Record<string, string> = {
   EE: 'et',
 
   // Spanish speaking countries
-  ES: 'es', MX: 'es', AR: 'es', CO: 'es', PE: 'es',
-  VE: 'es', CL: 'es', EC: 'es', GT: 'es', CU: 'es',
-  BO: 'es', DO: 'es', HN: 'es', PY: 'es', SV: 'es',
-  NI: 'es', CR: 'es', PA: 'es', UY: 'es', PR: 'es',
+  ES: 'es',
+  MX: 'es',
+  AR: 'es',
+  CO: 'es',
+  PE: 'es',
+  VE: 'es',
+  CL: 'es',
+  EC: 'es',
+  GT: 'es',
+  CU: 'es',
+  BO: 'es',
+  DO: 'es',
+  HN: 'es',
+  PY: 'es',
+  SV: 'es',
+  NI: 'es',
+  CR: 'es',
+  PA: 'es',
+  UY: 'es',
+  PR: 'es',
 };
 
 function parseAcceptLanguage(header: string | null): string {
@@ -23,7 +39,7 @@ function parseAcceptLanguage(header: string | null): string {
   // Parse Accept-Language header: "es-ES,es;q=0.9,en;q=0.8"
   const languages = header
     .split(',')
-    .map(lang => {
+    .map((lang) => {
       const [code, priority] = lang.trim().split(';q=');
       return {
         code: code.split('-')[0].toLowerCase(), // Get 'es' from 'es-ES'

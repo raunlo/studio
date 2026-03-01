@@ -1,21 +1,21 @@
 /**
  * Logger utility for consistent logging across the application.
- * 
+ *
  * Features:
  * - Development: All log levels are available (debug, info, warn, error)
  * - Production: Only warnings and errors are logged
  * - Test: All logs are suppressed
  * - Timestamps: All logs include ISO 8601 timestamps
  * - Prefixes: Optional context prefixes for better log organization
- * 
+ *
  * Usage:
  * ```typescript
  * import { createLogger, logger } from '@/lib/logger';
- * 
+ *
  * // Use default logger
  * logger.info('Application started');
  * logger.error('An error occurred', error);
- * 
+ *
  * // Create a logger with context prefix
  * const dbLogger = createLogger('Database');
  * dbLogger.debug('Query executed', { query, duration });
@@ -46,7 +46,7 @@ class Logger {
   private formatMessage(level: LogLevel, message: string, ...args: unknown[]): void {
     const timestamp = new Date().toISOString();
     const prefixStr = this.prefix ? `[${this.prefix}] ` : '';
-    
+
     if (isTest) {
       // Suppress logs in test environment
       return;
@@ -113,7 +113,7 @@ class Logger {
  * Create a logger instance with an optional prefix
  * @param prefix - Optional prefix to add to all log messages (e.g., 'API', 'Database')
  * @returns Logger instance
- * 
+ *
  * @example
  * const apiLogger = createLogger('API');
  * apiLogger.info('Request received', { method: 'GET', path: '/users' });

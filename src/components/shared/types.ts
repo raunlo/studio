@@ -1,7 +1,7 @@
-import { ChecklistResponse } from "@/api/checklistServiceV1.schemas";
+import { ChecklistResponse } from '@/api/checklistServiceV1.schemas';
 
 export type ChecklistCardHandle = {
-   handleReorder: (fromIndex: number, toIndex: number) => Promise<void>;
+  handleReorder: (fromIndex: number, toIndex: number) => Promise<void>;
 };
 
 export type ChecklistCardProps = {

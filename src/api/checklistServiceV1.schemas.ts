@@ -211,8 +211,7 @@ export interface ChecklistResponse {
 /**
  * Event type identifier
  */
-export type EventEnvelopeType = typeof EventEnvelopeType[keyof typeof EventEnvelopeType];
-
+export type EventEnvelopeType = (typeof EventEnvelopeType)[keyof typeof EventEnvelopeType];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const EventEnvelopeType = {
@@ -234,7 +233,13 @@ export const EventEnvelopeType = {
   - checklistItemReordered: ChecklistItemReorderedEventPayload
 
  */
-export type EventEnvelopePayload = ChecklistItemResponse | ChecklistItemRowResponse | ChecklistItemRowDeletedEventPayload | ChecklistItemRowAddedEventPayload | ChecklistItemDeletedEventPayload | ChecklistItemReorderedEventPayload;
+export type EventEnvelopePayload =
+  | ChecklistItemResponse
+  | ChecklistItemRowResponse
+  | ChecklistItemRowDeletedEventPayload
+  | ChecklistItemRowAddedEventPayload
+  | ChecklistItemDeletedEventPayload
+  | ChecklistItemReorderedEventPayload;
 
 /**
  * Envelope for SSE events; sent as JSON in the SSE data field.
@@ -431,18 +436,18 @@ export type Get200 = {
 };
 
 export type GetAllChecklistItemsParams = {
-/**
- * Sort order
- */
-sort?: GetAllChecklistItemsSort;
-/**
- * Filter by completed status
- */
-completed?: boolean;
+  /**
+   * Sort order
+   */
+  sort?: GetAllChecklistItemsSort;
+  /**
+   * Filter by completed status
+   */
+  completed?: boolean;
 };
 
-export type GetAllChecklistItemsSort = typeof GetAllChecklistItemsSort[keyof typeof GetAllChecklistItemsSort];
-
+export type GetAllChecklistItemsSort =
+  (typeof GetAllChecklistItemsSort)[keyof typeof GetAllChecklistItemsSort];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const GetAllChecklistItemsSort = {
@@ -456,11 +461,11 @@ export type ToggleChecklistItemCompleteBody = {
 };
 
 export type ChangeChecklistItemOrderNumberParams = {
-sortOrder?: ChangeChecklistItemOrderNumberSortOrder;
+  sortOrder?: ChangeChecklistItemOrderNumberSortOrder;
 };
 
-export type ChangeChecklistItemOrderNumberSortOrder = typeof ChangeChecklistItemOrderNumberSortOrder[keyof typeof ChangeChecklistItemOrderNumberSortOrder];
-
+export type ChangeChecklistItemOrderNumberSortOrder =
+  (typeof ChangeChecklistItemOrderNumberSortOrder)[keyof typeof ChangeChecklistItemOrderNumberSortOrder];
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
 export const ChangeChecklistItemOrderNumberSortOrder = {
@@ -485,20 +490,19 @@ export type ChangeChecklistItemOrderNumber200 = {
 };
 
 export type GetEventsStreamForChecklistItemsParams = {
-/**
- * Client identifier passed by frontend
- */
-clientId?: string;
+  /**
+   * Client identifier passed by frontend
+   */
+  clientId?: string;
 };
 
 export type DeleteAccountParams = {
-/**
- * Must be set to 'true' to confirm deletion
- */
-confirm: boolean;
+  /**
+   * Must be set to 'true' to confirm deletion
+   */
+  confirm: boolean;
 };
 
 export type DeleteAccount200 = {
   message?: string;
 };
-

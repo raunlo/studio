@@ -58,8 +58,8 @@ export default function ClaimInvitePage() {
   if (status === 'loading') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+        <div className="space-y-4 text-center">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
           <p className="text-lg text-muted-foreground">{t('invite.joiningChecklist')}</p>
         </div>
       </div>
@@ -69,8 +69,8 @@ export default function ClaimInvitePage() {
   if (status === 'success') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <CheckCircle2 className="h-16 w-16 mx-auto text-green-500" />
+        <div className="space-y-4 text-center">
+          <CheckCircle2 className="mx-auto h-16 w-16 text-green-500" />
           <h2 className="text-2xl font-semibold">{t('invite.successfullyJoined')}</h2>
           <p className="text-muted-foreground">{t('invite.redirecting')}</p>
         </div>
@@ -81,15 +81,13 @@ export default function ClaimInvitePage() {
   if (status === 'error') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <div className="text-center space-y-6 max-w-md">
-          <XCircle className="h-16 w-16 mx-auto text-destructive" />
+        <div className="max-w-md space-y-6 text-center">
+          <XCircle className="mx-auto h-16 w-16 text-destructive" />
           <div className="space-y-2">
             <h2 className="text-2xl font-semibold">{t('invite.unableToJoin')}</h2>
             <p className="text-muted-foreground">{errorMessage}</p>
           </div>
-          <Button onClick={() => router.push('/checklist')}>
-            {t('invite.backToHome')}
-          </Button>
+          <Button onClick={() => router.push('/checklist')}>{t('invite.backToHome')}</Button>
         </div>
       </div>
     );

@@ -1,10 +1,10 @@
-import i18n from 'i18next'
-import { initReactI18next } from 'react-i18next'
-import LanguageDetector from 'i18next-browser-languagedetector'
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
 
-import en from './locales/en.json'
-import et from './locales/et.json'
-import es from './locales/es.json'
+import en from './locales/en.json';
+import et from './locales/et.json';
+import es from './locales/es.json';
 
 i18n
   .use(LanguageDetector)
@@ -29,6 +29,6 @@ i18n
     },
     supportedLngs: ['en', 'et', 'es'],
     nonExplicitSupportedLngs: true,
-  })
+  });
 
-export default i18n
+export default i18n;

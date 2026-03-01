@@ -9,6 +9,7 @@ allowed_tools: Read, Write, Edit, Grep, Glob, Bash
 ## Architecture
 
 ### Next.js 15 App Router
+
 - Use App Router (`src/app/`) — not Pages Router
 - Default to Server Components, add `"use client"` only when needed (hooks, interactivity, browser APIs)
 - Use `loading.tsx` for suspense boundaries, `error.tsx` for error boundaries
@@ -16,6 +17,7 @@ allowed_tools: Read, Write, Edit, Grep, Glob, Bash
 - Path alias: `@/` maps to `src/`
 
 ### Component Structure
+
 ```
 src/components/
 ├── ui/              # Reusable primitives (button, input, dialog, etc.)
@@ -27,23 +29,26 @@ src/components/
 ## Data Fetching
 
 ### SWR Hooks Pattern
+
 ```typescript
 // Always use SWR for client-side data fetching
-import useSWR from "swr";
-import { getChecklists } from "@/api/endpoints";
+import useSWR from 'swr';
+import { getChecklists } from '@/api/endpoints';
 
 export function useChecklists() {
-  return useSWR("checklists", () => getChecklists());
+  return useSWR('checklists', () => getChecklists());
 }
 ```
 
 **Rules:**
+
 - Use SWR for all client-side data fetching
 - Use Orval-generated functions from `@/api/endpoints` — never write manual fetch/axios calls
 - SWR key should be descriptive and unique
 - Use `mutate()` for optimistic updates after mutations
 
 ### API Client (Orval)
+
 - Generated from OpenAPI spec: `npm run generate:api`
 - Source: `src/api/` — **NEVER edit these files manually**
 - Custom Axios instance at `src/lib/axios.ts` with:
@@ -54,12 +59,13 @@ export function useChecklists() {
 ## Real-time Updates (SSE)
 
 ### SSE Hook Pattern
+
 ```typescript
 // Follow existing pattern in src/hooks/use-sse.ts
 useEffect(() => {
   const eventSource = new EventSource(
     `${API_URL}/v1/events/checklist-item-updates/${checklistId}?clientId=${clientId}`,
-    { withCredentials: true }
+    { withCredentials: true },
   );
 
   eventSource.onmessage = (event) => {
@@ -74,6 +80,7 @@ useEffect(() => {
 ```
 
 **Rules:**
+
 - Always pass `clientId` to prevent echo
 - Always clean up with `eventSource.close()` in useEffect cleanup
 - Use SWR's `mutate()` to update cache when SSE event arrives
@@ -82,12 +89,14 @@ useEffect(() => {
 ## UI Components
 
 ### Radix UI + Tailwind
+
 - Use Radix UI primitives from `@/components/ui/` (shadcn/ui pattern)
 - Style with Tailwind CSS utility classes
 - Available components: Button, Dialog, DropdownMenu, Checkbox, Input, Select, Tabs, Tooltip, etc.
 - Use `cn()` utility for conditional class names
 
 ### Component Pattern
+
 ```typescript
 "use client";
 
@@ -108,24 +117,28 @@ export function MyComponent({ className, ...props }: Props) {
 ```
 
 ## State Management
+
 - **Server state**: SWR (data from API)
 - **UI state**: React useState/useReducer (local component state)
 - **No external state library** — SWR + React state is sufficient
 - **Form state**: React Hook Form + Zod for validation
 
 ## i18n
+
 - Translations in `src/i18n/locales/{en,et,es}/`
 - Use `useTranslation()` hook in client components
 - All user-facing strings must go through i18n
 - Key naming: `namespace.section.key` (e.g., `checklist.header.title`)
 
 ## Error Handling
+
 - Always handle loading, error, and empty states in components
 - Use SWR's `{ data, error, isLoading }` pattern
 - Show user-friendly error messages (not raw API errors)
 - Toast notifications for mutation results (success/failure)
 
 ## Anti-Patterns to Avoid
+
 - Writing manual fetch/axios calls instead of using Orval-generated client
 - Editing files in `src/api/` (they are generated)
 - Using external state management libraries (Redux, Zustand, etc.)
@@ -135,6 +148,7 @@ export function MyComponent({ className, ...props }: Props) {
 - Not handling all UI states (loading, error, empty)
 
 ## Checklist for New Code
+
 - [ ] Uses existing Radix UI components from `@/components/ui/`
 - [ ] Data fetching via SWR + Orval-generated client
 - [ ] All user-facing strings through i18n

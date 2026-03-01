@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import useSWR from "swr";
-import { useSWRConfig } from "swr";
-import { useRef, useCallback, useEffect, useMemo } from "react";
+import useSWR from 'swr';
+import { useSWRConfig } from 'swr';
+import { useRef, useCallback, useEffect, useMemo } from 'react';
 import {
   ChecklistItemResponse,
   ChecklistItemRowResponse,
@@ -10,8 +10,8 @@ import {
   UpdateChecklistItemRequest,
   ChecklistItemReorderedEventPayload,
   ChecklistItemRowDeletedEventPayload,
-  ChecklistItemRowAddedEventPayload
-} from "@/api/checklistServiceV1.schemas";
+  ChecklistItemRowAddedEventPayload,
+} from '@/api/checklistServiceV1.schemas';
 import {
   getAllChecklistItems,
   createChecklistItem,
@@ -21,12 +21,12 @@ import {
   createChecklistItemRow,
   deleteChecklistItemRow,
   toggleChecklistItemComplete,
-} from "@/api/checklist-item/checklist-item";
-import { ChecklistItem, ChecklistItemRow } from "@/components/shared/types";
+} from '@/api/checklist-item/checklist-item';
+import { ChecklistItem, ChecklistItemRow } from '@/components/shared/types';
 import { useSSE } from './use-checklist-item-updates';
 import type { MessageHandlers } from './use-checklist-item-updates';
-import { createLogger } from "@/lib/logger";
-import { getClientId } from "@/lib/axios";
+import { createLogger } from '@/lib/logger';
+import { getClientId } from '@/lib/axios';
 
 const logger = createLogger('UseChecklist');
 // SSE used for realtime updates
@@ -67,7 +67,7 @@ export function useChecklist(
   options: ChecklistHookOptions = {},
 ): ChecklistHookResult {
   const { refreshInterval } = options;
-  
+
   // Refs to track items and recent operations to prevent duplicates
   const itemsRef = useRef<ChecklistItem[]>([]);
   const recentlyAddedItemsRef = useRef<Set<number>>(new Set()); // Track recently added item IDs
@@ -80,21 +80,21 @@ export function useChecklist(
   if (typeof window !== 'undefined' && !clientIdRef.current) {
     clientIdRef.current = getClientId();
   }
-  
+
   // Ref to track rapid operations and debounce refetching
   const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { data: items = [], mutate: mutateItems, isLoading, error } = useSWR<ChecklistItem[]>(
-    checklistId ? ["checklist-items", checklistId] : null,
-    async ([, ], options?: { previousData?: ChecklistItem[] }) => {
+  const {
+    data: items = [],
+    mutate: mutateItems,
+    isLoading,
+    error,
+  } = useSWR<ChecklistItem[]>(
+    checklistId ? ['checklist-items', checklistId] : null,
+    async ([,], options?: { previousData?: ChecklistItem[] }) => {
       const previousData = options?.previousData;
-      const res = await dedupeRequest(
-        `checklist-items-${checklistId}`,
-        () =>
-          getAllChecklistItems(
-            checklistId!,
-            { completed: undefined }
-          ),
+      const res = await dedupeRequest(`checklist-items-${checklistId}`, () =>
+        getAllChecklistItems(checklistId!, { completed: undefined }),
       );
       const mappedItems: ChecklistItem[] = res.map((i: ChecklistItemResponse) => ({
         id: i.id,
@@ -109,18 +109,20 @@ export function useChecklist(
           })) ?? null,
       }));
       // Filter out recently deleted items to prevent flickering
-      let finalItems: ChecklistItem[] = mappedItems.filter((item) =>
-        item.id === null || !recentlyDeletedItemsRef.current.has(item.id)
+      let finalItems: ChecklistItem[] = mappedItems.filter(
+        (item) => item.id === null || !recentlyDeletedItemsRef.current.has(item.id),
       );
 
       // Preserve pending items that haven't been synced yet
       if (previousData) {
         const pendingItems = previousData.filter(
-          (item) => item.id !== null && recentlyAddedItemsRef.current.has(item.id)
+          (item) => item.id !== null && recentlyAddedItemsRef.current.has(item.id),
         );
         // Add pending items that aren't in the server response yet (at the front)
         for (const pendingItem of pendingItems) {
-          const existsInServer = finalItems.some(i => i.id === pendingItem.id || i.name === pendingItem.name);
+          const existsInServer = finalItems.some(
+            (i) => i.id === pendingItem.id || i.name === pendingItem.name,
+          );
           if (!existsInServer) {
             finalItems = [pendingItem, ...finalItems];
           }
@@ -133,150 +135,171 @@ export function useChecklist(
 
   // Helper to filter out recently deleted items from any list
   const filterDeletedItems = useCallback((itemList: ChecklistItem[]): ChecklistItem[] => {
-    return itemList.filter(item =>
-      item.id === null || !recentlyDeletedItemsRef.current.has(item.id)
+    return itemList.filter(
+      (item) => item.id === null || !recentlyDeletedItemsRef.current.has(item.id),
     );
   }, []);
 
   // Handlers for checklist items real time updates via SSE
-  const scheduleRefetch = useCallback((options: { updatedItems?: Array<ChecklistItem>} = {}) => {
-    const { updatedItems: items  } = options;
-    logger.debug('scheduleRefetch called with options:', options);
+  const scheduleRefetch = useCallback(
+    (options: { updatedItems?: Array<ChecklistItem> } = {}) => {
+      const { updatedItems: items } = options;
+      logger.debug('scheduleRefetch called with options:', options);
 
-    // Update the UI immediately, always filtering out recently deleted items
-    if (items) {
-      const filtered = filterDeletedItems(items);
-      mutateItems(filtered, { revalidate: false });
-    }
+      // Update the UI immediately, always filtering out recently deleted items
+      if (items) {
+        const filtered = filterDeletedItems(items);
+        mutateItems(filtered, { revalidate: false });
+      }
 
-    // Debounced API call
-    if (refetchTimeoutRef.current) {
-      clearTimeout(refetchTimeoutRef.current);
-    }
+      // Debounced API call
+      if (refetchTimeoutRef.current) {
+        clearTimeout(refetchTimeoutRef.current);
+      }
 
-    refetchTimeoutRef.current = setTimeout(() => {
-      mutateItems();
-    }, 1500);
-  }, [mutateItems, checklistId]);
+      refetchTimeoutRef.current = setTimeout(() => {
+        mutateItems();
+      }, 1500);
+    },
+    [mutateItems, checklistId],
+  );
 
   // Clear SSE highlight after animation completes
-  const clearSseHighlight = useCallback((itemId: number) => {
-    // Clear any existing timeout for this item
-    const existingTimeout = highlightTimeoutsRef.current.get(itemId);
-    if (existingTimeout) {
-      clearTimeout(existingTimeout);
-    }
+  const clearSseHighlight = useCallback(
+    (itemId: number) => {
+      // Clear any existing timeout for this item
+      const existingTimeout = highlightTimeoutsRef.current.get(itemId);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
 
-    // Schedule clearing the highlight
-    const timeout = setTimeout(() => {
-      mutateItems((currentItems) => {
-        if (!currentItems) return currentItems;
-        return currentItems.map(item =>
-          item.id === itemId ? { ...item, _sseHighlight: undefined } : item
+      // Schedule clearing the highlight
+      const timeout = setTimeout(() => {
+        mutateItems(
+          (currentItems) => {
+            if (!currentItems) return currentItems;
+            return currentItems.map((item) =>
+              item.id === itemId ? { ...item, _sseHighlight: undefined } : item,
+            );
+          },
+          { revalidate: false },
         );
-      }, { revalidate: false });
-      highlightTimeoutsRef.current.delete(itemId);
-    }, SSE_HIGHLIGHT_DURATION);
+        highlightTimeoutsRef.current.delete(itemId);
+      }, SSE_HIGHLIGHT_DURATION);
 
-    highlightTimeoutsRef.current.set(itemId, timeout);
-  }, [mutateItems]);
+      highlightTimeoutsRef.current.set(itemId, timeout);
+    },
+    [mutateItems],
+  );
 
   // Mark an item as highlighted from SSE and schedule clear
-  const markItemHighlighted = useCallback((item: ChecklistItem): ChecklistItem => {
-    if (item.id) {
-      clearSseHighlight(item.id);
-    }
-    return { ...item, _sseHighlight: true };
-  }, [clearSseHighlight]);
-
-  const handleItemCreatedMessageFromChecklistItemUpdates = (newItem: ChecklistItem)  => {
-          // Don't add if it's in the recently deleted list
-          if (newItem.id && recentlyDeletedItemsRef.current.has(newItem.id)) {
-            return;
-          }
-          // Don't add if it's in the recently added list (we already have it via optimistic update)
-          if (newItem.id && recentlyAddedItemsRef.current.has(newItem.id)) {
-            return;
-          }
-          // Don't add if item already exists (by ID or by name for pending items)
-          const alreadyExists = itemsRef.current.some(
-            item => item.id === newItem.id || (item._isPending && item.name === newItem.name)
-          );
-          if (alreadyExists) {
-            return;
-          }
-          const highlightedItem = markItemHighlighted(newItem);
-          // Insert new items at the front
-          const updatedItems = [highlightedItem, ...itemsRef.current];
-          scheduleRefetch({ updatedItems });
-        }
-
-  const handleItemUpdatedMessageFromChecklistItemUpdates = (payload: ChecklistItem)  => {
-          // Don't update if it's in the recently deleted list
-          if (payload.id && recentlyDeletedItemsRef.current.has(payload.id)) {
-            return;
-          }
-          const highlightedItem = markItemHighlighted(payload);
-          scheduleRefetch({ updatedItems: (itemsRef.current ?? []).map(item => item.id === payload.id ? highlightedItem : item) });
-  }
-  const handleItemReorderedMessageFromChecklistItemUpdates = (payload: ChecklistItemReorderedEventPayload)  => {
-          const itemId = payload.itemId;
-          const newOrderNumber = payload.newOrderNumber;
-
-          // Copy current items
-          const itemsCopy = [...(itemsRef.current ?? [])];
-          const movedIndex = itemsCopy.findIndex(item => item.id === itemId);
-          if (movedIndex === -1) return;
-
-          // Remove the moved item
-          const [movedItem] = itemsCopy.splice(movedIndex, 1);
-
-          // Find the target index for the new order number
-          let targetIndex = itemsCopy.findIndex(item => item.orderNumber === newOrderNumber);
-
-          // If not found, put at the end
-          if (targetIndex === -1) {
-            targetIndex = itemsCopy.length;
-          }
-
-          // Insert the moved item at the target index with highlight
-          const highlightedItem = markItemHighlighted({ ...movedItem, orderNumber: newOrderNumber });
-          itemsCopy.splice(targetIndex, 0, highlightedItem);
-
-          // Reassign orderNumbers to ensure correct sequence
-          const sortedItems = itemsCopy.map((item, idx) => ({
-            ...item,
-            orderNumber: idx + 1,
-          }));
-
-          scheduleRefetch({ updatedItems: sortedItems });
-  }
-  const handleItemDeletedMessageFromChecklistItemUpdates = (payload: { itemId: number })  => {
-          const updatedItems = itemsRef.current.filter(item => item.id !== payload.itemId);
-          scheduleRefetch({ updatedItems });
-  }
-  const handleItemRowAddedMessageFromChecklistItemUpdates = (payload: ChecklistItemRowAddedEventPayload)  => {
-     const currentItems = itemsRef.current;
-      const item = currentItems.find((i) => i.id === payload.itemId);
-      if (item) {
-        // Insert new rows at the front
-        const newRows = [payload.row, ...(item.rows || [])];
-        const updatedItem = markItemHighlighted({ ...item, rows: newRows });
-        const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
-        scheduleRefetch({ updatedItems: newItemsArray });
+  const markItemHighlighted = useCallback(
+    (item: ChecklistItem): ChecklistItem => {
+      if (item.id) {
+        clearSseHighlight(item.id);
       }
+      return { ...item, _sseHighlight: true };
+    },
+    [clearSseHighlight],
+  );
+
+  const handleItemCreatedMessageFromChecklistItemUpdates = (newItem: ChecklistItem) => {
+    // Don't add if it's in the recently deleted list
+    if (newItem.id && recentlyDeletedItemsRef.current.has(newItem.id)) {
+      return;
     }
-  const handleItemRowDeletedMessageFromChecklistItemUpdates = (data: ChecklistItemRowDeletedEventPayload)  => {
+    // Don't add if it's in the recently added list (we already have it via optimistic update)
+    if (newItem.id && recentlyAddedItemsRef.current.has(newItem.id)) {
+      return;
+    }
+    // Don't add if item already exists (by ID or by name for pending items)
+    const alreadyExists = itemsRef.current.some(
+      (item) => item.id === newItem.id || (item._isPending && item.name === newItem.name),
+    );
+    if (alreadyExists) {
+      return;
+    }
+    const highlightedItem = markItemHighlighted(newItem);
+    // Insert new items at the front
+    const updatedItems = [highlightedItem, ...itemsRef.current];
+    scheduleRefetch({ updatedItems });
+  };
+
+  const handleItemUpdatedMessageFromChecklistItemUpdates = (payload: ChecklistItem) => {
+    // Don't update if it's in the recently deleted list
+    if (payload.id && recentlyDeletedItemsRef.current.has(payload.id)) {
+      return;
+    }
+    const highlightedItem = markItemHighlighted(payload);
+    scheduleRefetch({
+      updatedItems: (itemsRef.current ?? []).map((item) =>
+        item.id === payload.id ? highlightedItem : item,
+      ),
+    });
+  };
+  const handleItemReorderedMessageFromChecklistItemUpdates = (
+    payload: ChecklistItemReorderedEventPayload,
+  ) => {
+    const itemId = payload.itemId;
+    const newOrderNumber = payload.newOrderNumber;
+
+    // Copy current items
+    const itemsCopy = [...(itemsRef.current ?? [])];
+    const movedIndex = itemsCopy.findIndex((item) => item.id === itemId);
+    if (movedIndex === -1) return;
+
+    // Remove the moved item
+    const [movedItem] = itemsCopy.splice(movedIndex, 1);
+
+    // Find the target index for the new order number
+    let targetIndex = itemsCopy.findIndex((item) => item.orderNumber === newOrderNumber);
+
+    // If not found, put at the end
+    if (targetIndex === -1) {
+      targetIndex = itemsCopy.length;
+    }
+
+    // Insert the moved item at the target index with highlight
+    const highlightedItem = markItemHighlighted({ ...movedItem, orderNumber: newOrderNumber });
+    itemsCopy.splice(targetIndex, 0, highlightedItem);
+
+    // Reassign orderNumbers to ensure correct sequence
+    const sortedItems = itemsCopy.map((item, idx) => ({
+      ...item,
+      orderNumber: idx + 1,
+    }));
+
+    scheduleRefetch({ updatedItems: sortedItems });
+  };
+  const handleItemDeletedMessageFromChecklistItemUpdates = (payload: { itemId: number }) => {
+    const updatedItems = itemsRef.current.filter((item) => item.id !== payload.itemId);
+    scheduleRefetch({ updatedItems });
+  };
+  const handleItemRowAddedMessageFromChecklistItemUpdates = (
+    payload: ChecklistItemRowAddedEventPayload,
+  ) => {
     const currentItems = itemsRef.current;
-      const item = currentItems.find((i) => i.id === data.itemId);
-      if (item) {
-        const newRows = (item.rows || []).filter((r) => r.id !== data.rowId);
-        const updatedItem = markItemHighlighted({ ...item, rows: newRows });
-        const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
-        scheduleRefetch({ updatedItems: newItemsArray });
-      }
+    const item = currentItems.find((i) => i.id === payload.itemId);
+    if (item) {
+      // Insert new rows at the front
+      const newRows = [payload.row, ...(item.rows || [])];
+      const updatedItem = markItemHighlighted({ ...item, rows: newRows });
+      const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
+      scheduleRefetch({ updatedItems: newItemsArray });
     }
-
+  };
+  const handleItemRowDeletedMessageFromChecklistItemUpdates = (
+    data: ChecklistItemRowDeletedEventPayload,
+  ) => {
+    const currentItems = itemsRef.current;
+    const item = currentItems.find((i) => i.id === data.itemId);
+    if (item) {
+      const newRows = (item.rows || []).filter((r) => r.id !== data.rowId);
+      const updatedItem = markItemHighlighted({ ...item, rows: newRows });
+      const newItemsArray = currentItems.map((i) => (i.id === item.id ? updatedItem : i));
+      scheduleRefetch({ updatedItems: newItemsArray });
+    }
+  };
 
   // Keep itemsRef in sync with items
   useEffect(() => {
@@ -305,7 +328,7 @@ export function useChecklist(
     itemDeleted: handleItemDeletedMessageFromChecklistItemUpdates,
     itemRowAdded: handleItemRowAddedMessageFromChecklistItemUpdates,
     itemRowDeleted: handleItemRowDeletedMessageFromChecklistItemUpdates,
-  }
+  };
 
   useSSE(handleRealtimeMessageFromSSE, checklistId, [checklistId]);
 
@@ -317,7 +340,7 @@ export function useChecklist(
     const optimisticItem: ChecklistItem = {
       ...item,
       id: tempId,
-      orderNumber: (items.length + 1),
+      orderNumber: items.length + 1,
       _isPending: true,
       _originalTempId: tempId,
     };
@@ -329,20 +352,15 @@ export function useChecklist(
     mutateItems([optimisticItem, ...current], { revalidate: false });
 
     try {
-      const res = await dedupeRequest(
-        `add-item-${checklistId}-${item.name}-${Date.now()}`,
-        () =>
-          createChecklistItem(
-            checklistId,
-            {
-              name: item.name,
-              rows:
-                item.rows?.map((r) => ({
-                  name: r.name,
-                  completed: r.completed ?? null,
-                })) ?? [],
-            } as CreateChecklistItemRequest
-          ),
+      const res = await dedupeRequest(`add-item-${checklistId}-${item.name}-${Date.now()}`, () =>
+        createChecklistItem(checklistId, {
+          name: item.name,
+          rows:
+            item.rows?.map((r) => ({
+              name: r.name,
+              completed: r.completed ?? null,
+            })) ?? [],
+        } as CreateChecklistItemRequest),
       );
       const created = res;
 
@@ -368,38 +386,45 @@ export function useChecklist(
       mutateItems(
         (currentItems) => {
           if (!currentItems) return [newItem];
-          return currentItems.map(item =>
+          return currentItems.map((item) =>
             item.id === tempId
-              ? { ...item, ...newItem, _originalTempId: item._originalTempId || tempId, _isPending: false }
-              : item
+              ? {
+                  ...item,
+                  ...newItem,
+                  _originalTempId: item._originalTempId || tempId,
+                  _isPending: false,
+                }
+              : item,
           );
         },
-        { revalidate: false }
+        { revalidate: false },
       );
 
       // Clean up tracking after a longer delay
       setTimeout(() => {
         recentlyAddedItemsRef.current.delete(created.id);
       }, 15000);
-
     } catch (error) {
       logger.error('❌ Failed to add item:', error);
       // Remove optimistic item on error
       recentlyAddedItemsRef.current.delete(tempId);
       mutateItems(
         (currentItems) => {
-          const result = currentItems?.filter(i => i.id !== tempId) ?? [];
+          const result = currentItems?.filter((i) => i.id !== tempId) ?? [];
           itemsRef.current = result;
           return result;
         },
-        { revalidate: false }
+        { revalidate: false },
       );
     }
   };
 
   const updateItem = async (item: ChecklistItem) => {
     if (!checklistId) return;
-    mutateItems(items.map((i) => (i.id === item.id ? item : i)), false);
+    mutateItems(
+      items.map((i) => (i.id === item.id ? item : i)),
+      false,
+    );
     if (item.id) {
       const req: UpdateChecklistItemRequest = {
         id: item.id ?? 0,
@@ -414,17 +439,11 @@ export function useChecklist(
               completed: r.completed ?? null,
             })) ?? [],
       };
-      await dedupeRequest(
-        `update-item-${checklistId}-${item.id}`,
-        () =>
-          updateChecklistItemBychecklistIdAndItemId(
-            checklistId,
-            item.id!,
-            req
-          ),
+      await dedupeRequest(`update-item-${checklistId}-${item.id}`, () =>
+        updateChecklistItemBychecklistIdAndItemId(checklistId, item.id!, req),
       );
-  // Use debounced refetch to prevent UI jumping during rapid row toggling
-  scheduleRefetch();
+      // Use debounced refetch to prevent UI jumping during rapid row toggling
+      scheduleRefetch();
     }
   };
 
@@ -438,21 +457,22 @@ export function useChecklist(
     mutateItems(filterDeletedItems(items));
 
     // Fire API call without waiting (parallel execution)
-    dedupeRequest(
-      `delete-item-${checklistId}-${itemId}`,
-      () => deleteChecklistItemById(checklistId, itemId),
-    ).then(() => {
-      // Clean up tracking after 10 seconds (longer to handle slow networks)
-      setTimeout(() => {
+    dedupeRequest(`delete-item-${checklistId}-${itemId}`, () =>
+      deleteChecklistItemById(checklistId, itemId),
+    )
+      .then(() => {
+        // Clean up tracking after 10 seconds (longer to handle slow networks)
+        setTimeout(() => {
+          recentlyDeletedItemsRef.current.delete(itemId);
+        }, 10000);
+      })
+      .catch((error) => {
+        logger.error('Failed to delete item:', error);
+        // On error, remove from deleted tracking so it can reappear
         recentlyDeletedItemsRef.current.delete(itemId);
-      }, 10000);
-    }).catch((error) => {
-      logger.error('Failed to delete item:', error);
-      // On error, remove from deleted tracking so it can reappear
-      recentlyDeletedItemsRef.current.delete(itemId);
-      // Refetch to restore state
-      mutateItems();
-    });
+        // Refetch to restore state
+        mutateItems();
+      });
 
     // Debounced refetch to sync with server
     //scheduleRefetch();
@@ -477,7 +497,7 @@ export function useChecklist(
     const executionFn = async (numberRetries: number) => {
       let retry = false;
       if (!checklistId) return { retry };
-      
+
       // Calculate the correct target order number based on neighbor +/-1 strategy
       // Use previous neighbor + 1 when moving after a previous item, or next neighbor - 1 when moving before next.
       // This keeps integers and avoids midpoint fractions.
@@ -489,7 +509,8 @@ export function useChecklist(
       } else if (to >= items.length - 1) {
         // Moving to last position: take lastItem.orderNumber + 1
         const lastItem = items[items.length - 1];
-        targetOrderNumber = lastItem && lastItem.orderNumber ? lastItem.orderNumber + 1 : items.length + 1;
+        targetOrderNumber =
+          lastItem && lastItem.orderNumber ? lastItem.orderNumber + 1 : items.length + 1;
       } else {
         // Prefer using previous neighbor + 1 to avoid fractional midpoints
         const prevItem = items[to - 1];
@@ -502,8 +523,7 @@ export function useChecklist(
           targetOrderNumber = to + 1; // Fallback
         }
       }
-    
-      
+
       const newList = [...items];
       const [moved] = newList.splice(from, 1);
       newList.splice(to, 0, moved);
@@ -519,17 +539,20 @@ export function useChecklist(
           recentlyReorderedItemsRef.current.add(reorderKey);
           if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
             // eslint-disable-next-line no-console
-            console.debug('🔄 Reordering item locally:', moved.id, 'to order:', sentOrderNumber, 'clientId:', clientIdRef.current);
+            console.debug(
+              '🔄 Reordering item locally:',
+              moved.id,
+              'to order:',
+              sentOrderNumber,
+              'clientId:',
+              clientIdRef.current,
+            );
           }
 
-          await dedupeRequest(
-            `reorder-item-${checklistId}-${moved.id}-${sentOrderNumber}`,
-            () =>
-              changeChecklistItemOrderNumber(
-                checklistId,
-                moved.id!,
-                { newOrderNumber: sentOrderNumber }
-              ),
+          await dedupeRequest(`reorder-item-${checklistId}-${moved.id}-${sentOrderNumber}`, () =>
+            changeChecklistItemOrderNumber(checklistId, moved.id!, {
+              newOrderNumber: sentOrderNumber,
+            }),
           );
 
           // Clean up the tracking after 5 seconds
@@ -540,7 +563,6 @@ export function useChecklist(
               console.debug('🧹 Cleaned up recently reordered item:', reorderKey);
             }
           }, 5000);
-          
         } catch (e) {
           mutateItems(previousItems, { revalidate: false });
           if (numberRetries === 1) retry = true;
@@ -557,11 +579,11 @@ export function useChecklist(
 
   const addRow = async (itemId: number | null, row: ChecklistItemRow) => {
     if (!checklistId) return;
-    
+
     // Generate temporary ID for better optimistic update rendering
     const tempId = -Date.now() - Math.random() * 1000; // Negative ID to distinguish from real IDs
     const optimisticRow = { ...row, id: tempId };
-    
+
     mutateItems(
       items.map((item) =>
         item.id === itemId
@@ -574,21 +596,15 @@ export function useChecklist(
       ),
       false,
     );
-    
+
     if (itemId) {
       const requests: Promise<unknown>[] = [];
       const checklistItem = items.find((item) => item.id === itemId);
-      const addRowFn = dedupeRequest(
-        `add-row-${checklistId}-${itemId}-${row.name}`,
-        () =>
-          createChecklistItemRow(
-            checklistId,
-            itemId,
-            { name: row.name, completed: row.completed ?? null } as Omit<
-              ChecklistItemRowResponse,
-              "id"
-            >
-          ),
+      const addRowFn = dedupeRequest(`add-row-${checklistId}-${itemId}-${row.name}`, () =>
+        createChecklistItemRow(checklistId, itemId, {
+          name: row.name,
+          completed: row.completed ?? null,
+        } as Omit<ChecklistItemRowResponse, 'id'>),
       );
       requests.push(addRowFn);
       if (checklistItem && checklistItem.completed) {
@@ -600,24 +616,25 @@ export function useChecklist(
         );
       }
       await Promise.all(requests);
-  // Debounced refetch to pick up authoritative server state
-  scheduleRefetch();
+      // Debounced refetch to pick up authoritative server state
+      scheduleRefetch();
     }
   };
 
   const deleteRow = async (itemId: number | null, rowId: number | null) => {
     if (!checklistId) return;
-    
+
     // Find the item to update
     const targetItem = items.find((item) => item.id === itemId);
     if (!targetItem) return;
-    
+
     // Calculate remaining rows after deletion
     const remainingRows = targetItem.rows?.filter((row) => row.id !== rowId) ?? [];
-    
+
     // Check if all remaining rows are completed
-    const allRemainingRowsCompleted = remainingRows.length > 0 && remainingRows.every((row) => row.completed);
-    
+    const allRemainingRowsCompleted =
+      remainingRows.length > 0 && remainingRows.every((row) => row.completed);
+
     mutateItems(
       items.map((item) =>
         item.id === itemId
@@ -632,42 +649,41 @@ export function useChecklist(
       false,
     );
     if (itemId && rowId) {
-      await dedupeRequest(
-        `delete-row-${checklistId}-${itemId}-${rowId}`,
-        () => deleteChecklistItemRow(checklistId, itemId, rowId),
+      await dedupeRequest(`delete-row-${checklistId}-${itemId}-${rowId}`, () =>
+        deleteChecklistItemRow(checklistId, itemId, rowId),
       );
-  // Debounced refetch after delete-row
-  scheduleRefetch();
+      // Debounced refetch after delete-row
+      scheduleRefetch();
     }
   };
 
   const toggleCompletion = async (itemId: number | null) => {
     if (!checklistId || !itemId) return;
-    
+
     // Optimistic update
     const currentItem = itemsRef.current.find((item) => item.id === itemId);
     if (!currentItem) return;
-    
+
     const newCompletedStatus = !currentItem.completed;
     const updatedItem = { ...currentItem, completed: newCompletedStatus };
-    
+
     // Keep items in their current order for optimistic update
     // This prevents jumping during rapid clicking
     mutateItems(
       items.map((item) => (item.id === itemId ? updatedItem : item)),
       false,
     );
-    
-    try {
-      await dedupeRequest(
-        `toggle-completion-${checklistId}-${itemId}`,
-        () => toggleChecklistItemComplete(checklistId, itemId, { completed: newCompletedStatus }),
-      );
-      
-  // Use debounced refetch to prevent UI jumping during rapid operations
-  // Only update completed field, do not move items
-  scheduleRefetch({ updatedItems: items.map((item) => item.id === itemId ? updatedItem : item) });
 
+    try {
+      await dedupeRequest(`toggle-completion-${checklistId}-${itemId}`, () =>
+        toggleChecklistItemComplete(checklistId, itemId, { completed: newCompletedStatus }),
+      );
+
+      // Use debounced refetch to prevent UI jumping during rapid operations
+      // Only update completed field, do not move items
+      scheduleRefetch({
+        updatedItems: items.map((item) => (item.id === itemId ? updatedItem : item)),
+      });
     } catch (error) {
       // Revert optimistic update on error
       mutateItems(
@@ -677,7 +693,6 @@ export function useChecklist(
       throw error;
     }
   };
-
 
   return {
     items,
@@ -692,4 +707,3 @@ export function useChecklist(
     toggleCompletion,
   };
 }
-

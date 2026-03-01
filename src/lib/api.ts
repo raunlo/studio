@@ -6,10 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import useSWR, { SWRConfiguration, SWRResponse } from 'swr';
-import useSWRMutation, {
-  SWRMutationConfiguration,
-  SWRMutationResponse,
-} from 'swr/mutation';
+import useSWRMutation, { SWRMutationConfiguration, SWRMutationResponse } from 'swr/mutation';
 import type {
   Checklist,
   CreateChecklist,
@@ -46,8 +43,7 @@ export const getGetChecklistsSWR = (
   params?: GetChecklistsParams,
   options?: SWRConfiguration<Awaited<ReturnType<typeof getChecklists>>>,
 ) => {
-  const swrKey =
-    `swr:/api/v1/checklists` + (params ? JSON.stringify(params) : '');
+  const swrKey = `swr:/api/v1/checklists` + (params ? JSON.stringify(params) : '');
   const swrFetcher = () => getChecklists(params);
   const swrObj = useSWR(swrKey, swrFetcher, options);
   return swrObj;
@@ -76,15 +72,10 @@ export const createChecklist = (createChecklistRequest: CreateChecklist) => {
   });
 };
 
-export const getCreateChecklistMutationFetcher = (
-  createChecklistRequest: CreateChecklist,
-) => {
+export const getCreateChecklistMutationFetcher = (createChecklistRequest: CreateChecklist) => {
   return () => createChecklist(createChecklistRequest);
 };
-export const getCreateChecklistSWRMutation = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
+export const getCreateChecklistSWRMutation = <TError = unknown, TContext = unknown>(options?: {
   mutation?: SWRMutationConfiguration<
     Awaited<ReturnType<typeof createChecklist>>,
     TError,
@@ -103,10 +94,7 @@ export const getCreateChecklistSWRMutation = <
     TContext
   >(
     'swr:/api/v1/checklists',
-    (
-      _key,
-      { arg }: { arg: CreateChecklist },
-    ) => {
+    (_key, { arg }: { arg: CreateChecklist }) => {
       const fetcher = getCreateChecklistMutationFetcher(arg);
       return fetcher();
     },
@@ -124,18 +112,14 @@ export const useCreateChecklist = <TError = unknown, TContext = unknown>(options
     TContext
   >;
 }) => {
-  const { trigger, data, error, isMutating, reset } =
-    getCreateChecklistSWRMutation(options);
+  const { trigger, data, error, isMutating, reset } = getCreateChecklistSWRMutation(options);
   return { trigger, data, error, isMutating, reset };
 };
 
 /**
  * @summary Update a checklist's title
  */
-export const updateChecklistTitle = (
-  id: string,
-  updateChecklistTitleBody: {name?: string},
-) => {
+export const updateChecklistTitle = (id: string, updateChecklistTitleBody: { name?: string }) => {
   return customInstance<Checklist>({
     url: `/api/v1/checklists/${id}`,
     method: 'PATCH',
@@ -146,14 +130,11 @@ export const updateChecklistTitle = (
 
 export const getUpdateChecklistTitleMutationFetcher = (
   id: string,
-  updateChecklistTitleBody: {name?: string},
+  updateChecklistTitleBody: { name?: string },
 ) => {
   return () => updateChecklistTitle(id, updateChecklistTitleBody);
 };
-export const getUpdateChecklistTitleSWRMutation = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
+export const getUpdateChecklistTitleSWRMutation = <TError = unknown, TContext = unknown>(options?: {
   mutation?: SWRMutationConfiguration<
     Awaited<ReturnType<typeof updateChecklistTitle>>,
     TError,
@@ -178,10 +159,7 @@ export const getUpdateChecklistTitleSWRMutation = <
     TContext
   >(
     'swr:/api/v1/checklists',
-    (
-      _key,
-      { arg }: { arg: { id: string; data: { name?: string } } },
-    ) => {
+    (_key, { arg }: { arg: { id: string; data: { name?: string } } }) => {
       const { id, data } = arg;
       const fetcher = getUpdateChecklistTitleMutationFetcher(id, data);
       return fetcher();
@@ -191,10 +169,7 @@ export const getUpdateChecklistTitleSWRMutation = <
   return swrMutation;
 };
 
-export const useUpdateChecklistTitle = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
+export const useUpdateChecklistTitle = <TError = unknown, TContext = unknown>(options?: {
   mutation?: SWRMutationConfiguration<
     Awaited<ReturnType<typeof updateChecklistTitle>>,
     TError,
@@ -206,8 +181,7 @@ export const useUpdateChecklistTitle = <
     TContext
   >;
 }) => {
-  const { trigger, data, error, isMutating, reset } =
-    getUpdateChecklistTitleSWRMutation(options);
+  const { trigger, data, error, isMutating, reset } = getUpdateChecklistTitleSWRMutation(options);
   return { trigger, data, error, isMutating, reset };
 };
 
@@ -224,10 +198,7 @@ export const deleteChecklist = (id: string) => {
 export const getDeleteChecklistMutationFetcher = (id: string) => {
   return () => deleteChecklist(id);
 };
-export const getDeleteChecklistSWRMutation = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
+export const getDeleteChecklistSWRMutation = <TError = unknown, TContext = unknown>(options?: {
   mutation?: SWRMutationConfiguration<
     Awaited<ReturnType<typeof deleteChecklist>>,
     TError,
@@ -270,8 +241,7 @@ export const useDeleteChecklist = <TError = unknown, TContext = unknown>(options
     TContext
   >;
 }) => {
-  const { trigger, data, error, isMutating, reset } =
-    getDeleteChecklistSWRMutation(options);
+  const { trigger, data, error, isMutating, reset } = getDeleteChecklistSWRMutation(options);
   return { trigger, data, error, isMutating, reset };
 };
 
@@ -287,10 +257,7 @@ export const addItem = (id: string, createItem: CreateItem) => {
   });
 };
 
-export const getAddItemMutationFetcher = (
-  id: string,
-  createItem: CreateItem,
-) => {
+export const getAddItemMutationFetcher = (id: string, createItem: CreateItem) => {
   return () => addItem(id, createItem);
 };
 export const getAddItemSWRMutation = <TError = unknown, TContext = unknown>(options?: {
@@ -350,19 +317,14 @@ export const useAddItem = <TError = unknown, TContext = unknown>(options?: {
     TContext
   >;
 }) => {
-  const { trigger, data, error, isMutating, reset } =
-    getAddItemSWRMutation(options);
+  const { trigger, data, error, isMutating, reset } = getAddItemSWRMutation(options);
   return { trigger, data, error, isMutating, reset };
 };
 
 /**
  * @summary Update a checklist item
  */
-export const updateItem = (
-  checklistId: string,
-  itemId: string,
-  updateItemRequest: UpdateItem,
-) => {
+export const updateItem = (checklistId: string, itemId: string, updateItemRequest: UpdateItem) => {
   return customInstance<Item>({
     url: `/api/v1/checklists/${checklistId}/items/${itemId}`,
     method: 'PATCH',
@@ -439,8 +401,7 @@ export const useUpdateItem = <TError = unknown, TContext = unknown>(options?: {
     TContext
   >;
 }) => {
-  const { trigger, data, error, isMutating, reset } =
-    getUpdateItemSWRMutation(options);
+  const { trigger, data, error, isMutating, reset } = getUpdateItemSWRMutation(options);
   return { trigger, data, error, isMutating, reset };
 };
 
@@ -454,10 +415,7 @@ export const deleteItem = (checklistId: string, itemId: string) => {
   });
 };
 
-export const getDeleteItemMutationFetcher = (
-  checklistId: string,
-  itemId: string,
-) => {
+export const getDeleteItemMutationFetcher = (checklistId: string, itemId: string) => {
   return () => deleteItem(checklistId, itemId);
 };
 export const getDeleteItemSWRMutation = <TError = unknown, TContext = unknown>(options?: {
@@ -517,8 +475,7 @@ export const useDeleteItem = <TError = unknown, TContext = unknown>(options?: {
     TContext
   >;
 }) => {
-  const { trigger, data, error, isMutating, reset } =
-    getDeleteItemSWRMutation(options);
+  const { trigger, data, error, isMutating, reset } = getDeleteItemSWRMutation(options);
   return { trigger, data, error, isMutating, reset };
 };
 
@@ -528,7 +485,7 @@ export const useDeleteItem = <TError = unknown, TContext = unknown>(options?: {
 export const reorderItem = (
   checklistId: string,
   itemId: string,
-  reorderItemBody: {newPosition?: number},
+  reorderItemBody: { newPosition?: number },
 ) => {
   return customInstance<void>({
     url: `/api/v1/checklists/${checklistId}/items/${itemId}/reorder`,
@@ -541,14 +498,11 @@ export const reorderItem = (
 export const getReorderItemMutationFetcher = (
   checklistId: string,
   itemId: string,
-  reorderItemBody: {newPosition?: number},
+  reorderItemBody: { newPosition?: number },
 ) => {
   return () => reorderItem(checklistId, itemId, reorderItemBody);
 };
-export const getReorderItemSWRMutation = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
+export const getReorderItemSWRMutation = <TError = unknown, TContext = unknown>(options?: {
   mutation?: SWRMutationConfiguration<
     Awaited<ReturnType<typeof reorderItem>>,
     TError,
@@ -609,19 +563,14 @@ export const useReorderItem = <TError = unknown, TContext = unknown>(options?: {
     TContext
   >;
 }) => {
-  const { trigger, data, error, isMutating, reset } =
-    getReorderItemSWRMutation(options);
+  const { trigger, data, error, isMutating, reset } = getReorderItemSWRMutation(options);
   return { trigger, data, error, isMutating, reset };
 };
 
 /**
  * @summary Add a sub-item to a checklist item
  */
-export const addSubItem = (
-  checklistId: string,
-  itemId: string,
-  createSubItem: CreateSubItem,
-) => {
+export const addSubItem = (checklistId: string, itemId: string, createSubItem: CreateSubItem) => {
   return customInstance<SubItem>({
     url: `/api/v1/checklists/${checklistId}/items/${itemId}/subitems`,
     method: 'POST',
@@ -698,8 +647,7 @@ export const useAddSubItem = <TError = unknown, TContext = unknown>(options?: {
     TContext
   >;
 }) => {
-  const { trigger, data, error, isMutating, reset } =
-    getAddSubItemSWRMutation(options);
+  const { trigger, data, error, isMutating, reset } = getAddSubItemSWRMutation(options);
   return { trigger, data, error, isMutating, reset };
 };
 
@@ -726,13 +674,9 @@ export const getUpdateSubItemMutationFetcher = (
   subItemId: string,
   updateSubItemRequest: UpdateSubItem,
 ) => {
-  return () =>
-    updateSubItem(checklistId, itemId, subItemId, updateSubItemRequest);
+  return () => updateSubItem(checklistId, itemId, subItemId, updateSubItemRequest);
 };
-export const getUpdateSubItemSWRMutation = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
+export const getUpdateSubItemSWRMutation = <TError = unknown, TContext = unknown>(options?: {
   mutation?: SWRMutationConfiguration<
     Awaited<ReturnType<typeof updateSubItem>>,
     TError,
@@ -775,12 +719,7 @@ export const getUpdateSubItemSWRMutation = <
       },
     ) => {
       const { checklistId, itemId, subItemId, data } = arg;
-      const fetcher = getUpdateSubItemMutationFetcher(
-        checklistId,
-        itemId,
-        subItemId,
-        data,
-      );
+      const fetcher = getUpdateSubItemMutationFetcher(checklistId, itemId, subItemId, data);
       return fetcher();
     },
     mutationOptions,
@@ -802,19 +741,14 @@ export const useUpdateSubItem = <TError = unknown, TContext = unknown>(options?:
     TContext
   >;
 }) => {
-  const { trigger, data, error, isMutating, reset } =
-    getUpdateSubItemSWRMutation(options);
+  const { trigger, data, error, isMutating, reset } = getUpdateSubItemSWRMutation(options);
   return { trigger, data, error, isMutating, reset };
 };
 
 /**
  * @summary Delete a sub-item
  */
-export const deleteSubItem = (
-  checklistId: string,
-  itemId: string,
-  subItemId: string,
-) => {
+export const deleteSubItem = (checklistId: string, itemId: string, subItemId: string) => {
   return customInstance<void>({
     url: `/api/v1/checklists/${checklistId}/items/${itemId}/subitems/${subItemId}`,
     method: 'DELETE',
@@ -828,10 +762,7 @@ export const getDeleteSubItemMutationFetcher = (
 ) => {
   return () => deleteSubItem(checklistId, itemId, subItemId);
 };
-export const getDeleteSubItemSWRMutation = <
-  TError = unknown,
-  TContext = unknown,
->(options?: {
+export const getDeleteSubItemSWRMutation = <TError = unknown, TContext = unknown>(options?: {
   mutation?: SWRMutationConfiguration<
     Awaited<ReturnType<typeof deleteSubItem>>,
     TError,
@@ -871,11 +802,7 @@ export const getDeleteSubItemSWRMutation = <
       },
     ) => {
       const { checklistId, itemId, subItemId } = arg;
-      const fetcher = getDeleteSubItemMutationFetcher(
-        checklistId,
-        itemId,
-        subItemId,
-      );
+      const fetcher = getDeleteSubItemMutationFetcher(checklistId, itemId, subItemId);
       return fetcher();
     },
     mutationOptions,
@@ -896,8 +823,7 @@ export const useDeleteSubItem = <TError = unknown, TContext = unknown>(options?:
     TContext
   >;
 }) => {
-  const { trigger, data, error, isMutating, reset } =
-    getDeleteSubItemSWRMutation(options);
+  const { trigger, data, error, isMutating, reset } = getDeleteSubItemSWRMutation(options);
   return { trigger, data, error, isMutating, reset };
 };
 export type GetChecklists200 = {

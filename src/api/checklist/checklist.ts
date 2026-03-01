@@ -6,16 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 import useSwr from 'swr';
-import type {
-  Arguments,
-  Key,
-  SWRConfiguration
-} from 'swr';
+import type { Arguments, Key, SWRConfiguration } from 'swr';
 
 import useSWRMutation from 'swr/mutation';
-import type {
-  SWRMutationConfiguration
-} from 'swr/mutation';
+import type { SWRMutationConfiguration } from 'swr/mutation';
 
 import type {
   ChecklistResponse,
@@ -24,393 +18,436 @@ import type {
   Error,
   ErrorResponseResponse,
   GetChecklistsWithStatsResponseResponse,
-  InviteResponse
+  InviteResponse,
 } from '../checklistServiceV1.schemas';
 
 import { customInstance } from '../../lib/axios';
 
-
-  
-  
-  
 /**
  * @summary Get all checklists
  */
-export const getAllChecklists = (
-    
- ) => {
-    return customInstance<GetChecklistsWithStatsResponseResponse>(
-    {url: `/api/v1/checklists`, method: 'GET'
-    },
-    );
-  }
-
-
+export const getAllChecklists = () => {
+  return customInstance<GetChecklistsWithStatsResponseResponse>({
+    url: `/api/v1/checklists`,
+    method: 'GET',
+  });
+};
 
 export const getGetAllChecklistsKey = () => [`/api/v1/checklists`] as const;
 
-export type GetAllChecklistsQueryResult = NonNullable<Awaited<ReturnType<typeof getAllChecklists>>>
-export type GetAllChecklistsQueryError = ErrorResponseResponse | ErrorResponseResponse
+export type GetAllChecklistsQueryResult = NonNullable<Awaited<ReturnType<typeof getAllChecklists>>>;
+export type GetAllChecklistsQueryError = ErrorResponseResponse | ErrorResponseResponse;
 
 /**
  * @summary Get all checklists
  */
-export const useGetAllChecklists = <TError = ErrorResponseResponse | ErrorResponseResponse>(
-   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getAllChecklists>>, TError> & { swrKey?: Key, enabled?: boolean },  }
-) => {
-  const {swr: swrOptions} = options ?? {}
+export const useGetAllChecklists = <
+  TError = ErrorResponseResponse | ErrorResponseResponse,
+>(options?: {
+  swr?: SWRConfiguration<Awaited<ReturnType<typeof getAllChecklists>>, TError> & {
+    swrKey?: Key;
+    enabled?: boolean;
+  };
+}) => {
+  const { swr: swrOptions } = options ?? {};
 
-  const isEnabled = swrOptions?.enabled !== false
-  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetAllChecklistsKey() : null);
-  const swrFn = () => getAllChecklists()
+  const isEnabled = swrOptions?.enabled !== false;
+  const swrKey = swrOptions?.swrKey ?? (() => (isEnabled ? getGetAllChecklistsKey() : null));
+  const swrFn = () => getAllChecklists();
 
-  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
+  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions);
 
   return {
     swrKey,
-    ...query
-  }
-}
+    ...query,
+  };
+};
 /**
  * @summary Create a new checklist
  */
-export const createChecklist = (
-    createChecklistRequest: CreateChecklistRequest,
- ) => {
-    return customInstance<ChecklistResponse>(
-    {url: `/api/v1/checklists`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createChecklistRequest
-    },
-    );
-  }
+export const createChecklist = (createChecklistRequest: CreateChecklistRequest) => {
+  return customInstance<ChecklistResponse>({
+    url: `/api/v1/checklists`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: createChecklistRequest,
+  });
+};
 
-
-
-export const getCreateChecklistMutationFetcher = ( ) => {
+export const getCreateChecklistMutationFetcher = () => {
   return (_: Key, { arg }: { arg: CreateChecklistRequest }) => {
     return createChecklist(arg);
-  }
-}
+  };
+};
 export const getCreateChecklistMutationKey = () => [`/api/v1/checklists`] as const;
 
-export type CreateChecklistMutationResult = NonNullable<Awaited<ReturnType<typeof createChecklist>>>
-export type CreateChecklistMutationError = Error | Error
+export type CreateChecklistMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createChecklist>>
+>;
+export type CreateChecklistMutationError = Error | Error;
 
 /**
  * @summary Create a new checklist
  */
-export const useCreateChecklist = <TError = Error | Error>(
-   options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof createChecklist>>, TError, Key, CreateChecklistRequest, Awaited<ReturnType<typeof createChecklist>>> & { swrKey?: string }, }
-) => {
-
-  const {swr: swrOptions} = options ?? {}
+export const useCreateChecklist = <TError = Error | Error>(options?: {
+  swr?: SWRMutationConfiguration<
+    Awaited<ReturnType<typeof createChecklist>>,
+    TError,
+    Key,
+    CreateChecklistRequest,
+    Awaited<ReturnType<typeof createChecklist>>
+  > & { swrKey?: string };
+}) => {
+  const { swr: swrOptions } = options ?? {};
 
   const swrKey = swrOptions?.swrKey ?? getCreateChecklistMutationKey();
   const swrFn = getCreateChecklistMutationFetcher();
 
-  const query = useSWRMutation(swrKey, swrFn, swrOptions)
+  const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
   return {
     swrKey,
-    ...query
-  }
-}
+    ...query,
+  };
+};
 /**
  * @summary Get checklist by ID
  */
-export const getChecklistById = (
-    checklistId: number,
- ) => {
-    return customInstance<ChecklistResponse>(
-    {url: `/api/v1/checklists/${checklistId}`, method: 'GET'
-    },
-    );
-  }
+export const getChecklistById = (checklistId: number) => {
+  return customInstance<ChecklistResponse>({
+    url: `/api/v1/checklists/${checklistId}`,
+    method: 'GET',
+  });
+};
 
+export const getGetChecklistByIdKey = (checklistId: number) =>
+  [`/api/v1/checklists/${checklistId}`] as const;
 
-
-export const getGetChecklistByIdKey = (checklistId: number,) => [`/api/v1/checklists/${checklistId}`] as const;
-
-export type GetChecklistByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getChecklistById>>>
-export type GetChecklistByIdQueryError = Error | Error | Error
+export type GetChecklistByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getChecklistById>>>;
+export type GetChecklistByIdQueryError = Error | Error | Error;
 
 /**
  * @summary Get checklist by ID
  */
 export const useGetChecklistById = <TError = Error | Error | Error>(
-  checklistId: number, options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getChecklistById>>, TError> & { swrKey?: Key, enabled?: boolean },  }
+  checklistId: number,
+  options?: {
+    swr?: SWRConfiguration<Awaited<ReturnType<typeof getChecklistById>>, TError> & {
+      swrKey?: Key;
+      enabled?: boolean;
+    };
+  },
 ) => {
-  const {swr: swrOptions} = options ?? {}
+  const { swr: swrOptions } = options ?? {};
 
-  const isEnabled = swrOptions?.enabled !== false && !!(checklistId)
-  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetChecklistByIdKey(checklistId) : null);
-  const swrFn = () => getChecklistById(checklistId)
+  const isEnabled = swrOptions?.enabled !== false && !!checklistId;
+  const swrKey =
+    swrOptions?.swrKey ?? (() => (isEnabled ? getGetChecklistByIdKey(checklistId) : null));
+  const swrFn = () => getChecklistById(checklistId);
 
-  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
+  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions);
 
   return {
     swrKey,
-    ...query
-  }
-}
+    ...query,
+  };
+};
 /**
  * @summary Update checklist by ID
  */
 export const updateChecklistById = (
-    checklistId: number,
-    createChecklistRequest: CreateChecklistRequest,
- ) => {
-    return customInstance<ChecklistResponse>(
-    {url: `/api/v1/checklists/${checklistId}`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: createChecklistRequest
-    },
-    );
-  }
+  checklistId: number,
+  createChecklistRequest: CreateChecklistRequest,
+) => {
+  return customInstance<ChecklistResponse>({
+    url: `/api/v1/checklists/${checklistId}`,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    data: createChecklistRequest,
+  });
+};
 
-
-
-export const getUpdateChecklistByIdMutationFetcher = (checklistId: number, ) => {
+export const getUpdateChecklistByIdMutationFetcher = (checklistId: number) => {
   return (_: Key, { arg }: { arg: CreateChecklistRequest }) => {
     return updateChecklistById(checklistId, arg);
-  }
-}
-export const getUpdateChecklistByIdMutationKey = (checklistId: number,) => [`/api/v1/checklists/${checklistId}`] as const;
+  };
+};
+export const getUpdateChecklistByIdMutationKey = (checklistId: number) =>
+  [`/api/v1/checklists/${checklistId}`] as const;
 
-export type UpdateChecklistByIdMutationResult = NonNullable<Awaited<ReturnType<typeof updateChecklistById>>>
-export type UpdateChecklistByIdMutationError = Error | Error | Error
+export type UpdateChecklistByIdMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateChecklistById>>
+>;
+export type UpdateChecklistByIdMutationError = Error | Error | Error;
 
 /**
  * @summary Update checklist by ID
  */
 export const useUpdateChecklistById = <TError = Error | Error | Error>(
-  checklistId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof updateChecklistById>>, TError, Key, CreateChecklistRequest, Awaited<ReturnType<typeof updateChecklistById>>> & { swrKey?: string }, }
+  checklistId: number,
+  options?: {
+    swr?: SWRMutationConfiguration<
+      Awaited<ReturnType<typeof updateChecklistById>>,
+      TError,
+      Key,
+      CreateChecklistRequest,
+      Awaited<ReturnType<typeof updateChecklistById>>
+    > & { swrKey?: string };
+  },
 ) => {
-
-  const {swr: swrOptions} = options ?? {}
+  const { swr: swrOptions } = options ?? {};
 
   const swrKey = swrOptions?.swrKey ?? getUpdateChecklistByIdMutationKey(checklistId);
   const swrFn = getUpdateChecklistByIdMutationFetcher(checklistId);
 
-  const query = useSWRMutation(swrKey, swrFn, swrOptions)
+  const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
   return {
     swrKey,
-    ...query
-  }
-}
+    ...query,
+  };
+};
 /**
  * @summary Delete checklist by ID
  */
-export const deleteChecklistById = (
-    checklistId: number,
- ) => {
-    return customInstance<ChecklistResponse>(
-    {url: `/api/v1/checklists/${checklistId}`, method: 'DELETE'
-    },
-    );
-  }
+export const deleteChecklistById = (checklistId: number) => {
+  return customInstance<ChecklistResponse>({
+    url: `/api/v1/checklists/${checklistId}`,
+    method: 'DELETE',
+  });
+};
 
-
-
-export const getDeleteChecklistByIdMutationFetcher = (checklistId: number, ) => {
+export const getDeleteChecklistByIdMutationFetcher = (checklistId: number) => {
   return (_: Key, __: { arg: Arguments }) => {
     return deleteChecklistById(checklistId);
-  }
-}
-export const getDeleteChecklistByIdMutationKey = (checklistId: number,) => [`/api/v1/checklists/${checklistId}`] as const;
+  };
+};
+export const getDeleteChecklistByIdMutationKey = (checklistId: number) =>
+  [`/api/v1/checklists/${checklistId}`] as const;
 
-export type DeleteChecklistByIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteChecklistById>>>
-export type DeleteChecklistByIdMutationError = Error | Error
+export type DeleteChecklistByIdMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteChecklistById>>
+>;
+export type DeleteChecklistByIdMutationError = Error | Error;
 
 /**
  * @summary Delete checklist by ID
  */
 export const useDeleteChecklistById = <TError = Error | Error>(
-  checklistId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof deleteChecklistById>>, TError, Key, Arguments, Awaited<ReturnType<typeof deleteChecklistById>>> & { swrKey?: string }, }
+  checklistId: number,
+  options?: {
+    swr?: SWRMutationConfiguration<
+      Awaited<ReturnType<typeof deleteChecklistById>>,
+      TError,
+      Key,
+      Arguments,
+      Awaited<ReturnType<typeof deleteChecklistById>>
+    > & { swrKey?: string };
+  },
 ) => {
-
-  const {swr: swrOptions} = options ?? {}
+  const { swr: swrOptions } = options ?? {};
 
   const swrKey = swrOptions?.swrKey ?? getDeleteChecklistByIdMutationKey(checklistId);
   const swrFn = getDeleteChecklistByIdMutationFetcher(checklistId);
 
-  const query = useSWRMutation(swrKey, swrFn, swrOptions)
+  const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
   return {
     swrKey,
-    ...query
-  }
-}
+    ...query,
+  };
+};
 /**
  * @summary List active invite links for a checklist
  */
-export const getChecklistInvites = (
-    checklistId: number,
- ) => {
-    return customInstance<InviteResponse[]>(
-    {url: `/api/v1/checklists/${checklistId}/invites`, method: 'GET'
-    },
-    );
-  }
+export const getChecklistInvites = (checklistId: number) => {
+  return customInstance<InviteResponse[]>({
+    url: `/api/v1/checklists/${checklistId}/invites`,
+    method: 'GET',
+  });
+};
 
+export const getGetChecklistInvitesKey = (checklistId: number) =>
+  [`/api/v1/checklists/${checklistId}/invites`] as const;
 
-
-export const getGetChecklistInvitesKey = (checklistId: number,) => [`/api/v1/checklists/${checklistId}/invites`] as const;
-
-export type GetChecklistInvitesQueryResult = NonNullable<Awaited<ReturnType<typeof getChecklistInvites>>>
-export type GetChecklistInvitesQueryError = Error | Error | Error
+export type GetChecklistInvitesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getChecklistInvites>>
+>;
+export type GetChecklistInvitesQueryError = Error | Error | Error;
 
 /**
  * @summary List active invite links for a checklist
  */
 export const useGetChecklistInvites = <TError = Error | Error | Error>(
-  checklistId: number, options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getChecklistInvites>>, TError> & { swrKey?: Key, enabled?: boolean },  }
+  checklistId: number,
+  options?: {
+    swr?: SWRConfiguration<Awaited<ReturnType<typeof getChecklistInvites>>, TError> & {
+      swrKey?: Key;
+      enabled?: boolean;
+    };
+  },
 ) => {
-  const {swr: swrOptions} = options ?? {}
+  const { swr: swrOptions } = options ?? {};
 
-  const isEnabled = swrOptions?.enabled !== false && !!(checklistId)
-  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetChecklistInvitesKey(checklistId) : null);
-  const swrFn = () => getChecklistInvites(checklistId)
+  const isEnabled = swrOptions?.enabled !== false && !!checklistId;
+  const swrKey =
+    swrOptions?.swrKey ?? (() => (isEnabled ? getGetChecklistInvitesKey(checklistId) : null));
+  const swrFn = () => getChecklistInvites(checklistId);
 
-  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
+  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions);
 
   return {
     swrKey,
-    ...query
-  }
-}
+    ...query,
+  };
+};
 /**
  * @summary Create a new invite link
  */
 export const createChecklistInvite = (
-    checklistId: number,
-    createInviteRequest: CreateInviteRequest,
- ) => {
-    return customInstance<InviteResponse>(
-    {url: `/api/v1/checklists/${checklistId}/invites`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createInviteRequest
-    },
-    );
-  }
+  checklistId: number,
+  createInviteRequest: CreateInviteRequest,
+) => {
+  return customInstance<InviteResponse>({
+    url: `/api/v1/checklists/${checklistId}/invites`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: createInviteRequest,
+  });
+};
 
-
-
-export const getCreateChecklistInviteMutationFetcher = (checklistId: number, ) => {
+export const getCreateChecklistInviteMutationFetcher = (checklistId: number) => {
   return (_: Key, { arg }: { arg: CreateInviteRequest }) => {
     return createChecklistInvite(checklistId, arg);
-  }
-}
-export const getCreateChecklistInviteMutationKey = (checklistId: number,) => [`/api/v1/checklists/${checklistId}/invites`] as const;
+  };
+};
+export const getCreateChecklistInviteMutationKey = (checklistId: number) =>
+  [`/api/v1/checklists/${checklistId}/invites`] as const;
 
-export type CreateChecklistInviteMutationResult = NonNullable<Awaited<ReturnType<typeof createChecklistInvite>>>
-export type CreateChecklistInviteMutationError = Error | Error | Error
+export type CreateChecklistInviteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createChecklistInvite>>
+>;
+export type CreateChecklistInviteMutationError = Error | Error | Error;
 
 /**
  * @summary Create a new invite link
  */
 export const useCreateChecklistInvite = <TError = Error | Error | Error>(
-  checklistId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof createChecklistInvite>>, TError, Key, CreateInviteRequest, Awaited<ReturnType<typeof createChecklistInvite>>> & { swrKey?: string }, }
+  checklistId: number,
+  options?: {
+    swr?: SWRMutationConfiguration<
+      Awaited<ReturnType<typeof createChecklistInvite>>,
+      TError,
+      Key,
+      CreateInviteRequest,
+      Awaited<ReturnType<typeof createChecklistInvite>>
+    > & { swrKey?: string };
+  },
 ) => {
-
-  const {swr: swrOptions} = options ?? {}
+  const { swr: swrOptions } = options ?? {};
 
   const swrKey = swrOptions?.swrKey ?? getCreateChecklistInviteMutationKey(checklistId);
   const swrFn = getCreateChecklistInviteMutationFetcher(checklistId);
 
-  const query = useSWRMutation(swrKey, swrFn, swrOptions)
+  const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
   return {
     swrKey,
-    ...query
-  }
-}
+    ...query,
+  };
+};
 /**
  * @summary Revoke an invite link
  */
-export const revokeChecklistInvite = (
-    inviteId: number,
- ) => {
-    return customInstance<void>(
-    {url: `/api/v1/checklists/invites/${inviteId}`, method: 'DELETE'
-    },
-    );
-  }
+export const revokeChecklistInvite = (inviteId: number) => {
+  return customInstance<void>({ url: `/api/v1/checklists/invites/${inviteId}`, method: 'DELETE' });
+};
 
-
-
-export const getRevokeChecklistInviteMutationFetcher = (inviteId: number, ) => {
+export const getRevokeChecklistInviteMutationFetcher = (inviteId: number) => {
   return (_: Key, __: { arg: Arguments }) => {
     return revokeChecklistInvite(inviteId);
-  }
-}
-export const getRevokeChecklistInviteMutationKey = (inviteId: number,) => [`/api/v1/checklists/invites/${inviteId}`] as const;
+  };
+};
+export const getRevokeChecklistInviteMutationKey = (inviteId: number) =>
+  [`/api/v1/checklists/invites/${inviteId}`] as const;
 
-export type RevokeChecklistInviteMutationResult = NonNullable<Awaited<ReturnType<typeof revokeChecklistInvite>>>
-export type RevokeChecklistInviteMutationError = Error | Error | Error
+export type RevokeChecklistInviteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof revokeChecklistInvite>>
+>;
+export type RevokeChecklistInviteMutationError = Error | Error | Error;
 
 /**
  * @summary Revoke an invite link
  */
 export const useRevokeChecklistInvite = <TError = Error | Error | Error>(
-  inviteId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof revokeChecklistInvite>>, TError, Key, Arguments, Awaited<ReturnType<typeof revokeChecklistInvite>>> & { swrKey?: string }, }
+  inviteId: number,
+  options?: {
+    swr?: SWRMutationConfiguration<
+      Awaited<ReturnType<typeof revokeChecklistInvite>>,
+      TError,
+      Key,
+      Arguments,
+      Awaited<ReturnType<typeof revokeChecklistInvite>>
+    > & { swrKey?: string };
+  },
 ) => {
-
-  const {swr: swrOptions} = options ?? {}
+  const { swr: swrOptions } = options ?? {};
 
   const swrKey = swrOptions?.swrKey ?? getRevokeChecklistInviteMutationKey(inviteId);
   const swrFn = getRevokeChecklistInviteMutationFetcher(inviteId);
 
-  const query = useSWRMutation(swrKey, swrFn, swrOptions)
+  const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
   return {
     swrKey,
-    ...query
-  }
-}
+    ...query,
+  };
+};
 /**
  * Remove yourself from a shared checklist. Owners cannot leave their own checklists. Users can rejoin using the same invite link after leaving.
  * @summary Leave a shared checklist
  */
-export const leaveSharedChecklist = (
-    checklistId: number,
- ) => {
-    return customInstance<void>(
-    {url: `/api/v1/checklists/${checklistId}/leave`, method: 'POST'
-    },
-    );
-  }
+export const leaveSharedChecklist = (checklistId: number) => {
+  return customInstance<void>({ url: `/api/v1/checklists/${checklistId}/leave`, method: 'POST' });
+};
 
-
-
-export const getLeaveSharedChecklistMutationFetcher = (checklistId: number, ) => {
+export const getLeaveSharedChecklistMutationFetcher = (checklistId: number) => {
   return (_: Key, __: { arg: Arguments }) => {
     return leaveSharedChecklist(checklistId);
-  }
-}
-export const getLeaveSharedChecklistMutationKey = (checklistId: number,) => [`/api/v1/checklists/${checklistId}/leave`] as const;
+  };
+};
+export const getLeaveSharedChecklistMutationKey = (checklistId: number) =>
+  [`/api/v1/checklists/${checklistId}/leave`] as const;
 
-export type LeaveSharedChecklistMutationResult = NonNullable<Awaited<ReturnType<typeof leaveSharedChecklist>>>
-export type LeaveSharedChecklistMutationError = Error | Error | Error | Error
+export type LeaveSharedChecklistMutationResult = NonNullable<
+  Awaited<ReturnType<typeof leaveSharedChecklist>>
+>;
+export type LeaveSharedChecklistMutationError = Error | Error | Error | Error;
 
 /**
  * @summary Leave a shared checklist
  */
 export const useLeaveSharedChecklist = <TError = Error | Error | Error | Error>(
-  checklistId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof leaveSharedChecklist>>, TError, Key, Arguments, Awaited<ReturnType<typeof leaveSharedChecklist>>> & { swrKey?: string }, }
+  checklistId: number,
+  options?: {
+    swr?: SWRMutationConfiguration<
+      Awaited<ReturnType<typeof leaveSharedChecklist>>,
+      TError,
+      Key,
+      Arguments,
+      Awaited<ReturnType<typeof leaveSharedChecklist>>
+    > & { swrKey?: string };
+  },
 ) => {
-
-  const {swr: swrOptions} = options ?? {}
+  const { swr: swrOptions } = options ?? {};
 
   const swrKey = swrOptions?.swrKey ?? getLeaveSharedChecklistMutationKey(checklistId);
   const swrFn = getLeaveSharedChecklistMutationFetcher(checklistId);
 
-  const query = useSWRMutation(swrKey, swrFn, swrOptions)
+  const query = useSWRMutation(swrKey, swrFn, swrOptions);
 
   return {
     swrKey,
-    ...query
-  }
-}
+    ...query,
+  };
+};

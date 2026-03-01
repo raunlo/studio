@@ -1,8 +1,8 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ChecklistOverview } from "@/components/checklist-overview";
-import { NEXT_PUBLIC_API_BASE_URL } from "@/lib/axios";
+'use client';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ChecklistOverview } from '@/components/checklist-overview';
+import { NEXT_PUBLIC_API_BASE_URL } from '@/lib/axios';
 
 export default function ChecklistPage() {
   const [isChecking, setIsChecking] = useState(true);
@@ -37,8 +37,8 @@ export default function ChecklistPage() {
 
   if (isChecking) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-32 w-32 animate-spin rounded-full border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -48,8 +48,8 @@ export default function ChecklistPage() {
   }
 
   return (
-    <div className="bg-background w-full min-h-screen">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-7xl">
+    <div className="min-h-screen w-full bg-background">
+      <div className="container mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
         <ChecklistOverview />
       </div>
     </div>
