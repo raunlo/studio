@@ -1,8 +1,8 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import { HeaderWrapper } from "@/components/ui/HeaderWrapper";
-import { LoginPage } from "@/components/LoginPage";
-import { NEXT_PUBLIC_API_BASE_URL } from "@/lib/axios";
+'use client';
+import React, { useEffect, useState } from 'react';
+import { HeaderWrapper } from '@/components/ui/HeaderWrapper';
+import { LoginPage } from '@/components/LoginPage';
+import { NEXT_PUBLIC_API_BASE_URL } from '@/lib/axios';
 
 // Simplified - no PII needed
 interface Session {
@@ -15,14 +15,14 @@ export const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     checkSession();
-    
+
     // Also check session when page becomes visible (e.g., after redirect from OAuth callback)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         checkSession();
       }
     };
-    
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
@@ -54,8 +54,8 @@ export const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-32 w-32 animate-spin rounded-full border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -67,9 +67,7 @@ export const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <HeaderWrapper />
-      <main className="flex-1 flex flex-col justify-center items-center w-full">
-        {children}
-      </main>
+      <main className="flex w-full flex-1 flex-col items-center justify-center">{children}</main>
     </>
   );
 };

@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleAuth } from 'google-auth-library';
 import type { IdTokenClient } from 'google-auth-library/build/src/auth/idtokenclient';
@@ -71,17 +70,12 @@ async function handler(req: NextRequest) {
   // Skip NextAuth API routes - don't proxy them
   const pathname = req.nextUrl.pathname;
   if (pathname.startsWith('/api/auth/')) {
-    return NextResponse.json(
-      { message: 'NextAuth routes are not proxied' },
-      { status: 404 },
-    );
+    return NextResponse.json({ message: 'NextAuth routes are not proxied' }, { status: 404 });
   }
 
   const privateApiBaseUrl = process.env.PRIVATE_API_BASE_URL;
   if (!privateApiBaseUrl) {
-    logger.error(
-      'PRIVATE_API_BASE_URL is not set in environment variables'
-    );
+    logger.error('PRIVATE_API_BASE_URL is not set in environment variables');
     return NextResponse.json(
       { message: 'PRIVATE_API_BASE_URL is not configured' },
       { status: 500 },
@@ -96,7 +90,7 @@ async function handler(req: NextRequest) {
     const targetUrl = `${privateApiBaseUrl}${requestPath}${incomingUrl.search}`;
 
     logger.info(`Proxying request to: ${targetUrl}`);
-    
+
     // We explicitly buffer the body to handle different request types (e.g., streaming)
     // and to avoid issues with the underlying http libraries.
     const bodyBuffer = await req.arrayBuffer();
@@ -111,7 +105,16 @@ async function handler(req: NextRequest) {
 
     const res = await authedClient.request({
       url: targetUrl,
-      method: req.method as "POST" | "PUT" | "PATCH" | "GET" | "HEAD" | "DELETE" | "CONNECT" | "OPTIONS" | "TRACE",
+      method: req.method as
+        | 'POST'
+        | 'PUT'
+        | 'PATCH'
+        | 'GET'
+        | 'HEAD'
+        | 'DELETE'
+        | 'CONNECT'
+        | 'OPTIONS'
+        | 'TRACE',
       headers: {
         ...Object.fromEntries(requestHeaders.entries()),
         // The host header must match the target service's URL for routing.
@@ -120,25 +123,27 @@ async function handler(req: NextRequest) {
       body: bodyBuffer.byteLength > 0 ? Buffer.from(bodyBuffer) : undefined,
       responseType: 'stream', // Important for handling different content types
     });
-    
+
     // Type assertion to access properties on the response
     const response = res as ResponseData;
-    
+
     return new NextResponse(response.data as BodyInit, {
       status: response.status,
       statusText: response.statusText,
       headers: response.headers,
     });
-
   } catch (error: unknown) {
-    const err = error as { message?: string; response?: { data?: { error?: string } | string; status?: number } };
+    const err = error as {
+      message?: string;
+      response?: { data?: { error?: string } | string; status?: number };
+    };
     logger.error(`Error proxying request:`, err.message || error);
-    
+
     const errorData = err.response?.data || err.message;
 
     return NextResponse.json(
       { message: 'Error proxying request', details: errorData },
-      { status: err.response?.status || 500 }
+      { status: err.response?.status || 500 },
     );
   }
 }
@@ -150,4 +155,3 @@ export const PATCH = handler;
 export const DELETE = handler;
 export const HEAD = handler;
 export const OPTIONS = handler;
-

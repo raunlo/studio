@@ -16,6 +16,7 @@ This security review identified and resolved **27 critical and high severity vul
 **Severity:** High
 
 #### Vulnerabilities Resolved:
+
 1. **SSRF (Server-Side Request Forgery)** - CVE affecting axios 1.3.2-1.7.3
    - Risk: Attackers could make arbitrary requests from the server
    - Impact: Credential leakage, unauthorized access to internal resources
@@ -64,11 +65,12 @@ This security review identified and resolved **27 critical and high severity vul
 ## Changes Made
 
 ### package.json Updates
+
 ```json
 {
   "dependencies": {
-    "axios": "^1.12.0",  // Previously: ^1.7.2
-    "next": "15.5.9"      // Previously: 15.3.3
+    "axios": "^1.12.0", // Previously: ^1.7.2
+    "next": "15.5.9" // Previously: 15.3.3
   }
 }
 ```
@@ -76,9 +78,11 @@ This security review identified and resolved **27 critical and high severity vul
 ## Verification
 
 ### Build Status
+
 ✅ **Production build successful** - Verified with `npm run build`
 
 ### Security Status
+
 ✅ **Zero high/critical vulnerabilities** in production dependencies  
 ✅ **All React Server Components vulnerabilities resolved**  
 ⚠️ **11 moderate vulnerabilities** remain in dev dependency `orval` (esbuild-related, development-only)
@@ -114,6 +118,7 @@ All these vulnerabilities have been resolved with the upgrade to Next.js 15.5.9.
 ## Testing
 
 After the security updates:
+
 - ✅ Build passes successfully
 - ✅ No breaking changes detected
 - ✅ All critical vulnerabilities resolved

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React from 'react';
 
@@ -48,34 +48,32 @@ export function TokenTestHelper() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 bg-gray-900 text-white p-4 rounded-lg shadow-xl max-w-sm">
-      <h3 className="font-bold text-sm mb-2">🧪 Session Test Helper</h3>
+    <div className="fixed bottom-4 right-4 z-50 max-w-sm rounded-lg bg-gray-900 p-4 text-white shadow-xl">
+      <h3 className="mb-2 text-sm font-bold">🧪 Session Test Helper</h3>
 
-      <div className="space-y-2 mb-3">
+      <div className="mb-3 space-y-2">
         <button
           onClick={checkSession}
-          className="w-full px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs"
+          className="w-full rounded bg-green-600 px-3 py-1 text-xs hover:bg-green-700"
         >
           Check Session Status
         </button>
         <button
           onClick={deleteSession}
-          className="w-full px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-xs"
+          className="w-full rounded bg-red-600 px-3 py-1 text-xs hover:bg-red-700"
         >
           Delete Session
         </button>
         <button
           onClick={refreshCookies}
-          className="w-full px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs"
+          className="w-full rounded bg-blue-600 px-3 py-1 text-xs hover:bg-blue-700"
         >
           Refresh view
         </button>
       </div>
 
-      <div className="text-xs bg-gray-800 p-2 rounded max-h-32 overflow-auto">
-        <div className="font-mono break-all">
-          {cookies || 'No cookies found'}
-        </div>
+      <div className="max-h-32 overflow-auto rounded bg-gray-800 p-2 text-xs">
+        <div className="break-all font-mono">{cookies || 'No cookies found'}</div>
       </div>
     </div>
   );

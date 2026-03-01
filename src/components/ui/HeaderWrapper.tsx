@@ -1,6 +1,6 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import { Header } from "@/components/ui/Header";
+'use client';
+import React, { useEffect, useState } from 'react';
+import { Header } from '@/components/ui/Header';
 import { markLoggingOut, NEXT_PUBLIC_API_BASE_URL, getCsrfToken } from '@/lib/axios';
 
 // User interface with profile info from backend

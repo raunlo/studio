@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { useTranslation } from "react-i18next";
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
 
 export type FilterType = 'all' | 'active' | 'completed';
 
@@ -24,9 +24,9 @@ export function ChecklistFilterBar({
   const { t } = useTranslation();
 
   return (
-    <div className="sticky top-0 z-10 bg-card -mx-4 sm:-mx-6 px-4 sm:px-6 py-2">
+    <div className="sticky top-0 z-10 -mx-4 bg-card px-4 py-2 sm:-mx-6 sm:px-6">
       <Tabs value={activeFilter} onValueChange={(value) => onFilterChange(value as FilterType)}>
-        <TabsList className="grid w-full grid-cols-3 h-9 sm:h-10 touch-manipulation">
+        <TabsList className="grid h-9 w-full touch-manipulation grid-cols-3 sm:h-10">
           <TabsTrigger value="all" className="text-sm sm:text-base">
             {t('filter.all')}
             {counts && counts.all > 0 && (

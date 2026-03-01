@@ -6,56 +6,43 @@
  * OpenAPI spec version: 1.0.0
  */
 import useSwr from 'swr';
-import type {
-  Key,
-  SWRConfiguration
-} from 'swr';
+import type { Key, SWRConfiguration } from 'swr';
 
-import type {
-  Get200
-} from '../checklistServiceV1.schemas';
+import type { Get200 } from '../checklistServiceV1.schemas';
 
 import { customInstance } from '../../lib/axios';
 
-
-  
-  
-  
 /**
  * @summary Health check
  */
-export const get = (
-    
- ) => {
-    return customInstance<Get200>(
-    {url: `/`, method: 'GET'
-    },
-    );
-  }
-
-
+export const get = () => {
+  return customInstance<Get200>({ url: `/`, method: 'GET' });
+};
 
 export const getGetKey = () => [`/`] as const;
 
-export type GetQueryResult = NonNullable<Awaited<ReturnType<typeof get>>>
-export type GetQueryError = unknown
+export type GetQueryResult = NonNullable<Awaited<ReturnType<typeof get>>>;
+export type GetQueryError = unknown;
 
 /**
  * @summary Health check
  */
-export const useGet = <TError = unknown>(
-   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof get>>, TError> & { swrKey?: Key, enabled?: boolean },  }
-) => {
-  const {swr: swrOptions} = options ?? {}
+export const useGet = <TError = unknown>(options?: {
+  swr?: SWRConfiguration<Awaited<ReturnType<typeof get>>, TError> & {
+    swrKey?: Key;
+    enabled?: boolean;
+  };
+}) => {
+  const { swr: swrOptions } = options ?? {};
 
-  const isEnabled = swrOptions?.enabled !== false
-  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetKey() : null);
-  const swrFn = () => get()
+  const isEnabled = swrOptions?.enabled !== false;
+  const swrKey = swrOptions?.swrKey ?? (() => (isEnabled ? getGetKey() : null));
+  const swrFn = () => get();
 
-  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
+  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions);
 
   return {
     swrKey,
-    ...query
-  }
-}
+    ...query,
+  };
+};

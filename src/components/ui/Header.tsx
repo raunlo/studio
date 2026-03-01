@@ -1,8 +1,8 @@
-"use client";
-import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
-import Link from "next/link";
-import { LanguageSelector } from "./LanguageSelector";
+'use client';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import Link from 'next/link';
+import { LanguageSelector } from './LanguageSelector';
 
 interface HeaderProps {
   user?: {
@@ -28,36 +28,33 @@ export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border/50 animate-fade-in">
-      <div className="flex items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 max-w-7xl mx-auto">
+    <header className="sticky top-0 z-50 animate-fade-in border-b border-border/50 bg-card/95 backdrop-blur-md">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
         {/* Brand */}
-        <Link
-          href="/checklist"
-          className="flex items-center gap-2.5 sm:gap-3 group"
-        >
+        <Link href="/checklist" className="group flex items-center gap-2.5 sm:gap-3">
           <div className="relative flex-shrink-0">
             <img
               src="/brand/dailychexly-mark.svg"
               alt="DailyChexly"
               width={40}
               height={40}
-              className="h-9 w-9 sm:h-10 sm:w-10 select-none transition-transform group-hover:scale-105"
+              className="h-9 w-9 select-none transition-transform group-hover:scale-105 sm:h-10 sm:w-10"
               draggable={false}
             />
           </div>
-          <span className="text-xl sm:text-2xl font-headline text-foreground tracking-tight">
+          <span className="font-headline text-xl tracking-tight text-foreground sm:text-2xl">
             DailyChexly
           </span>
         </Link>
 
         {/* Desktop navigation */}
-        <div className="hidden sm:flex items-center gap-4" suppressHydrationWarning>
+        <div className="hidden items-center gap-4 sm:flex" suppressHydrationWarning>
           <LanguageSelector />
 
           {user && (
-            <div className="flex items-center gap-3 pl-4 border-l border-border/50">
+            <div className="flex items-center gap-3 border-l border-border/50 pl-4">
               {/* User initials avatar */}
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 shadow-sm">
                 <span className="text-sm font-medium text-primary-foreground">
                   {getInitials(user.name)}
                 </span>
@@ -65,14 +62,14 @@ export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
 
               {/* User name */}
               {user.name && (
-                <span className="text-sm font-medium text-foreground hidden lg:block">
+                <span className="hidden text-sm font-medium text-foreground lg:block">
                   {user.name}
                 </span>
               )}
 
               {/* Sign out button */}
               <button
-                className="px-4 py-2 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
+                className="rounded-lg bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
                 onClick={onLogout}
                 title={t('auth.signOut') || 'Sign out'}
               >
@@ -84,27 +81,23 @@ export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
 
         {/* Mobile navigation */}
         {user && (
-          <div className="flex sm:hidden items-center gap-2" suppressHydrationWarning>
+          <div className="flex items-center gap-2 sm:hidden" suppressHydrationWarning>
             <LanguageSelector />
 
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 hover:bg-muted rounded-lg transition-colors"
+              className="rounded-lg p-2 transition-colors hover:bg-muted"
               aria-label="Menu"
             >
               <svg
-                className="w-6 h-6 text-foreground"
+                className="h-6 w-6 text-foreground"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
               >
                 {isMobileMenuOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 ) : (
                   <path
                     strokeLinecap="round"
@@ -117,19 +110,17 @@ export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
 
             {/* Mobile dropdown */}
             {isMobileMenuOpen && (
-              <div className="absolute top-full right-0 left-0 mt-px bg-card border-b border-border shadow-lg animate-fade-in">
-                <div className="p-4 max-w-7xl mx-auto">
-                  <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border/50">
+              <div className="absolute left-0 right-0 top-full mt-px animate-fade-in border-b border-border bg-card shadow-lg">
+                <div className="mx-auto max-w-7xl p-4">
+                  <div className="mb-4 flex items-center gap-3 border-b border-border/50 pb-4">
                     {/* User initials avatar */}
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 shadow-sm">
                       <span className="text-lg font-medium text-primary-foreground">
                         {getInitials(user.name)}
                       </span>
                     </div>
                     <div>
-                      {user.name && (
-                        <p className="font-medium text-foreground">{user.name}</p>
-                      )}
+                      {user.name && <p className="font-medium text-foreground">{user.name}</p>}
                       <p className="text-sm text-muted-foreground">
                         {user.email || t('auth.signedIn') || 'Signed in'}
                       </p>
@@ -137,7 +128,7 @@ export const Header = ({ user, onLogin, onLogout }: HeaderProps) => {
                   </div>
 
                   <button
-                    className="w-full px-4 py-3 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
+                    className="w-full rounded-lg bg-muted px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
                     onClick={() => {
                       setIsMobileMenuOpen(false);
                       onLogout();

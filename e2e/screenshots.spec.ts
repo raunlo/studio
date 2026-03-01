@@ -16,7 +16,7 @@ test.describe('Take screenshots of all pages', () => {
     // Take full page screenshot
     await page.screenshot({
       path: 'screenshots/checklist-overview.png',
-      fullPage: true
+      fullPage: true,
     });
 
     console.log('✓ Screenshot saved: checklist-overview.png');
@@ -28,9 +28,11 @@ test.describe('Take screenshots of all pages', () => {
     await page.waitForLoadState('networkidle');
 
     // Click on the first checklist (if any exist)
-    const firstChecklist = page.locator('[class*="checklist-overview-card"], [class*="Card"]').first();
+    const firstChecklist = page
+      .locator('[class*="checklist-overview-card"], [class*="Card"]')
+      .first();
 
-    const exists = await firstChecklist.count() > 0;
+    const exists = (await firstChecklist.count()) > 0;
     if (exists) {
       await firstChecklist.click();
       await page.waitForLoadState('networkidle');
@@ -38,7 +40,7 @@ test.describe('Take screenshots of all pages', () => {
 
       await page.screenshot({
         path: 'screenshots/checklist-detail.png',
-        fullPage: true
+        fullPage: true,
       });
 
       console.log('✓ Screenshot saved: checklist-detail.png');
@@ -70,7 +72,7 @@ test.describe('Take screenshots of all pages', () => {
 
       await page.screenshot({
         path: 'screenshots/checklist-detail.png',
-        fullPage: true
+        fullPage: true,
       });
 
       console.log('✓ Screenshot saved: checklist-detail.png');
@@ -87,7 +89,7 @@ test.describe('Take screenshots of all pages', () => {
 
     await page.screenshot({
       path: 'screenshots/login-page.png',
-      fullPage: true
+      fullPage: true,
     });
 
     console.log('✓ Screenshot saved: login-page.png');

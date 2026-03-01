@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Essential Commands
+
 ```bash
 npm run dev              # Start development server on port 9002 with Turbopack
 npm run build            # Build for production
@@ -19,8 +20,10 @@ npm run generate:api     # Generate API client from OpenAPI spec using Orval
 ```
 
 ### Environment Setup
+
 Copy `.env.local.example` to `.env.local` and configure:
-- Firebase config (NEXT_PUBLIC_FIREBASE_*)
+
+- Firebase config (NEXT*PUBLIC_FIREBASE*\*)
 - Google OAuth (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
 - JWT_SECRET for token generation
 - NEXTAUTH_URL for OAuth callbacks
@@ -29,6 +32,7 @@ Copy `.env.local.example` to `.env.local` and configure:
 ## Architecture
 
 ### Frontend Structure
+
 - **Next.js 15 App Router** with React Server Components
 - **Authentication**: Google OAuth with JWT tokens stored in httpOnly cookies
 - **State Management**: SWR for data fetching and caching
@@ -40,12 +44,14 @@ Copy `.env.local.example` to `.env.local` and configure:
 ### API Architecture
 
 #### Client-Side API Calls
+
 - **Generated Client**: API client code is auto-generated from `openapi/api_v1.yaml` using Orval
 - **Location**: `src/api/` (generated, do not edit manually)
 - **Custom Instance**: Uses `src/lib/axios.ts` for custom Axios instance with auth
 - **SWR Integration**: All API hooks use SWR for caching and revalidation
 
 #### Backend Communication Patterns
+
 1. **Direct Backend Calls** (from browser):
    - Uses `src/lib/axios.ts` custom Axios instance
    - Sends requests to `NEXT_PUBLIC_API_BASE_URL` (checklist-app-go service)
@@ -66,6 +72,7 @@ Copy `.env.local.example` to `.env.local` and configure:
    - `/api/auth/session` - Gets current session info
 
 ### Authentication Flow
+
 1. User clicks "Sign in with Google" → redirects to `/api/auth/google`
 2. Google OAuth flow → callback to `/api/auth/callback/google`
 3. Backend validates Google token, creates user if new
@@ -77,26 +84,31 @@ Copy `.env.local.example` to `.env.local` and configure:
 ### Key Files
 
 **Authentication & Security**:
+
 - `src/lib/jwt.ts` - JWT generation and verification (HS256, 24h expiry)
 - `src/lib/axios.ts` - Axios instance with token refresh, client ID generation, logout guards
 - `src/app/api/auth/*/route.ts` - OAuth and token management routes
 
 **State Management**:
+
 - `src/hooks/use-checklist.ts` - Main checklist hook with SWR + SSE updates
 - `src/hooks/use-checklist-item-updates.ts` - SSE connection for real-time updates
 
 **Components**:
+
 - `src/components/checklist-manager.tsx` - Top-level checklist container with drag-drop
 - `src/components/checklist-card.tsx` - Individual checklist with items
 - `src/components/checklist-item.tsx` - Nested checklist items with sub-rows
 - `src/components/ui/*` - Reusable shadcn/ui components
 
 **API Integration**:
+
 - `src/api/` - Generated API client (run `npm run generate:api` to regenerate)
 - `src/lib/axios.ts` - Custom Axios mutator for Orval-generated hooks
 - `orval.config.js` - Orval configuration for API generation
 
 ### Real-Time Updates (SSE)
+
 - SSE endpoint: `GET /api/events/sse` with `?checklistId=N` param
 - Events: `checklistItemAdded`, `checklistItemReordered`, `checklistItemRowAdded`, `checklistItemRowDeleted`
 - Deduplication: Uses `recentlyAddedItemsRef` and `recentlyReorderedItemsRef` to prevent echo
@@ -104,6 +116,7 @@ Copy `.env.local.example` to `.env.local` and configure:
 - SWR cache is mutated optimistically + revalidated on SSE events
 
 ### Styling Guidelines
+
 - **Primary color**: Calming blue (#64B5F6)
 - **Background**: Light gray (#F0F4F8)
 - **Accent**: Gentle green (#81C784) for completed tasks
@@ -114,31 +127,37 @@ Copy `.env.local.example` to `.env.local` and configure:
 ## Important Notes
 
 ### TypeScript Configuration
+
 - Build and linting currently ignore errors (`ignoreBuildErrors: true`, `ignoreDuringBuilds: true`)
 - Run `npm run typecheck` to see actual type errors before committing
 
 ### Security
+
 - JWT_SECRET must be set in production (used for HS256 signing)
 - Tokens stored as httpOnly cookies (not localStorage) to prevent XSS
 - Google OAuth requires GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, NEXTAUTH_URL
 - Recent security updates resolved 27+ critical vulnerabilities (see SECURITY_REVIEW.md)
 
 ### API Generation
+
 - Always run `npm run generate:api` after updating `openapi/api_v1.yaml`
 - Do not manually edit files in `src/api/` - they are auto-generated
 - Custom Axios instance in `src/lib/axios.ts` handles auth for all generated hooks
 
 ### Firebase Deployment
+
 - Configure `PRIVATE_API_BASE_URL` in `apphosting.yaml` for App Hosting
 - Multiple environments: production (`apphosting.prod.yaml`), UAT (`apphosting.uat.yaml`)
 - Backend URL defaults to `https://checklist-app-go-qqzjtedwva-ez.a.run.app`
 
 ### i18n
+
 - Translations in `src/i18n/locales/` (en.json, et.json, es.json)
 - Language auto-detected from browser or localStorage
 - Use `useStableTranslation` hook to prevent hydration mismatches
 
 ### Keep-Alive & Client IDs
+
 - Axios uses HTTP keep-alive for better performance
 - Each client gets persistent ID in localStorage (`checklist_client_id`)
 - Client ID sent as `X-Client-Id` header for request tracking/deduplication

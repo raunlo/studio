@@ -315,11 +315,11 @@ paths:
             description: Checklist item id
       responses:
         '200':
-           description: "Successful request"
-           content:
-              application/json:
-                  schema:
-                    $ref: '#/components/schemas/ChecklistItemResponse'
+          description: 'Successful request'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistItemResponse'
         '500':
           description: Internal server error
           content:
@@ -409,11 +409,11 @@ paths:
               $ref: '#/components/schemas/UpdateChecklistItemRequest'
       responses:
         '200':
-              description: Checklist item updated
-              content:
-                application/json:
-                  schema:
-                    $ref: '#/components/schemas/ChecklistItemResponse'
+          description: Checklist item updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistItemResponse'
         '500':
           description: Internal server error
           content:
@@ -529,7 +529,7 @@ paths:
             schema:
               type: object
               required:
-               - newOrderNumber
+                - newOrderNumber
               properties:
                 newOrderNumber:
                   type: number
@@ -1041,7 +1041,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-
 components:
   responses:
     GetChecklistsWithStatsResponse:
@@ -1094,11 +1093,11 @@ components:
           maxLength: 500
           description: Checklist item name (1-500 characters)
         rows:
-            type: array
-            maxItems: 100
-            description: Checklist item rows (max 100 rows per item)
-            items:
-                $ref: '#/components/schemas/CreateOrUpdateChecklistItemRowRequest'
+          type: array
+          maxItems: 100
+          description: Checklist item rows (max 100 rows per item)
+          items:
+            $ref: '#/components/schemas/CreateOrUpdateChecklistItemRowRequest'
       required:
         - name
     UpdateChecklistItemRequest:
@@ -1403,7 +1402,7 @@ components:
             - $ref: '#/components/schemas/ChecklistItemReorderedEventPayload'
       required:
         - type
-    
+
     ChecklistItemRowDeletedEventPayload:
       type: object
       properties:

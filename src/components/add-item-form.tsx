@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useRef } from "react";
-import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus } from "lucide-react";
-import { getPredefinedItems, PredefinedChecklistItem } from "@/lib/knowledge-base";
-import { PredefinedItemsDropdown } from "./predefined-items-dropdown";
+import { useEffect, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Plus } from 'lucide-react';
+import { getPredefinedItems, PredefinedChecklistItem } from '@/lib/knowledge-base';
+import { PredefinedItemsDropdown } from './predefined-items-dropdown';
 
 type AddItemFormProps = {
   onFormSubmit: (text: string) => void;
@@ -14,7 +14,7 @@ type AddItemFormProps = {
 
 export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
   const { t, ready } = useTranslation();
-  const [itemText, setItemText] = useState("");
+  const [itemText, setItemText] = useState('');
   const [filteredItems, setFilteredItems] = useState<PredefinedChecklistItem[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false); // NEW
@@ -27,9 +27,7 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
       const allItems = getPredefinedItems();
       const lowercasedText = itemText.toLowerCase();
 
-      const found = allItems.filter(item =>
-        item.text.toLowerCase().includes(lowercasedText)
-      );
+      const found = allItems.filter((item) => item.text.toLowerCase().includes(lowercasedText));
 
       // kui just valisime dropdownist, ära ava uuesti
       if (suppressNextOpenRef.current) {
@@ -54,9 +52,9 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
       }
     };
     // kasuta 'click', mitte 'mousedown', et Reacti onClick jõuaks enne joosta
-    document.addEventListener("click", handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
     return () => {
-      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener('click', handleClickOutside);
     };
   }, []);
 
@@ -64,21 +62,21 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
     e.preventDefault();
     if (itemText.trim()) {
       onFormSubmit(itemText.trim());
-      setItemText("");
+      setItemText('');
       setIsDropdownOpen(false);
       setFilteredItems([]);
     }
   };
 
   const handleTemplateClick = (item: PredefinedChecklistItem) => {
-    suppressNextOpenRef.current = true;           // ära luba järgmisel efektitsüklil avada
+    suppressNextOpenRef.current = true; // ära luba järgmisel efektitsüklil avada
     setItemText(item.text);
     setIsDropdownOpen(false);
-    setFilteredItems([]);                         // kohe puhasta, et mitte “re-openida”
+    setFilteredItems([]); // kohe puhasta, et mitte “re-openida”
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative flex gap-2 w-full" ref={formRef}>
+    <form onSubmit={handleSubmit} className="relative flex w-full gap-2" ref={formRef}>
       <div className="flex-grow">
         <Input
           value={itemText}
@@ -92,7 +90,7 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
             setIsInputFocused(false);
           }}
           placeholder={ready ? t('main.addItem') : 'Add item...'}
-          className="h-12 sm:h-10 w-full text-base touch-manipulation"
+          className="h-12 w-full touch-manipulation text-base sm:h-10"
           autoComplete="off"
         />
         {isDropdownOpen && (
@@ -102,7 +100,7 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
       <Button
         type="submit"
         size="sm"
-        className="h-12 w-12 sm:h-10 sm:w-10 touch-manipulation shrink-0"
+        className="h-12 w-12 shrink-0 touch-manipulation sm:h-10 sm:w-10"
         disabled={!itemText.trim()}
         aria-label={ready ? t('main.addButton') : 'Add item'}
       >

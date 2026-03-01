@@ -1,9 +1,9 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useTranslation } from "react-i18next";
-import { LoginPage } from "@/components/LoginPage";
-import { NEXT_PUBLIC_API_BASE_URL } from "@/lib/axios";
+'use client';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
+import { LoginPage } from '@/components/LoginPage';
+import { NEXT_PUBLIC_API_BASE_URL } from '@/lib/axios';
 
 export default function Home() {
   const { t } = useTranslation();
@@ -53,9 +53,9 @@ export default function Home() {
 
   if (isChecking) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
           <p className="text-sm text-muted-foreground">{t('main.loading')}</p>
         </div>
       </div>

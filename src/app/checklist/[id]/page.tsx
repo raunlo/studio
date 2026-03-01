@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { useSWRConfig } from "swr";
-import { ChecklistCard } from "@/components/checklist-card";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { useGetChecklistById } from "@/api/checklist/checklist";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useTranslation } from "react-i18next";
-import { DragDropContext, DropResult } from "@hello-pangea/dnd";
-import { ChecklistCardHandle } from "@/components/shared/types";
-import { AxiosError } from "axios";
-import { NEXT_PUBLIC_API_BASE_URL } from "@/lib/axios";
-import { ChecklistFilterBar, FilterType } from "@/components/checklist-filter-bar";
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { useSWRConfig } from 'swr';
+import { ChecklistCard } from '@/components/checklist-card';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { useGetChecklistById } from '@/api/checklist/checklist';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from 'react-i18next';
+import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { ChecklistCardHandle } from '@/components/shared/types';
+import { AxiosError } from 'axios';
+import { NEXT_PUBLIC_API_BASE_URL } from '@/lib/axios';
+import { ChecklistFilterBar, FilterType } from '@/components/checklist-filter-bar';
 
 export default function ChecklistDetailPage() {
   const [isChecking, setIsChecking] = useState(true);
@@ -87,8 +87,8 @@ export default function ChecklistDetailPage() {
 
   if (isChecking) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-32 w-32 animate-spin rounded-full border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -98,16 +98,16 @@ export default function ChecklistDetailPage() {
   }
 
   return (
-    <div className="bg-background w-full">
-      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 w-full sm:max-w-2xl">
+    <div className="w-full bg-background">
+      <div className="container mx-auto w-full px-4 py-4 sm:max-w-2xl sm:px-6 sm:py-6">
         {/* Header with back button - Mobile optimized */}
-        <div className="mb-4 sm:mb-6 flex items-center justify-between gap-4">
+        <div className="mb-4 flex items-center justify-between gap-4 sm:mb-6">
           <Button
             variant="ghost"
             onClick={handleBackToOverview}
-            className="gap-2 h-11 px-3 sm:px-4 touch-manipulation"
+            className="h-11 touch-manipulation gap-2 px-3 sm:px-4"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="h-5 w-5" />
             {t('detail.back')}
           </Button>
         </div>
@@ -120,37 +120,34 @@ export default function ChecklistDetailPage() {
           </div>
         )}
 
-        {error && (() => {
-          // Check if it's an auth error (will redirect via useEffect above)
-          const isAuthError = error instanceof AxiosError &&
-            (error.response?.status === 401 || error.response?.status === 403);
+        {error &&
+          (() => {
+            // Check if it's an auth error (will redirect via useEffect above)
+            const isAuthError =
+              error instanceof AxiosError &&
+              (error.response?.status === 401 || error.response?.status === 403);
 
-          if (isAuthError) {
-            // Show loading while redirecting
+            if (isAuthError) {
+              // Show loading while redirecting
+              return (
+                <div className="space-y-4">
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-96 w-full" />
+                </div>
+              );
+            }
+
+            // Show error for non-auth errors
             return (
-              <div className="space-y-4">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-96 w-full" />
+              <div className="rounded-lg border-2 border-dashed border-destructive px-4 py-16 text-center">
+                <h3 className="text-xl font-semibold text-destructive">{t('detail.error')}</h3>
+                <p className="mt-2 text-muted-foreground">{t('detail.errorDescription')}</p>
+                <Button onClick={handleBackToOverview} className="mt-4">
+                  {t('detail.backToOverview')}
+                </Button>
               </div>
             );
-          }
-
-          // Show error for non-auth errors
-          return (
-            <div className="text-center py-16 px-4 border-2 border-dashed rounded-lg border-destructive">
-              <h3 className="text-xl font-semibold text-destructive">{t('detail.error')}</h3>
-              <p className="text-muted-foreground mt-2">
-                {t('detail.errorDescription')}
-              </p>
-              <Button
-                onClick={handleBackToOverview}
-                className="mt-4"
-              >
-                {t('detail.backToOverview')}
-              </Button>
-            </div>
-          );
-        })()}
+          })()}
 
         {checklist && (
           <div className="space-y-6">

@@ -5,8 +5,8 @@
 location: europe-west4
 
 runConfig:
-  minInstances: 0 
-  maxInstances: 1  # Allow more scaling for production
+  minInstances: 0
+  maxInstances: 1 # Allow more scaling for production
   cpu: 1
   memoryMiB: 1024
 
@@ -17,7 +17,7 @@ env:
     availability:
       - RUNTIME
       - BUILD
-  
+
   # Public API URL for client-side requests
   - variable: NEXT_PUBLIC_BACKEND_URL
     value: https://api.dailychexly.com

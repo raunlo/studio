@@ -1,4 +1,12 @@
-import { EventEnvelopeType, EventEnvelope, ChecklistItemResponse, ChecklistItemRowDeletedEventPayload, ChecklistItemRowAddedEventPayload, ChecklistItemDeletedEventPayload, ChecklistItemReorderedEventPayload } from '@/api/checklistServiceV1.schemas';
+import {
+  EventEnvelopeType,
+  EventEnvelope,
+  ChecklistItemResponse,
+  ChecklistItemRowDeletedEventPayload,
+  ChecklistItemRowAddedEventPayload,
+  ChecklistItemDeletedEventPayload,
+  ChecklistItemReorderedEventPayload,
+} from '@/api/checklistServiceV1.schemas';
 import { getClientId } from '@/lib/axios';
 import { useEffect, useRef } from 'react';
 import { NEXT_PUBLIC_API_BASE_URL } from '@/lib/axios';
@@ -14,22 +22,25 @@ export type MessageHandlers = {
   itemReordered: (data: ChecklistItemReorderedEventPayload) => void;
   itemRowAdded: (data: ChecklistItemRowAddedEventPayload) => void;
   itemRowDeleted: (data: ChecklistItemRowDeletedEventPayload) => void;
-}
+};
 
-
-export function useSSE(messageHandlers: MessageHandlers, checklistId: number, deps: unknown[] = []) {
+export function useSSE(
+  messageHandlers: MessageHandlers,
+  checklistId: number,
+  deps: unknown[] = [],
+) {
   const esRef = useRef<EventSource | null>(null);
   // allow duplicate ids; do not dedupe by id on client
 
   useEffect(() => {
-  const base = `${NEXT_PUBLIC_API_BASE_URL|| ''}/v1/events/checklist-item-updates/${checklistId}`;
-  const clientId = getClientId();
-  
-  // ⭐ SECURE: Authentication via httpOnly cookie, sent automatically by browser
-  const url = `${base}?clientId=${encodeURIComponent(clientId)}`;
-      // Only log connection attempts when debugging is enabled
-      // Helps reduce console noise in normal runs
-      logger.debug('SSE connecting to', url);
+    const base = `${NEXT_PUBLIC_API_BASE_URL || ''}/v1/events/checklist-item-updates/${checklistId}`;
+    const clientId = getClientId();
+
+    // ⭐ SECURE: Authentication via httpOnly cookie, sent automatically by browser
+    const url = `${base}?clientId=${encodeURIComponent(clientId)}`;
+    // Only log connection attempts when debugging is enabled
+    // Helps reduce console noise in normal runs
+    logger.debug('SSE connecting to', url);
 
     // ⭐ Cookies are sent automatically with credentials: 'include'
     const es = new EventSource(url, {

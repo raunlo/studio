@@ -6,37 +6,37 @@
 // Country code to language mapping
 const countryToLanguage: Record<string, string> = {
   // Estonian
-  'EE': 'et',
-  
+  EE: 'et',
+
   // Spanish speaking countries
-  'ES': 'es', // Spain
-  'MX': 'es', // Mexico
-  'AR': 'es', // Argentina
-  'CO': 'es', // Colombia
-  'PE': 'es', // Peru
-  'VE': 'es', // Venezuela
-  'CL': 'es', // Chile
-  'EC': 'es', // Ecuador
-  'GT': 'es', // Guatemala
-  'CU': 'es', // Cuba
-  'BO': 'es', // Bolivia
-  'DO': 'es', // Dominican Republic
-  'HN': 'es', // Honduras
-  'PY': 'es', // Paraguay
-  'SV': 'es', // El Salvador
-  'NI': 'es', // Nicaragua
-  'CR': 'es', // Costa Rica
-  'PA': 'es', // Panama
-  'UY': 'es', // Uruguay
-  'PR': 'es', // Puerto Rico
-  
+  ES: 'es', // Spain
+  MX: 'es', // Mexico
+  AR: 'es', // Argentina
+  CO: 'es', // Colombia
+  PE: 'es', // Peru
+  VE: 'es', // Venezuela
+  CL: 'es', // Chile
+  EC: 'es', // Ecuador
+  GT: 'es', // Guatemala
+  CU: 'es', // Cuba
+  BO: 'es', // Bolivia
+  DO: 'es', // Dominican Republic
+  HN: 'es', // Honduras
+  PY: 'es', // Paraguay
+  SV: 'es', // El Salvador
+  NI: 'es', // Nicaragua
+  CR: 'es', // Costa Rica
+  PA: 'es', // Panama
+  UY: 'es', // Uruguay
+  PR: 'es', // Puerto Rico
+
   // English speaking countries (fallback is English anyway)
-  'US': 'en',
-  'GB': 'en',
-  'AU': 'en',
-  'CA': 'en',
-  'NZ': 'en',
-  'IE': 'en',
+  US: 'en',
+  GB: 'en',
+  AU: 'en',
+  CA: 'en',
+  NZ: 'en',
+  IE: 'en',
 };
 
 const GEO_LANGUAGE_KEY = 'geoLanguageDetected';
@@ -106,7 +106,6 @@ export async function detectLanguageByGeo(): Promise<string | null> {
     // Mark as attempted if no match found
     localStorage.setItem(GEO_LANGUAGE_KEY, 'true');
     return null;
-
   } catch {
     localStorage.setItem(GEO_LANGUAGE_KEY, 'true');
     return null;
