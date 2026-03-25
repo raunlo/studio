@@ -16,8 +16,9 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { Drawer } from 'vaul';
-import { Plus, Trash2, Check, X, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Check, X, ChevronRight, BookmarkPlus } from 'lucide-react';
 import { ChecklistItem, ChecklistItemRow } from '@/components/shared/types';
+import { useCreateTemplateFromItem } from '@/api/template/template';
 import { CheckedState } from '@radix-ui/react-checkbox';
 import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { useTranslation } from 'react-i18next';
@@ -34,6 +35,7 @@ type ChecklistItemProps = {
 
 export function ChecklistItemComponent({
   item,
+  checklistId,
   addRow,
   updateItem,
   deleteItem,
@@ -50,6 +52,10 @@ export function ChecklistItemComponent({
   const [editingRowId, setEditingRowId] = useState<number | null>(null);
   const [titleEditValue, setTitleEditValue] = useState(item.name);
   const [rowEditValue, setRowEditValue] = useState('');
+
+  const [isSaveTemplateOpen, setIsSaveTemplateOpen] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const createTemplateFromItem = useCreateTemplateFromItem();
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const mobileTitleInputRef = useRef<HTMLInputElement>(null);
@@ -242,6 +248,21 @@ export function ChecklistItemComponent({
     setRowEditValue('');
   };
 
+  const handleSaveAsTemplate = async () => {
+    const name = templateName.trim();
+    if (!name || !item.id) return;
+    try {
+      await createTemplateFromItem.trigger({
+        name,
+        checklistId,
+        checklistItemId: item.id,
+      });
+      setIsSaveTemplateOpen(false);
+    } catch {
+      // error handled by SWR
+    }
+  };
+
   const handleRowKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -366,19 +387,34 @@ export function ChecklistItemComponent({
             </div>
           </div>
 
-          {/* Delete button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteItem(item.id);
-            }}
-            aria-label="Delete item"
-            className="h-8 w-8 shrink-0 touch-manipulation text-muted-foreground/50 transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {/* Item actions */}
+          <div className="flex shrink-0 items-center gap-0.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                setTemplateName(item.name);
+                setIsSaveTemplateOpen(true);
+              }}
+              aria-label="Save as template"
+              className="h-8 w-8 touch-manipulation text-muted-foreground/50 transition-all duration-200 hover:bg-primary/10 hover:text-primary sm:opacity-0 sm:group-hover:opacity-100"
+            >
+              <BookmarkPlus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteItem(item.id);
+              }}
+              aria-label="Delete item"
+              className="h-8 w-8 touch-manipulation text-muted-foreground/50 transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Subitems preview */}
@@ -590,6 +626,64 @@ export function ChecklistItemComponent({
           </Drawer.Portal>
         </Drawer.Root>
       )}
+
+      {/* Bottom Drawer for saving as template */}
+      <Drawer.Root
+        open={isSaveTemplateOpen}
+        onOpenChange={(open) => !open && setIsSaveTemplateOpen(false)}
+        repositionInputs={false}
+      >
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-50 bg-black/40" />
+          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 flex h-auto flex-col rounded-t-[10px] bg-background outline-none">
+            <div className="mx-auto mb-6 mt-4 h-1.5 w-12 flex-shrink-0 rounded-full bg-muted-foreground/30" />
+            <div
+              className="px-6 pb-6"
+              style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+            >
+              <div className="mb-4">
+                <h2 className="mb-1 text-lg font-semibold text-foreground">
+                  {t('item.saveAsTemplate', 'Save as Template')}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {t('item.saveAsTemplateDescription', 'Create a template from this item and its sub-items')}
+                </p>
+              </div>
+              <div className="py-4">
+                <Input
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSaveAsTemplate();
+                    }
+                  }}
+                  placeholder={t('item.templateNamePlaceholder', 'Template name')}
+                  className="h-12 w-full text-lg"
+                  autoFocus
+                />
+              </div>
+              <div className="flex flex-row gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsSaveTemplateOpen(false)}
+                  className="h-12 flex-1 touch-manipulation"
+                >
+                  {t('item.cancel')}
+                </Button>
+                <Button
+                  onClick={handleSaveAsTemplate}
+                  disabled={!templateName.trim()}
+                  className="h-12 flex-1 touch-manipulation"
+                >
+                  {t('item.save')}
+                </Button>
+              </div>
+            </div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
 
       {/* Bottom Drawer for editing row - only on mobile */}
       {isMobile && (

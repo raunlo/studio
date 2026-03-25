@@ -64,6 +64,7 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
+  const [newRowName, setNewRowName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   // Initialize edit state when template loads
@@ -108,6 +109,52 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
       console.error('Failed to delete template:', error);
     }
   }, [deleteTemplateTrigger, templateId, t]);
+
+  const handleAddRow = useCallback(async () => {
+    const name = newRowName.trim();
+    if (!name || !template) return;
+
+    const maxPosition = template.rows.reduce((max, r) => Math.max(max, r.position), 0);
+    const updatedRows = [
+      ...template.rows.map((r) => ({ name: r.name, position: r.position })),
+      { name, position: maxPosition + 1000 },
+    ];
+
+    try {
+      await updateTemplateTrigger({
+        id: templateId,
+        data: {
+          name: template.name,
+          description: template.description || undefined,
+          rows: updatedRows,
+        },
+      });
+      setNewRowName('');
+    } catch (error) {
+      console.error('Failed to add row:', error);
+    }
+  }, [newRowName, template, templateId, updateTemplateTrigger]);
+
+  const handleRemoveRow = useCallback(async (rowId: number) => {
+    if (!template) return;
+
+    const updatedRows = template.rows
+      .filter((r) => r.id !== rowId)
+      .map((r) => ({ name: r.name, position: r.position }));
+
+    try {
+      await updateTemplateTrigger({
+        id: templateId,
+        data: {
+          name: template.name,
+          description: template.description || undefined,
+          rows: updatedRows,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to remove row:', error);
+    }
+  }, [template, templateId, updateTemplateTrigger]);
 
   if (isLoading) {
     return (
@@ -199,45 +246,35 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
       <Card>
         <CardHeader>
           <CardTitle>
-            {t('template.items', 'Items')} ({template.items.length})
+            {t('template.rows', 'Items')} ({template.rows.length})
           </CardTitle>
           <CardDescription>
-            {t('template.itemsDescription', 'Items to include when using this template')}
+            {t('template.rowsDescription', 'Items to include when using this template')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Add Item Form */}
-          {isEditing && (
-            <div className="p-4 rounded-lg border border-dashed border-muted-foreground/25 bg-muted/50">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add new item..."
-                  className="flex-1"
-                  id="newItemInput"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const input = e.currentTarget;
-                      if (input.value.trim()) {
-                        // In a real implementation, this would add to template items
-                        // For now, we're showing the UI
-                        console.log('Add item:', input.value);
-                        input.value = '';
-                      }
-                    }
-                  }}
-                />
-                <Button variant="outline" size="sm">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Press Enter or click + to add item
-              </p>
+          {/* Add Row Form */}
+          <div className="p-4 rounded-lg border border-dashed border-muted-foreground/25 bg-muted/50">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add new item..."
+                className="flex-1"
+                value={newRowName}
+                onChange={(e) => setNewRowName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddRow();
+                  }
+                }}
+              />
+              <Button variant="outline" size="sm" onClick={handleAddRow} disabled={!newRowName.trim()}>
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
-          )}
+          </div>
 
           {/* Items List */}
-          {template.items.length === 0 ? (
+          {template.rows.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground text-sm mb-3">
                 {isEditing ? '✏️ No items yet. Add one above!' : '📋 No items in this template'}
@@ -250,24 +287,19 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
             </div>
           ) : (
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {template.items.map((item) => (
+              {template.rows.map((item) => (
                 <div
                   key={item.id}
                   className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent transition-colors group"
                 >
                   <GripVertical className="h-4 w-4 text-muted-foreground/50 flex-shrink-0" />
                   <span className="flex-1 text-sm">{item.name}</span>
-                  {isEditing && (
-                    <button
-                      onClick={() => {
-                        // Remove item functionality
-                        console.log('Remove item:', item.id);
-                      }}
-                      className="p-1 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10 rounded"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleRemoveRow(item.id)}
+                    className="p-1 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10 rounded"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                   <span className="text-xs text-muted-foreground/50">
                     {new Date(item.createdAt).toLocaleDateString()}
                   </span>
@@ -277,10 +309,10 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
           )}
 
           {/* Items Info */}
-          {!isEditing && template.items.length > 0 && (
+          {!isEditing && template.rows.length > 0 && (
             <div className="mt-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
               <p className="text-xs text-blue-900 dark:text-blue-100">
-                💡 All {template.items.length} items will be added to your checklist when you use this template
+                💡 All {template.rows.length} items will be added to your checklist when you use this template
               </p>
             </div>
           )}
@@ -294,7 +326,7 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
             <h3 className="font-semibold text-blue-900 dark:text-blue-100">💡 How to use this template</h3>
             <ul className="text-sm text-blue-800 dark:text-blue-100 space-y-2 ml-4">
               <li>✓ Save time by reusing this template for recurring tasks</li>
-              <li>✓ All {template.items.length} items will be added to your new checklist</li>
+              <li>✓ All {template.rows.length} items will be added to your new checklist</li>
               <li>✓ You can edit items after creating the checklist</li>
             </ul>
           </div>

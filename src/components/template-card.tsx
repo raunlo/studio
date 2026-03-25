@@ -58,7 +58,7 @@ export function TemplateCard({ template, onEdit, onDelete }: TemplateCardProps) 
           <div className="flex items-center gap-2">
             <span className="text-lg">📝</span>
             <span>
-              {template.items.length} {template.items.length === 1 ? 'item' : 'items'}
+              {template.rows.length} {template.rows.length === 1 ? 'item' : 'items'}
             </span>
           </div>
           <p className="text-xs text-muted-foreground/70">

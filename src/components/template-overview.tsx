@@ -19,7 +19,6 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { useGetAllTemplates, useCreateTemplate, useDeleteTemplate } from '@/api/template/template';
 import type { Template } from '@/api/template/template';
-import { TemplateQuickGuide } from '@/components/template-quick-guide';
 
 export function TemplateOverview() {
   const { t } = useTranslation();
@@ -186,11 +185,6 @@ export function TemplateOverview() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
-
-      {/* Quick Guide */}
-      <div className="mb-8">
-        <TemplateQuickGuide />
       </div>
 
       {/* Empty state */}

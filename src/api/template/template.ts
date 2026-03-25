@@ -10,7 +10,7 @@ import type { SWRMutationConfiguration } from 'swr/mutation';
 import { customInstance } from '@/lib/axios';
 
 // Type definitions matching backend API
-export interface TemplateItem {
+export interface TemplateRow {
   id: number;
   templateId: number;
   name: string;
@@ -24,34 +24,27 @@ export interface Template {
   userId: string;
   name: string;
   description?: string | null;
-  items: TemplateItem[];
+  rows: TemplateRow[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CreateTemplateRowRequest {
+  name: string;
+  position: number;
 }
 
 export interface CreateTemplateRequest {
   name: string;
   description?: string | null;
+  rows?: CreateTemplateRowRequest[];
 }
 
-export interface CreateTemplateFromItemsRequest {
+export interface CreateTemplateFromItemRequest {
   name: string;
   description?: string | null;
   checklistId: number;
-  checklistItemIds: number[];
-}
-
-export interface CreateChecklistFromTemplateRequest {
-  name: string;
-}
-
-export interface TemplatePreviewResponse {
-  existingItems: TemplateItem[];
-  newItems: TemplateItem[];
-}
-
-export interface ApplyTemplateRequest {
-  itemIds: number[];
+  checklistItemId: number;
 }
 
 // ============= GET All Templates =============
@@ -180,9 +173,9 @@ export const useDeleteTemplate = <TError = Error>(options?: {
   return useSWRMutation(getGetAllTemplatesKey(), fetcher, options?.swr);
 };
 
-// ============= CREATE Template from Items =============
+// ============= CREATE Template from Item =============
 
-export const createTemplateFromItems = (request: CreateTemplateFromItemsRequest) => {
+export const createTemplateFromItem = (request: CreateTemplateFromItemRequest) => {
   return customInstance<Template>({
     url: '/api/v1/templates/from-items',
     method: 'POST',
@@ -190,96 +183,36 @@ export const createTemplateFromItems = (request: CreateTemplateFromItemsRequest)
   });
 };
 
-export const useCreateTemplateFromItems = <TError = Error>(options?: {
-  swr?: SWRMutationConfiguration<Template, TError, Key, CreateTemplateFromItemsRequest>;
+export const useCreateTemplateFromItem = <TError = Error>(options?: {
+  swr?: SWRMutationConfiguration<Template, TError, Key, CreateTemplateFromItemRequest>;
 }) => {
   const fetcher = (
     _: Key,
-    { arg }: { arg: CreateTemplateFromItemsRequest },
-  ) => createTemplateFromItems(arg);
+    { arg }: { arg: CreateTemplateFromItemRequest },
+  ) => createTemplateFromItem(arg);
 
   return useSWRMutation(getGetAllTemplatesKey(), fetcher, options?.swr);
 };
 
-// ============= CREATE Checklist from Template =============
-
-export const createChecklistFromTemplate = (templateId: number, request: CreateChecklistFromTemplateRequest) => {
-  return customInstance({
-    url: `/api/v1/templates/${templateId}/create-checklist`,
-    method: 'POST',
-    data: request,
-  });
-};
-
-interface CreateChecklistFromTemplateArgs {
-  templateId: number;
-  data: CreateChecklistFromTemplateRequest;
-}
-
-export const useCreateChecklistFromTemplate = <TError = Error>(options?: {
-  swr?: SWRMutationConfiguration<any, TError, Key, CreateChecklistFromTemplateArgs>;
-}) => {
-  const fetcher = (_: Key, { arg }: { arg: CreateChecklistFromTemplateArgs }) =>
-    createChecklistFromTemplate(arg.templateId, arg.data);
-
-  return useSWRMutation(['/checklists'], fetcher as any, options?.swr);
-};
-
 // ============= Apply Template to Checklist =============
 
-export const applyTemplate = (checklistId: number, templateId: number, request: ApplyTemplateRequest) => {
+export const applyTemplate = (checklistId: number, templateId: number) => {
   return customInstance({
     url: `/api/v1/checklists/${checklistId}/apply-template/${templateId}`,
     method: 'POST',
-    data: request,
   });
 };
 
 interface ApplyTemplateArgs {
   checklistId: number;
   templateId: number;
-  data: ApplyTemplateRequest;
 }
 
 export const useApplyTemplate = <TError = Error>(options?: {
   swr?: SWRMutationConfiguration<any, TError, Key, ApplyTemplateArgs>;
 }) => {
   const fetcher = (_: Key, { arg }: { arg: ApplyTemplateArgs }) =>
-    applyTemplate(arg.checklistId, arg.templateId, arg.data);
+    applyTemplate(arg.checklistId, arg.templateId);
 
   return useSWRMutation(['/checklists'], fetcher as any, options?.swr);
-};
-
-// ============= Get Template Preview =============
-
-export const getTemplatePreview = (checklistId: number, templateId: number) => {
-  return customInstance<TemplatePreviewResponse>({
-    url: `/api/v1/checklists/${checklistId}/template-preview/${templateId}`,
-    method: 'GET',
-  });
-};
-
-export const useGetTemplatePreview = <TError = GetAllTemplatesError>(
-  checklistId: number,
-  templateId: number,
-  options?: {
-    swr?: SWRConfiguration<TemplatePreviewResponse, TError> & {
-      swrKey?: Key;
-      enabled?: boolean;
-    };
-  },
-) => {
-  const { swr: swrOptions } = options ?? {};
-  const isEnabled = swrOptions?.enabled !== false && checklistId > 0 && templateId > 0;
-  const swrKey = swrOptions?.swrKey ?? (() =>
-    isEnabled ? `/api/v1/checklists/${checklistId}/template-preview/${templateId}` : null
-  );
-  const swrFn = () => getTemplatePreview(checklistId, templateId);
-
-  const query = useSWR<TemplatePreviewResponse, TError>(swrKey, swrFn, swrOptions);
-
-  return {
-    swrKey,
-    ...query,
-  };
 };

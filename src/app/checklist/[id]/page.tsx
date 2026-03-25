@@ -14,7 +14,6 @@ import { ChecklistCardHandle } from '@/components/shared/types';
 import { AxiosError } from 'axios';
 import { NEXT_PUBLIC_API_BASE_URL } from '@/lib/axios';
 import { ChecklistFilterBar, FilterType } from '@/components/checklist-filter-bar';
-import { Zap } from 'lucide-react';
 
 export default function ChecklistDetailPage() {
   const [isChecking, setIsChecking] = useState(true);
@@ -101,8 +100,8 @@ export default function ChecklistDetailPage() {
   return (
     <div className="w-full bg-background">
       <div className="container mx-auto w-full px-4 py-4 sm:max-w-2xl sm:px-6 sm:py-6">
-        {/* Header with back button - Mobile optimized */}
-        <div className="mb-4 flex items-center justify-between gap-4 sm:mb-6">
+        {/* Header with back button */}
+        <div className="mb-4 sm:mb-6">
           <Button
             variant="ghost"
             onClick={handleBackToOverview}
@@ -110,15 +109,6 @@ export default function ChecklistDetailPage() {
           >
             <ArrowLeft className="h-5 w-5" />
             {t('detail.back')}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => router.push('/templates')}
-            className="h-11 touch-manipulation gap-2 px-3 sm:px-4"
-            title="Use templates to quickly add items"
-          >
-            <Zap className="h-5 w-5" />
-            <span className="hidden sm:inline">Templates</span>
           </Button>
         </div>
 
@@ -167,11 +157,15 @@ export default function ChecklistDetailPage() {
                 checklist={checklist}
                 activeFilter={activeFilter}
                 onFilterChange={setActiveFilter}
+                onTemplateApplied={() => {
+                  mutate([`/api/v1/checklists/${checklistId}`]);
+                }}
               />
             </DragDropContext>
           </div>
         )}
       </div>
+
     </div>
   );
 }
