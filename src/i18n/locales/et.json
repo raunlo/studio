@@ -187,7 +187,15 @@
     "namePlaceholder": "Nimi...",
     "addSubItem": "Lisa...",
     "save": "Salvesta",
-    "cancel": "Tühista"
+    "cancel": "Tühista",
+    "saveAsTemplate": "Salvesta mallina",
+    "saveAsTemplateDescription": "Loo mall sellest elemendist ja selle alamelementidest",
+    "templateNamePlaceholder": "Malli nimi",
+    "templateExists": "Selle nimega mall on juba olemas",
+    "existingItems": "Salvestatud mallis",
+    "currentItems": "Selles elemendis",
+    "updateExisting": "Uuenda olemasolevat malli",
+    "createNew": "Loo uus niikuinii"
   },
   "detail": {
     "back": "Tagasi nimekirjade juurde",

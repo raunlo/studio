@@ -187,7 +187,15 @@
     "namePlaceholder": "Nombre...",
     "addSubItem": "Añadir...",
     "save": "Guardar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "saveAsTemplate": "Guardar como plantilla",
+    "saveAsTemplateDescription": "Crear una plantilla a partir de este elemento y sus sub-elementos",
+    "templateNamePlaceholder": "Nombre de plantilla",
+    "templateExists": "Ya existe una plantilla con este nombre",
+    "existingItems": "En plantilla guardada",
+    "currentItems": "En este elemento",
+    "updateExisting": "Actualizar plantilla existente",
+    "createNew": "Crear nueva de todos modos"
   },
   "detail": {
     "back": "Volver a listas",

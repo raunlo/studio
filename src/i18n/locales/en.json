@@ -187,7 +187,15 @@
     "namePlaceholder": "Name...",
     "addSubItem": "Add...",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "saveAsTemplate": "Save as Template",
+    "saveAsTemplateDescription": "Create a template from this item and its sub-items",
+    "templateNamePlaceholder": "Template name",
+    "templateExists": "A template with this name already exists",
+    "existingItems": "In saved template",
+    "currentItems": "In this item",
+    "updateExisting": "Update existing template",
+    "createNew": "Create new anyway"
   },
   "detail": {
     "back": "Back to checklists",

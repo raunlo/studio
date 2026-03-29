@@ -64,7 +64,9 @@ export function ChecklistItemComponent({
   const matchingTemplate = useMemo(() => {
     const name = templateName.trim().toLowerCase();
     if (!name || !allTemplates) return null;
-    return allTemplates.find((t) => t.name.toLowerCase() === name) ?? null;
+    const s =  allTemplates.find((t) => t.name.toLowerCase() === name) ?? null;
+    console.log('Matching template search:', { name, found: s });
+    return s;
   }, [templateName, allTemplates]);
 
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -704,20 +706,17 @@ export function ChecklistItemComponent({
                     {t('item.templateExists', 'A template with this name already exists')}
                   </p>
 
-                  {/* Diff view */}
+                  {/* Diff view - only show when there's something to compare */}
+                  {(matchingTemplate.rows.length > 0 || (item.rows?.length ?? 0) > 0) && (
                   <div className="space-y-2">
                     {/* Existing template rows */}
+                    {matchingTemplate.rows.length > 0 && (
                     <div>
                       <p className="mb-1 text-xs font-medium text-amber-800/70 dark:text-amber-200/70">
-                        {t('item.existingItems', 'Existing template')} ({matchingTemplate.rows.length})
+                        {t('item.existingItems', 'In saved template')}
                       </p>
                       <div className="flex flex-wrap gap-1">
-                        {matchingTemplate.rows.length === 0 ? (
-                          <span className="text-xs italic text-amber-700/50 dark:text-amber-300/50">
-                            {t('item.noItems', 'No items')}
-                          </span>
-                        ) : (
-                          matchingTemplate.rows.map((r) => {
+                        {matchingTemplate.rows.map((r) => {
                             const isInCurrent = item.rows?.some(
                               (cr) => cr.name.toLowerCase() === r.name.toLowerCase(),
                             );
@@ -734,23 +733,19 @@ export function ChecklistItemComponent({
                                 {r.name}
                               </span>
                             );
-                          })
-                        )}
+                          })}
                       </div>
                     </div>
+                    )}
 
                     {/* Current item rows */}
+                    {(item.rows?.length ?? 0) > 0 && (
                     <div>
                       <p className="mb-1 text-xs font-medium text-amber-800/70 dark:text-amber-200/70">
-                        {t('item.currentItems', 'This item')} ({item.rows?.length ?? 0})
+                        {t('item.currentItems', 'In this item')}
                       </p>
                       <div className="flex flex-wrap gap-1">
-                        {!item.rows || item.rows.length === 0 ? (
-                          <span className="text-xs italic text-amber-700/50 dark:text-amber-300/50">
-                            {t('item.noItems', 'No items')}
-                          </span>
-                        ) : (
-                          item.rows.map((r, i) => {
+                        {item.rows!.map((r, i) => {
                             const isInExisting = matchingTemplate.rows.some(
                               (tr) => tr.name.toLowerCase() === r.name.toLowerCase(),
                             );
@@ -767,11 +762,12 @@ export function ChecklistItemComponent({
                                 {r.name}
                               </span>
                             );
-                          })
-                        )}
+                          })}
                       </div>
                     </div>
+                    )}
                   </div>
+                  )}
                 </div>
               )}
 
