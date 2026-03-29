@@ -37,16 +37,27 @@ export function PredefinedItemsDropdown({
             {templates.map((template) => (
               <li
                 key={`tmpl-${template.id}`}
-                className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-secondary"
+                className="flex cursor-pointer items-start gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-secondary"
                 onClick={() => onTemplateSelect?.(template)}
                 onMouseDown={(e) => e.preventDefault()}
               >
-                <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
                 <div className="min-w-0 flex-1">
-                  <span className="font-medium">{template.name}</span>
-                  <span className="ml-1.5 text-xs text-muted-foreground">
-                    {template.rows?.length ?? 0} {t('templates.items', 'items')}
-                  </span>
+                  <div>
+                    <span className="font-medium">{template.name}</span>
+                    <span className="ml-1.5 text-xs text-muted-foreground">
+                      {template.rows?.length ?? 0} {t('templates.items', 'items')}
+                    </span>
+                  </div>
+                  {template.rows && template.rows.length > 0 && (
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {template.rows
+                        .slice(0, 3)
+                        .map((r) => r.name)
+                        .join(', ')}
+                      {template.rows.length > 3 && `, +${template.rows.length - 3}`}
+                    </div>
+                  )}
                 </div>
               </li>
             ))}

@@ -2,18 +2,23 @@
 
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
-import { useState, useCallback } from 'react';
-import { ArrowLeft, Plus, GripVertical, Trash2, Check } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { ArrowLeft, Plus, GripVertical, Trash2, MoreVertical, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
 import {
   useGetTemplateById,
   useUpdateTemplate,
   useDeleteTemplate,
 } from '@/api/template/template';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface TemplateDetailProps {
   templateId: number;
@@ -25,15 +30,16 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
 
   const { data: template, isLoading, mutate } = useGetTemplateById(templateId);
 
-  const { trigger: updateTemplateTrigger } = useUpdateTemplate({
+  const { trigger: rawUpdateTrigger } = useUpdateTemplate({
     swr: {
       onSuccess: () => {
         mutate();
-        toast({
-          title: t('template.updated', 'Template updated'),
-        });
+        setSaveStatus('saved');
+        if (saveStatusTimerRef.current) clearTimeout(saveStatusTimerRef.current);
+        saveStatusTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
       },
       onError: () => {
+        setSaveStatus('idle');
         toast({
           title: t('common.error', 'Error'),
           description: t('template.updateFailed', 'Failed to update template'),
@@ -43,12 +49,25 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
     },
   });
 
+  const updateTemplateTrigger = useCallback(
+    async (...args: Parameters<typeof rawUpdateTrigger>) => {
+      setSaveStatus('saving');
+      return rawUpdateTrigger(...args);
+    },
+    [rawUpdateTrigger],
+  );
+
+  // Cleanup timer
+  useEffect(() => {
+    return () => {
+      if (saveStatusTimerRef.current) clearTimeout(saveStatusTimerRef.current);
+    };
+  }, []);
+
   const { trigger: deleteTemplateTrigger } = useDeleteTemplate({
     swr: {
       onSuccess: () => {
-        toast({
-          title: t('template.deleted', 'Template deleted'),
-        });
+        toast({ title: t('template.deleted', 'Template deleted') });
         router.push('/templates');
       },
       onError: () => {
@@ -61,48 +80,93 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
     },
   });
 
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [newRowName, setNewRowName] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
+  const [editingRowId, setEditingRowId] = useState<number | null>(null);
+  const [rowEditValue, setRowEditValue] = useState('');
 
-  // Initialize edit state when template loads
-  if (template && !isEditing && editedName === '') {
-    setEditedName(template.name);
-    setEditedDescription(template.description || '');
-  }
+  // Save status tracking
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const saveStatusTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleSaveChanges = useCallback(async () => {
-    if (!editedName.trim()) {
-      toast({
-        title: t('common.error', 'Error'),
-        description: t('template.nameRequired', 'Template name is required'),
-        variant: 'destructive',
-      });
-      return;
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const descriptionInputRef = useRef<HTMLInputElement>(null);
+  const rowInputRef = useRef<HTMLInputElement>(null);
+  const newRowInputRef = useRef<HTMLInputElement>(null);
+  const hasAutoFocused = useRef(false);
+
+  // Auto-focus name on newly created templates
+  useEffect(() => {
+    if (template && !hasAutoFocused.current) {
+      const isUntitled = template.name === t('template.untitled', 'Untitled template');
+      if (isUntitled && template.rows.length === 0) {
+        setEditedName(template.name);
+        setIsEditingName(true);
+        hasAutoFocused.current = true;
+      }
     }
+  }, [template, t]);
 
-    setIsSaving(true);
-    try {
+  useEffect(() => {
+    if (isEditingName && nameInputRef.current) {
+      nameInputRef.current.focus();
+      nameInputRef.current.select();
+    }
+  }, [isEditingName]);
+
+  useEffect(() => {
+    if (isEditingDescription && descriptionInputRef.current) {
+      descriptionInputRef.current.focus();
+    }
+  }, [isEditingDescription]);
+
+  useEffect(() => {
+    if (editingRowId && rowInputRef.current) {
+      rowInputRef.current.focus();
+      rowInputRef.current.select();
+    }
+  }, [editingRowId]);
+
+  const saveTemplate = useCallback(
+    async (updates: { name?: string; description?: string }) => {
+      if (!template) return;
       await updateTemplateTrigger({
         id: templateId,
         data: {
-          name: editedName.trim(),
-          description: editedDescription.trim() || undefined,
+          name: updates.name ?? template.name,
+          description: updates.description ?? template.description ?? undefined,
+          rows: template.rows.map((r) => ({ name: r.name, position: r.position })),
         },
       });
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Failed to update template:', error);
-    } finally {
-      setIsSaving(false);
+    },
+    [template, templateId, updateTemplateTrigger],
+  );
+
+  const handleNameSave = useCallback(async () => {
+    const trimmed = editedName.trim();
+    if (!trimmed) {
+      setIsEditingName(false);
+      return;
     }
-  }, [editedName, editedDescription, templateId, updateTemplateTrigger, t]);
+    if (trimmed !== template?.name) {
+      await saveTemplate({ name: trimmed });
+    }
+    setIsEditingName(false);
+  }, [editedName, template, saveTemplate]);
+
+  const handleDescriptionSave = useCallback(async () => {
+    const trimmed = editedDescription.trim();
+    if (trimmed !== (template?.description ?? '')) {
+      await saveTemplate({ description: trimmed || undefined });
+    }
+    setIsEditingDescription(false);
+  }, [editedDescription, template, saveTemplate]);
 
   const handleDeleteTemplate = useCallback(async () => {
-    if (!window.confirm(t('template.confirmDelete', 'Are you sure?'))) return;
-
+    if (!window.confirm(t('template.confirmDelete', 'Are you sure you want to delete this template?'))) return;
     try {
       await deleteTemplateTrigger(templateId);
     } catch (error) {
@@ -130,17 +194,48 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
         },
       });
       setNewRowName('');
+      // Re-focus the input for rapid adding
+      setTimeout(() => newRowInputRef.current?.focus(), 50);
     } catch (error) {
       console.error('Failed to add row:', error);
     }
   }, [newRowName, template, templateId, updateTemplateTrigger]);
 
-  const handleRemoveRow = useCallback(async (rowId: number) => {
-    if (!template) return;
+  const handleRemoveRow = useCallback(
+    async (rowId: number) => {
+      if (!template) return;
 
-    const updatedRows = template.rows
-      .filter((r) => r.id !== rowId)
-      .map((r) => ({ name: r.name, position: r.position }));
+      const updatedRows = template.rows
+        .filter((r) => r.id !== rowId)
+        .map((r) => ({ name: r.name, position: r.position }));
+
+      try {
+        await updateTemplateTrigger({
+          id: templateId,
+          data: {
+            name: template.name,
+            description: template.description || undefined,
+            rows: updatedRows,
+          },
+        });
+      } catch (error) {
+        console.error('Failed to remove row:', error);
+      }
+    },
+    [template, templateId, updateTemplateTrigger],
+  );
+
+  const handleRowEditSave = useCallback(async () => {
+    const trimmed = rowEditValue.trim();
+    if (!trimmed || !template || !editingRowId) {
+      setEditingRowId(null);
+      return;
+    }
+
+    const updatedRows = template.rows.map((r) => ({
+      name: r.id === editingRowId ? trimmed : r.name,
+      position: r.position,
+    }));
 
     try {
       await updateTemplateTrigger({
@@ -152,191 +247,237 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
         },
       });
     } catch (error) {
-      console.error('Failed to remove row:', error);
+      console.error('Failed to update row:', error);
     }
-  }, [template, templateId, updateTemplateTrigger]);
+    setEditingRowId(null);
+  }, [rowEditValue, template, editingRowId, templateId, updateTemplateTrigger]);
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-40" />
+      <div className="container mx-auto max-w-2xl px-4 py-6">
+        <Skeleton className="mb-6 h-8 w-48" />
+        <Skeleton className="mb-4 h-12 w-full" />
+        <Skeleton className="mb-2 h-10 w-full" />
+        <Skeleton className="mb-2 h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
       </div>
     );
   }
 
   if (!template) {
     return (
-      <div className="text-center py-16">
+      <div className="container mx-auto max-w-2xl px-4 py-16 text-center">
         <p className="text-muted-foreground">{t('template.notFound', 'Template not found')}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
+    <div className="container mx-auto max-w-2xl px-4 py-4 sm:py-6">
+      {/* Header with back + save status + actions */}
+      <div className="mb-6 flex items-center justify-between">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/templates')}
+          className="gap-1.5 text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" />
+          {t('template.backToList', 'Templates')}
         </Button>
-        <h1 className="text-3xl font-bold">{template.name}</h1>
+
+        <div className="flex items-center gap-2">
+          {/* Save status indicator */}
+          {saveStatus !== 'idle' && (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground animate-fade-in">
+              {saveStatus === 'saving' ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  {t('common.saving', 'Saving...')}
+                </>
+              ) : (
+                <>
+                  <Check className="h-3 w-3 text-primary" />
+                  {t('common.saved', 'Saved')}
+                </>
+              )}
+            </span>
+          )}
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={handleDeleteTemplate}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {t('template.delete', 'Delete template')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        </div>
       </div>
 
-      {/* Template Info Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <div>
-            <CardTitle>{t('template.details', 'Template details')}</CardTitle>
-            <CardDescription>{t('template.editInfo', 'Edit template information')}</CardDescription>
-          </div>
-          <div className="flex gap-2">
-            {isEditing ? (
-              <>
-                <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSaving}>
-                  {t('common.cancel', 'Cancel')}
-                </Button>
-                <Button onClick={handleSaveChanges} disabled={isSaving}>
-                  {isSaving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="outline" onClick={() => setIsEditing(true)}>
-                  {t('common.edit', 'Edit')}
-                </Button>
-                <Button variant="destructive" onClick={handleDeleteTemplate}>
-                  {t('common.delete', 'Delete')}
-                </Button>
-              </>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium">{t('template.name', 'Template name')}</label>
-            <Input
-              value={editedName}
-              onChange={(e) => setEditedName(e.target.value)}
-              disabled={!isEditing}
-              className="mt-2"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium">
-              {t('template.description', 'Description')}
-            </label>
-            <Input
-              value={editedDescription}
-              onChange={(e) => setEditedDescription(e.target.value)}
-              disabled={!isEditing}
-              placeholder={t('template.descriptionPlaceholder', 'Optional description')}
-              className="mt-2"
-            />
-          </div>
-          <div className="text-xs text-muted-foreground pt-2">
-            {t('common.created', 'Created')} {new Date(template.createdAt).toLocaleDateString()}
-            {' • '}
-            {t('common.modified', 'Modified')} {new Date(template.updatedAt).toLocaleDateString()}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Editable name */}
+      <div className="mb-1">
+        {isEditingName ? (
+          <Input
+            ref={nameInputRef}
+            value={editedName}
+            onChange={(e) => setEditedName(e.target.value)}
+            onBlur={handleNameSave}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleNameSave();
+              } else if (e.key === 'Escape') {
+                setIsEditingName(false);
+              }
+            }}
+            className="h-auto border-none bg-transparent px-0 font-headline text-2xl text-foreground shadow-none focus-visible:ring-0 sm:text-3xl"
+          />
+        ) : (
+          <h1
+            onClick={() => {
+              setEditedName(template.name);
+              setIsEditingName(true);
+            }}
+            className="cursor-text font-headline text-2xl text-foreground transition-colors hover:text-primary/80 sm:text-3xl"
+          >
+            {template.name}
+          </h1>
+        )}
+      </div>
 
-      {/* Template Items */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t('template.rows', 'Items')} ({template.rows.length})
-          </CardTitle>
-          <CardDescription>
-            {t('template.rowsDescription', 'Items to include when using this template')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Add Row Form */}
-          <div className="p-4 rounded-lg border border-dashed border-muted-foreground/25 bg-muted/50">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add new item..."
-                className="flex-1"
-                value={newRowName}
-                onChange={(e) => setNewRowName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleAddRow();
-                  }
-                }}
-              />
-              <Button variant="outline" size="sm" onClick={handleAddRow} disabled={!newRowName.trim()}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+      {/* Editable description */}
+      <div className="mb-8">
+        {isEditingDescription ? (
+          <Input
+            ref={descriptionInputRef}
+            value={editedDescription}
+            onChange={(e) => setEditedDescription(e.target.value)}
+            onBlur={handleDescriptionSave}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleDescriptionSave();
+              } else if (e.key === 'Escape') {
+                setIsEditingDescription(false);
+              }
+            }}
+            placeholder={t('template.descriptionPlaceholder', 'Add a description...')}
+            className="h-auto border-none bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
+          />
+        ) : (
+          <p
+            onClick={() => {
+              setEditedDescription(template.description ?? '');
+              setIsEditingDescription(true);
+            }}
+            className="cursor-text text-sm text-muted-foreground transition-colors hover:text-foreground/70"
+          >
+            {template.description || t('template.descriptionPlaceholder', 'Add a description...')}
+          </p>
+        )}
+      </div>
 
-          {/* Items List */}
-          {template.rows.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground text-sm mb-3">
-                {isEditing ? '✏️ No items yet. Add one above!' : '📋 No items in this template'}
-              </p>
-              {isEditing && (
-                <p className="text-xs text-muted-foreground">
-                  Items you add here will be included when creating checklists from this template
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {template.rows.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent transition-colors group"
-                >
-                  <GripVertical className="h-4 w-4 text-muted-foreground/50 flex-shrink-0" />
-                  <span className="flex-1 text-sm">{item.name}</span>
-                  <button
-                    onClick={() => handleRemoveRow(item.id)}
-                    className="p-1 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10 rounded"
+      {/* Items section */}
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-medium text-muted-foreground">
+            {t('template.items', 'Items')} ({template.rows.length})
+          </h2>
+        </div>
+
+        {/* Row list */}
+        <div className="space-y-0.5">
+          {template.rows
+            .sort((a, b) => a.position - b.position)
+            .map((row) => (
+              <div
+                key={row.id}
+                className="group flex items-center gap-2 rounded-lg px-2 py-2.5 transition-colors hover:bg-accent/50"
+              >
+                <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/30" />
+
+                {editingRowId === row.id ? (
+                  <Input
+                    ref={rowInputRef}
+                    value={rowEditValue}
+                    onChange={(e) => setRowEditValue(e.target.value)}
+                    onBlur={handleRowEditSave}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleRowEditSave();
+                      } else if (e.key === 'Escape') {
+                        setEditingRowId(null);
+                      }
+                    }}
+                    className="h-auto flex-1 border-none bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
+                  />
+                ) : (
+                  <span
+                    onClick={() => {
+                      setRowEditValue(row.name);
+                      setEditingRowId(row.id);
+                    }}
+                    className="flex-1 cursor-text text-sm text-foreground/90"
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                  <span className="text-xs text-muted-foreground/50">
-                    {new Date(item.createdAt).toLocaleDateString()}
+                    {row.name}
                   </span>
-                </div>
-              ))}
-            </div>
-          )}
+                )}
 
-          {/* Items Info */}
-          {!isEditing && template.rows.length > 0 && (
-            <div className="mt-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
-              <p className="text-xs text-blue-900 dark:text-blue-100">
-                💡 All {template.rows.length} items will be added to your checklist when you use this template
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <button
+                  onClick={() => handleRemoveRow(row.id)}
+                  className="shrink-0 rounded p-1 text-muted-foreground/30 transition-colors hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+        </div>
 
-      {/* Info Card */}
-      <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-        <CardContent className="pt-6">
-          <div className="space-y-3">
-            <h3 className="font-semibold text-blue-900 dark:text-blue-100">💡 How to use this template</h3>
-            <ul className="text-sm text-blue-800 dark:text-blue-100 space-y-2 ml-4">
-              <li>✓ Save time by reusing this template for recurring tasks</li>
-              <li>✓ All {template.rows.length} items will be added to your new checklist</li>
-              <li>✓ You can edit items after creating the checklist</li>
-            </ul>
-          </div>
-          <div className="mt-6 pt-4 border-t border-blue-200 dark:border-blue-800">
-            <p className="text-xs text-blue-700 dark:text-blue-300">
-              <strong>Next step:</strong> Create a checklist from this template on the checklist page
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Add new item */}
+        <div className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-muted-foreground/20 px-2 py-2">
+          <Plus className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+          <Input
+            ref={newRowInputRef}
+            value={newRowName}
+            onChange={(e) => setNewRowName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddRow();
+              }
+            }}
+            placeholder={t('template.addItem', 'Add an item...')}
+            className="h-auto flex-1 border-none bg-transparent px-0 text-sm shadow-none placeholder:text-muted-foreground/40 focus-visible:ring-0"
+          />
+          {newRowName.trim() && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleAddRow}
+              className="h-7 px-2 text-xs text-primary hover:bg-primary/10"
+            >
+              {t('common.add', 'Add')}
+            </Button>
+          )}
+        </div>
+
+        {/* Empty state hint */}
+        {template.rows.length === 0 && (
+          <p className="mt-4 text-center text-xs text-muted-foreground/60">
+            {t('template.addItemHint', 'Start adding items that will be included when you use this template')}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

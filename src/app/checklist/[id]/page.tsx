@@ -158,7 +158,7 @@ export default function ChecklistDetailPage() {
                 activeFilter={activeFilter}
                 onFilterChange={setActiveFilter}
                 onTemplateApplied={() => {
-                  mutate([`/api/v1/checklists/${checklistId}`]);
+                  mutate(['checklist-items', Number(checklistId)]);
                 }}
               />
             </DragDropContext>
