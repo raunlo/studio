@@ -4,12 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, ChevronRight, Trash2 } from 'lucide-react';
+import { Plus, Search, ChevronRight, Trash2, Share2, LogOut } from 'lucide-react';
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
-import { useGetAllTemplates, useCreateTemplate, useDeleteTemplate } from '@/api/template/template';
+import { useGetAllTemplates, useCreateTemplate, useDeleteTemplate, leaveSharedTemplate } from '@/api/template/template';
 import type { Template } from '@/api/template/template';
+import { ShareTemplateModal } from '@/components/share-template-modal';
 
 export function TemplateOverview() {
   const { t } = useTranslation();
@@ -36,6 +37,7 @@ export function TemplateOverview() {
   });
 
   const [search, setSearch] = useState('');
+  const [sharingTemplate, setSharingTemplate] = useState<{ id: number; name: string } | null>(null);
 
   const templates: Template[] = data ?? [];
 
@@ -50,26 +52,15 @@ export function TemplateOverview() {
     );
   }, [templates, search]);
 
-  // Group by first letter, sorted alphabetically
-  const { grouped, letters } = useMemo(() => {
-    const map = new Map<string, Template[]>();
-    const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
-
-    for (const tmpl of sorted) {
-      const letter = tmpl.name[0]?.toUpperCase() || '#';
-      const key = /[A-ZÄÖÜÕ]/.test(letter) ? letter : '#';
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(tmpl);
-    }
-
-    const sortedLetters = [...map.keys()].sort((a, b) => {
-      if (a === '#') return 1;
-      if (b === '#') return -1;
-      return a.localeCompare(b);
-    });
-
-    return { grouped: map, letters: sortedLetters };
-  }, [filtered]);
+  // Split into owned and shared
+  const ownedTemplates = useMemo(
+    () => [...filtered.filter((t) => t.isOwner)].sort((a, b) => a.name.localeCompare(b.name)),
+    [filtered],
+  );
+  const sharedTemplates = useMemo(
+    () => [...filtered.filter((t) => !t.isOwner)].sort((a, b) => a.name.localeCompare(b.name)),
+    [filtered],
+  );
 
   const handleCreateTemplate = async () => {
     try {
@@ -102,12 +93,27 @@ export function TemplateOverview() {
     [deleteTemplateTrigger, t],
   );
 
-  const scrollToLetter = (letter: string) => {
-    const el = document.getElementById(`template-section-${letter}`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
+  const handleLeaveTemplate = useCallback(
+    async (e: React.MouseEvent, templateId: number) => {
+      e.stopPropagation();
+      if (!window.confirm(t('confirm.leaveTemplate', 'Leave this shared template? You can rejoin using the invite link.'))) return;
+      try {
+        await leaveSharedTemplate(templateId);
+        toast({
+          title: t('toast.leftTemplate', 'Left template'),
+          description: t('toast.leftTemplateDescription', 'You have successfully left the shared template'),
+        });
+        mutate();
+      } catch (error) {
+        console.error('Failed to leave template:', error);
+        toast({
+          title: t('toast.failedToLeaveTemplate', 'Failed to leave template'),
+          variant: 'destructive',
+        });
+      }
+    },
+    [mutate, t],
+  );
 
   if (isLoading) {
     return (
@@ -178,26 +184,23 @@ export function TemplateOverview() {
         <div className="relative flex flex-1 overflow-hidden">
           {/* Template list */}
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pb-8">
-            {letters.map((letter) => (
-              <div key={letter} id={`template-section-${letter}`}>
-                {/* Section header */}
+            {/* My Templates section */}
+            {ownedTemplates.length > 0 && (
+              <div>
                 <div className="sticky top-0 z-10 bg-muted/80 px-4 py-1 backdrop-blur-sm sm:px-6">
-                  <span className="text-xs font-semibold text-muted-foreground">{letter}</span>
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {t('template.myTemplates', 'My Templates')}
+                  </span>
                 </div>
-
-                {/* Items */}
-                {grouped.get(letter)!.map((template) => (
+                {ownedTemplates.map((template) => (
                   <button
                     key={template.id}
                     onClick={() => router.push(`/templates/${template.id}`)}
                     className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors active:bg-accent sm:px-6 sm:hover:bg-accent"
                   >
-                    {/* Avatar circle with first letter */}
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                       {template.name[0]?.toUpperCase()}
                     </div>
-
-                    {/* Content */}
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium text-foreground">
                         {template.name}
@@ -207,8 +210,13 @@ export function TemplateOverview() {
                         {template.description && ` · ${template.description}`}
                       </div>
                     </div>
-
-                    {/* Delete + chevron */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSharingTemplate({ id: template.id, name: template.name }); }}
+                      className="shrink-0 rounded p-1.5 text-muted-foreground/50 transition-colors hover:bg-primary/10 hover:text-primary sm:opacity-0 sm:group-hover:opacity-100"
+                      title={t('overview.share', 'Share')}
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                    </button>
                     <button
                       onClick={(e) => handleDeleteTemplate(e, template.id)}
                       className="shrink-0 rounded p-1.5 text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
@@ -219,24 +227,57 @@ export function TemplateOverview() {
                   </button>
                 ))}
               </div>
-            ))}
-          </div>
+            )}
 
-          {/* Alphabet sidebar */}
-          {letters.length > 1 && (
-            <div className="absolute right-0 top-0 z-20 flex h-full flex-col items-center justify-center py-2 pr-0.5">
-              {letters.map((letter) => (
-                <button
-                  key={letter}
-                  onClick={() => scrollToLetter(letter)}
-                  className="flex h-[18px] w-5 items-center justify-center text-[10px] font-semibold text-primary active:scale-125"
-                >
-                  {letter}
-                </button>
-              ))}
-            </div>
-          )}
+            {/* Shared with me section */}
+            {sharedTemplates.length > 0 && (
+              <div>
+                <div className="sticky top-0 z-10 bg-muted/80 px-4 py-1 backdrop-blur-sm sm:px-6">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {t('template.sharedWithMe', 'Shared with me')}
+                  </span>
+                </div>
+                {sharedTemplates.map((template) => (
+                  <button
+                    key={template.id}
+                    onClick={() => router.push(`/templates/${template.id}`)}
+                    className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors active:bg-accent sm:px-6 sm:hover:bg-accent"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                      {template.name[0]?.toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-foreground">
+                        {template.name}
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {template.rows?.length ?? 0} {t('templates.items', 'items')}
+                        {template.description && ` · ${template.description}`}
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => handleLeaveTemplate(e, template.id)}
+                      className="shrink-0 rounded p-1.5 text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
+                      title={t('template.leave', 'Leave')}
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                    </button>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+      )}
+
+      {sharingTemplate && (
+        <ShareTemplateModal
+          templateId={sharingTemplate.id}
+          templateName={sharingTemplate.name}
+          isOpen={true}
+          onClose={() => setSharingTemplate(null)}
+        />
       )}
     </div>
   );

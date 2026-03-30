@@ -21,6 +21,8 @@
   "share": {
     "title": "Compartir lista",
     "description": "Crea enlaces de invitación para compartir esta lista con otros",
+    "templateTitle": "Compartir plantilla",
+    "templateDescription": "Crea enlaces de invitación para compartir esta plantilla con otros",
     "createNewInviteLink": "Crear nuevo enlace de invitación",
     "nameOptional": "Nombre (opcional)",
     "namePlaceholder": "Ej: Para Juan, Miembros del equipo",
@@ -57,6 +59,12 @@
     "inviteRevoked": "Invitación revocada",
     "failedToRevoke": "Error al revocar invitación"
   },
+  "templateInvite": {
+    "joining": "Uniéndose a la plantilla...",
+    "successfullyJoined": "¡Te has unido a la plantilla!",
+    "unableToJoin": "No se puede unir a la plantilla",
+    "failedToClaim": "Error al reclamar invitación de plantilla"
+  },
   "invite": {
     "joiningChecklist": "Uniéndose a la lista...",
     "successfullyJoined": "¡Te has unido a la lista!",
@@ -68,11 +76,15 @@
   "toast": {
     "leftChecklist": "Saliste de la lista",
     "leftChecklistDescription": "Has salido exitosamente de la lista compartida",
-    "failedToLeave": "Error al salir de la lista"
+    "failedToLeave": "Error al salir de la lista",
+    "leftTemplate": "Saliste de la plantilla",
+    "leftTemplateDescription": "Has salido exitosamente de la plantilla compartida",
+    "failedToLeaveTemplate": "Error al salir de la plantilla"
   },
   "confirm": {
     "deleteChecklist": "¿Estás seguro de que quieres eliminar esta lista? Esta acción no se puede deshacer.",
-    "leaveChecklist": "¿Estás seguro de que quieres salir de esta lista compartida? Puedes volver a unirte usando el enlace de invitación."
+    "leaveChecklist": "¿Estás seguro de que quieres salir de esta lista compartida? Puedes volver a unirte usando el enlace de invitación.",
+    "leaveTemplate": "¿Salir de esta plantilla compartida? Puedes volver a unirte usando el enlace de invitación."
   },
   "error": {
     "apiConnectionError": "No se pudo conectar al servidor. Por favor verifica que la API esté funcionando y accesible.",

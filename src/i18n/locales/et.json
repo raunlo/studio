@@ -21,6 +21,8 @@
   "share": {
     "title": "Jaga nimekirja",
     "description": "Loo kutsete linke selle nimekirja jagamiseks teistega",
+    "templateTitle": "Jaga malli",
+    "templateDescription": "Loo kutsete linke selle malli jagamiseks teistega",
     "createNewInviteLink": "Loo uus kutselink",
     "nameOptional": "Nimi (valikuline)",
     "namePlaceholder": "Näiteks: Jüri jaoks, Tiimiliikmed",
@@ -57,6 +59,12 @@
     "inviteRevoked": "Kutse tühistatud",
     "failedToRevoke": "Kutse tühistamine ebaõnnestus"
   },
+  "templateInvite": {
+    "joining": "Liitun malliga...",
+    "successfullyJoined": "Oled malliga liitunud!",
+    "unableToJoin": "Malliga liitumine ebaõnnestus",
+    "failedToClaim": "Malli kutse kasutamine ebaõnnestus"
+  },
   "invite": {
     "joiningChecklist": "Liitun nimekirjaga...",
     "successfullyJoined": "Oled nimekirjaga liitunud!",
@@ -68,11 +76,15 @@
   "toast": {
     "leftChecklist": "Lahkusid nimekirjast",
     "leftChecklistDescription": "Oled edukalt jagatud nimekirjast lahkunud",
-    "failedToLeave": "Nimekirjast lahkumine ebaõnnestus"
+    "failedToLeave": "Nimekirjast lahkumine ebaõnnestus",
+    "leftTemplate": "Lahkusid mallist",
+    "leftTemplateDescription": "Oled edukalt jagatud mallist lahkunud",
+    "failedToLeaveTemplate": "Mallist lahkumine ebaõnnestus"
   },
   "confirm": {
     "deleteChecklist": "Kas oled kindel, et soovid selle nimekirja kustutada? Seda toimingut ei saa tagasi võtta.",
-    "leaveChecklist": "Kas oled kindel, et soovid sellest jagatud nimekirjast lahkuda? Saad kutselingi kaudu uuesti liituda."
+    "leaveChecklist": "Kas oled kindel, et soovid sellest jagatud nimekirjast lahkuda? Saad kutselingi kaudu uuesti liituda.",
+    "leaveTemplate": "Lahkuda sellest jagatud mallist? Saad kutselingi kaudu uuesti liituda."
   },
   "error": {
     "apiConnectionError": "Serveriga ühenduse loomine ebaõnnestus. Palun veendu, et API töötab ja on kättesaadav.",
