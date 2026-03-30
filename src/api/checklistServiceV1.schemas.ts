@@ -470,46 +470,6 @@ export interface CreateTemplateFromItemRequest {
   checklistItemId: number;
 }
 
-export interface TemplateInviteResponse {
-  /** @minimum 1 */
-  id: number;
-  /** @minimum 1 */
-  templateId: number;
-  /**
-   * Optional friendly name for the invite
-   * @nullable
-   */
-  name?: string | null;
-  /**
-   * @minLength 64
-   * @maxLength 64
-   */
-  inviteToken: string;
-  /** Full URL for sharing */
-  inviteUrl: string;
-  createdAt: string;
-  /** @nullable */
-  expiresAt?: string | null;
-  /**
-   * User ID who claimed (for backend use only, don't display)
-   * @nullable
-   */
-  claimedBy?: string | null;
-  /** @nullable */
-  claimedAt?: string | null;
-  isSingleUse: boolean;
-  /** Computed field indicating if invite is expired */
-  isExpired: boolean;
-  /** Computed field indicating if invite is claimed */
-  isClaimed: boolean;
-}
-
-export interface ClaimTemplateInviteResponse {
-  /** @minimum 1 */
-  templateId: number;
-  message?: string;
-}
-
 /**
  * A list of checklist items with statistics
  */

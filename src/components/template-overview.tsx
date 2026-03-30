@@ -4,13 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, ChevronRight, Trash2, Share2, LogOut } from 'lucide-react';
+import { Plus, Search, ChevronRight, Trash2 } from 'lucide-react';
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
-import { useGetAllTemplates, useCreateTemplate, useDeleteTemplate, leaveSharedTemplate } from '@/api/template/template';
+import { useGetAllTemplates, useCreateTemplate, deleteTemplate } from '@/api/template/template';
 import type { Template } from '@/api/template/template';
-import { ShareTemplateModal } from '@/components/share-template-modal';
+// import { ShareTemplateModal } from '@/components/share-template-modal'; // disabled: template sharing via workspace
 
 export function TemplateOverview() {
   const { t } = useTranslation();
@@ -20,47 +20,22 @@ export function TemplateOverview() {
   const { data, isLoading, mutate } = useGetAllTemplates();
   const { trigger: createTemplateTrigger, isMutating: isCreating } = useCreateTemplate();
 
-  const { trigger: deleteTemplateTrigger } = useDeleteTemplate({
-    swr: {
-      onSuccess: () => {
-        mutate();
-        toast({ title: t('template.deleted', 'Template deleted') });
-      },
-      onError: () => {
-        toast({
-          title: t('common.error', 'Error'),
-          description: t('template.deleteFailed', 'Failed to delete template'),
-          variant: 'destructive',
-        });
-      },
-    },
-  });
 
   const [search, setSearch] = useState('');
-  const [sharingTemplate, setSharingTemplate] = useState<{ id: number; name: string } | null>(null);
 
   const templates: Template[] = data ?? [];
 
   // Filter by search
   const filtered = useMemo(() => {
-    if (!search.trim()) return templates;
+    const sorted = [...templates].sort((a, b) => a.name.localeCompare(b.name));
+    if (!search.trim()) return sorted;
     const q = search.toLowerCase();
-    return templates.filter(
+    return sorted.filter(
       (tmpl) =>
         tmpl.name.toLowerCase().includes(q) ||
         tmpl.rows?.some((r) => r.name.toLowerCase().includes(q)),
     );
   }, [templates, search]);
-
-  // Split into owned and shared
-  const ownedTemplates = useMemo(
-    () => [...filtered.filter((t) => t.isOwner)].sort((a, b) => a.name.localeCompare(b.name)),
-    [filtered],
-  );
-  const sharedTemplates = useMemo(
-    () => [...filtered.filter((t) => !t.isOwner)].sort((a, b) => a.name.localeCompare(b.name)),
-    [filtered],
-  );
 
   const handleCreateTemplate = async () => {
     try {
@@ -85,29 +60,14 @@ export function TemplateOverview() {
       e.stopPropagation();
       if (!window.confirm(t('template.confirmDelete', 'Are you sure?'))) return;
       try {
-        await deleteTemplateTrigger(templateId);
+        await deleteTemplate(templateId);
+        mutate();
+        toast({ title: t('template.deleted', 'Template deleted') });
       } catch (error) {
         console.error('Failed to delete template:', error);
-      }
-    },
-    [deleteTemplateTrigger, t],
-  );
-
-  const handleLeaveTemplate = useCallback(
-    async (e: React.MouseEvent, templateId: number) => {
-      e.stopPropagation();
-      if (!window.confirm(t('confirm.leaveTemplate', 'Leave this shared template? You can rejoin using the invite link.'))) return;
-      try {
-        await leaveSharedTemplate(templateId);
         toast({
-          title: t('toast.leftTemplate', 'Left template'),
-          description: t('toast.leftTemplateDescription', 'You have successfully left the shared template'),
-        });
-        mutate();
-      } catch (error) {
-        console.error('Failed to leave template:', error);
-        toast({
-          title: t('toast.failedToLeaveTemplate', 'Failed to leave template'),
+          title: t('common.error', 'Error'),
+          description: t('template.deleteFailed', 'Failed to delete template'),
           variant: 'destructive',
         });
       }
@@ -184,100 +144,37 @@ export function TemplateOverview() {
         <div className="relative flex flex-1 overflow-hidden">
           {/* Template list */}
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pb-8">
-            {/* My Templates section */}
-            {ownedTemplates.length > 0 && (
-              <div>
-                <div className="sticky top-0 z-10 bg-muted/80 px-4 py-1 backdrop-blur-sm sm:px-6">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {t('template.myTemplates', 'My Templates')}
-                  </span>
+            {filtered.map((template) => (
+              <button
+                key={template.id}
+                onClick={() => router.push(`/templates/${template.id}`)}
+                className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors active:bg-accent sm:px-6 sm:hover:bg-accent"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                  {template.name[0]?.toUpperCase()}
                 </div>
-                {ownedTemplates.map((template) => (
-                  <button
-                    key={template.id}
-                    onClick={() => router.push(`/templates/${template.id}`)}
-                    className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors active:bg-accent sm:px-6 sm:hover:bg-accent"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                      {template.name[0]?.toUpperCase()}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium text-foreground">
-                        {template.name}
-                      </div>
-                      <div className="truncate text-xs text-muted-foreground">
-                        {template.rows?.length ?? 0} {t('templates.items', 'items')}
-                        {template.description && ` · ${template.description}`}
-                      </div>
-                    </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setSharingTemplate({ id: template.id, name: template.name }); }}
-                      className="shrink-0 rounded p-1.5 text-muted-foreground/50 transition-colors hover:bg-primary/10 hover:text-primary sm:opacity-0 sm:group-hover:opacity-100"
-                      title={t('overview.share', 'Share')}
-                    >
-                      <Share2 className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={(e) => handleDeleteTemplate(e, template.id)}
-                      className="shrink-0 rounded p-1.5 text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30" />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Shared with me section */}
-            {sharedTemplates.length > 0 && (
-              <div>
-                <div className="sticky top-0 z-10 bg-muted/80 px-4 py-1 backdrop-blur-sm sm:px-6">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {t('template.sharedWithMe', 'Shared with me')}
-                  </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium text-foreground">
+                    {template.name}
+                  </div>
+                  <div className="truncate text-xs text-muted-foreground">
+                    {template.rows?.length ?? 0} {t('templates.items', 'items')}
+                    {template.description && ` · ${template.description}`}
+                  </div>
                 </div>
-                {sharedTemplates.map((template) => (
+                {template.isOwner && (
                   <button
-                    key={template.id}
-                    onClick={() => router.push(`/templates/${template.id}`)}
-                    className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors active:bg-accent sm:px-6 sm:hover:bg-accent"
+                    onClick={(e) => handleDeleteTemplate(e, template.id)}
+                    className="shrink-0 rounded p-1.5 text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
                   >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                      {template.name[0]?.toUpperCase()}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium text-foreground">
-                        {template.name}
-                      </div>
-                      <div className="truncate text-xs text-muted-foreground">
-                        {template.rows?.length ?? 0} {t('templates.items', 'items')}
-                        {template.description && ` · ${template.description}`}
-                      </div>
-                    </div>
-                    <button
-                      onClick={(e) => handleLeaveTemplate(e, template.id)}
-                      className="shrink-0 rounded p-1.5 text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100"
-                      title={t('template.leave', 'Leave')}
-                    >
-                      <LogOut className="h-3.5 w-3.5" />
-                    </button>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
-                ))}
-              </div>
-            )}
+                )}
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30" />
+              </button>
+            ))}
           </div>
         </div>
-      )}
-
-      {sharingTemplate && (
-        <ShareTemplateModal
-          templateId={sharingTemplate.id}
-          templateName={sharingTemplate.name}
-          isOpen={true}
-          onClose={() => setSharingTemplate(null)}
-        />
       )}
     </div>
   );

@@ -30,7 +30,7 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
 
   const { data: template, isLoading, mutate } = useGetTemplateById(templateId);
 
-  const { trigger: rawUpdateTrigger } = useUpdateTemplate({
+  const { trigger: rawUpdateTrigger } = useUpdateTemplate(templateId, {
     swr: {
       onSuccess: () => {
         mutate();
@@ -64,7 +64,7 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
     };
   }, []);
 
-  const { trigger: deleteTemplateTrigger } = useDeleteTemplate({
+  const { trigger: deleteTemplateTrigger } = useDeleteTemplate(templateId, {
     swr: {
       onSuccess: () => {
         toast({ title: t('template.deleted', 'Template deleted') });
@@ -134,12 +134,9 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
     async (updates: { name?: string; description?: string }) => {
       if (!template) return;
       await updateTemplateTrigger({
-        id: templateId,
-        data: {
-          name: updates.name ?? template.name,
-          description: updates.description ?? template.description ?? undefined,
-          rows: template.rows.map((r) => ({ name: r.name, position: r.position })),
-        },
+        name: updates.name ?? template.name,
+        description: updates.description ?? template.description ?? undefined,
+        rows: template.rows.map((r) => ({ name: r.name, position: r.position })),
       });
     },
     [template, templateId, updateTemplateTrigger],
@@ -186,12 +183,9 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
 
     try {
       await updateTemplateTrigger({
-        id: templateId,
-        data: {
-          name: template.name,
-          description: template.description || undefined,
-          rows: updatedRows,
-        },
+        name: template.name,
+        description: template.description || undefined,
+        rows: updatedRows,
       });
       setNewRowName('');
       // Re-focus the input for rapid adding
@@ -211,12 +205,9 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
 
       try {
         await updateTemplateTrigger({
-          id: templateId,
-          data: {
-            name: template.name,
-            description: template.description || undefined,
-            rows: updatedRows,
-          },
+          name: template.name,
+          description: template.description || undefined,
+          rows: updatedRows,
         });
       } catch (error) {
         console.error('Failed to remove row:', error);
@@ -239,12 +230,9 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
 
     try {
       await updateTemplateTrigger({
-        id: templateId,
-        data: {
-          name: template.name,
-          description: template.description || undefined,
-          rows: updatedRows,
-        },
+        name: template.name,
+        description: template.description || undefined,
+        rows: updatedRows,
       });
     } catch (error) {
       console.error('Failed to update row:', error);

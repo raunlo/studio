@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
 import { getPredefinedItems, PredefinedChecklistItem } from '@/lib/knowledge-base';
 import { PredefinedItemsDropdown } from './predefined-items-dropdown';
-import { useGetAllTemplates, useApplyTemplate, Template } from '@/api/template/template';
+import { useGetAllTemplates, applyTemplate, Template } from '@/api/template/template';
 
 type AddItemFormProps = {
   checklistId: number;
@@ -26,7 +26,7 @@ export function AddItemForm({ checklistId, onFormSubmit, onTemplateApplied }: Ad
   const formRef = useRef<HTMLFormElement>(null);
 
   const { data: templates } = useGetAllTemplates();
-  const applyTemplate = useApplyTemplate();
+
 
   const filteredTemplates = useMemo(() => {
     if (!templates || itemText.trim().length < 1) return [];
@@ -44,7 +44,7 @@ export function AddItemForm({ checklistId, onFormSubmit, onTemplateApplied }: Ad
     setIsDropdownOpen(false);
     setFilteredItems([]);
     try {
-      await applyTemplate.trigger({ checklistId, templateId: template.id });
+      await applyTemplate(checklistId, template.id);
       onTemplateApplied?.();
     } catch {
       // error handled by SWR

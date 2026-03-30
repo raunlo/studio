@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetAllTemplates, useApplyTemplate, useCreateTemplate, Template } from '@/api/template/template';
+import { useGetAllTemplates, applyTemplate, useCreateTemplate, Template } from '@/api/template/template';
 import { FileText, Plus, Loader2, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -27,7 +27,6 @@ interface TemplateDrawerProps {
 export function TemplateDrawer({ checklistId, onTemplateApplied }: TemplateDrawerProps) {
   const { t } = useTranslation();
   const { data: templates, isLoading } = useGetAllTemplates();
-  const applyTemplate = useApplyTemplate();
   const createTemplate = useCreateTemplate();
 
   const [confirmTemplate, setConfirmTemplate] = useState<Template | null>(null);
@@ -53,10 +52,7 @@ export function TemplateDrawer({ checklistId, onTemplateApplied }: TemplateDrawe
     if (!confirmTemplate) return;
     setApplying(true);
     try {
-      await applyTemplate.trigger({
-        checklistId,
-        templateId: confirmTemplate.id,
-      });
+      await applyTemplate(checklistId, confirmTemplate.id);
       setConfirmTemplate(null);
       onTemplateApplied?.();
     } catch {
