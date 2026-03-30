@@ -315,11 +315,11 @@ paths:
             description: Checklist item id
       responses:
         '200':
-          description: 'Successful request'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChecklistItemResponse'
+           description: "Successful request"
+           content:
+              application/json:
+                  schema:
+                    $ref: '#/components/schemas/ChecklistItemResponse'
         '500':
           description: Internal server error
           content:
@@ -409,11 +409,11 @@ paths:
               $ref: '#/components/schemas/UpdateChecklistItemRequest'
       responses:
         '200':
-          description: Checklist item updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChecklistItemResponse'
+              description: Checklist item updated
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/ChecklistItemResponse'
         '500':
           description: Internal server error
           content:
@@ -529,7 +529,7 @@ paths:
             schema:
               type: object
               required:
-                - newOrderNumber
+               - newOrderNumber
               properties:
                 newOrderNumber:
                   type: number
@@ -622,6 +622,52 @@ paths:
                 $ref: '#/components/schemas/Error'
         '400':
           description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/checklists/{checklistId}/items/{itemId}/restore:
+    post:
+      summary: Restore a soft-deleted checklist item (undo delete)
+      operationId: RestoreChecklistItem
+      tags:
+        - checklistItem
+      parameters:
+        - $ref: '#/components/parameters/X-Client-Id'
+        - name: checklistId
+          in: path
+          required: true
+          schema:
+            type: number
+            x-go-type: uint
+            minimum: 1
+            format: int64
+          description: Checklist ID
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: number
+            x-go-type: uint
+            minimum: 1
+            format: int64
+            description: Checklist item id
+      responses:
+        '200':
+          description: Item restored successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistItemResponse'
+        '404':
+          description: Checklist item not found or not deleted
           content:
             application/json:
               schema:
@@ -1014,22 +1060,49 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/v1/session/client-id:
-    post:
-      summary: Generate server-side client ID
-      operationId: generateClientId
-      description: Generates a secure, server-validated client ID for SSE connections. The client ID is tied to the authenticated user and expires after 24 hours.
+  /api/v1/templates:
+    parameters:
+      - $ref: '#/components/parameters/X-Client-Id'
+    get:
+      summary: List all templates
+      operationId: getAllTemplates
       tags:
-        - session
+        - template
       responses:
         '200':
-          description: Client ID generated successfully
+          description: List of user templates
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ClientIdResponse'
-        '401':
-          description: User not authenticated
+                type: array
+                items:
+                  $ref: '#/components/schemas/TemplateResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new template
+      operationId: createTemplate
+      tags:
+        - template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '400':
+          description: Bad request
           content:
             application/json:
               schema:
@@ -1040,6 +1113,191 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /api/v1/templates/from-items:
+    parameters:
+      - $ref: '#/components/parameters/X-Client-Id'
+    post:
+      summary: Create template from existing checklist item
+      operationId: createTemplateFromItem
+      tags:
+        - template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateFromItemRequest'
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Checklist not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/templates/{templateId}:
+    parameters:
+      - $ref: '#/components/parameters/X-Client-Id'
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: number
+          x-go-type: uint
+          minimum: 1
+        description: Template ID
+    get:
+      summary: Get template by ID
+      operationId: getTemplateById
+      tags:
+        - template
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update template
+      operationId: updateTemplate
+      tags:
+        - template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '200':
+          description: Template updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete template
+      operationId: deleteTemplate
+      tags:
+        - template
+      responses:
+        '204':
+          description: Template deleted
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/checklists/{checklistId}/apply-template/{templateId}:
+    parameters:
+      - $ref: '#/components/parameters/X-Client-Id'
+      - name: checklistId
+        in: path
+        required: true
+        schema:
+          type: number
+          x-go-type: uint
+          minimum: 1
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: number
+          x-go-type: uint
+          minimum: 1
+    post:
+      summary: Apply template to checklist (creates one checklist item with rows)
+      operationId: applyTemplate
+      tags:
+        - template
+      responses:
+        '200':
+          description: Checklist item created from template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistItemResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+  # DISABLED: Template invite endpoints removed — template sharing replaced by workspace sharing.
+  # Endpoints removed: GET/POST /templates/{id}/invites, DELETE /templates/invites/{id},
+  #                    POST /template-invites/{token}/claim, POST /templates/{id}/leave
 
 components:
   responses:
@@ -1093,11 +1351,11 @@ components:
           maxLength: 500
           description: Checklist item name (1-500 characters)
         rows:
-          type: array
-          maxItems: 100
-          description: Checklist item rows (max 100 rows per item)
-          items:
-            $ref: '#/components/schemas/CreateOrUpdateChecklistItemRowRequest'
+            type: array
+            maxItems: 100
+            description: Checklist item rows (max 100 rows per item)
+            items:
+                $ref: '#/components/schemas/CreateOrUpdateChecklistItemRowRequest'
       required:
         - name
     UpdateChecklistItemRequest:
@@ -1366,6 +1624,8 @@ components:
           - checklistItemCreated: ChecklistItemResponse
           - checklistItemUpdated: ChecklistItemResponse
           - checklistItemDeleted: ChecklistItemDeletedEventPayload
+          - checklistItemSoftDeleted: ChecklistItemSoftDeletedEventPayload
+          - checklistItemRestored: ChecklistItemRestoredEventPayload
           - checklistItemRowAdded: ChecklistItemRowResponse
           - checklistItemRowUpdated: ChecklistItemRowResponse
           - checklistItemRowDeleted: ChecklistItemRowDeletedEventPayload
@@ -1381,6 +1641,8 @@ components:
             - checklistItemCreated
             - checklistItemUpdated
             - checklistItemDeleted
+            - checklistItemSoftDeleted
+            - checklistItemRestored
             - checklistItemRowAdded
             - checklistItemRowUpdated
             - checklistItemRowDeleted
@@ -1389,7 +1651,8 @@ components:
           description: |
             Payload structure depends on event type:
               - checklistItemCreated, checklistItemUpdated: ChecklistItemResponse
-              - checklistItemDeleted: ChecklistItemDeletedEventPayload
+              - checklistItemDeleted, checklistItemSoftDeleted: ChecklistItemDeletedEventPayload
+              - checklistItemRestored: ChecklistItemRestoredEventPayload
               - checklistItemRowAdded, checklistItemRowUpdated: ChecklistItemRowResponse
               - checklistItemRowDeleted: ChecklistItemRowDeletedEventPayload
               - checklistItemReordered: ChecklistItemReorderedEventPayload
@@ -1399,10 +1662,12 @@ components:
             - $ref: '#/components/schemas/ChecklistItemRowDeletedEventPayload'
             - $ref: '#/components/schemas/ChecklistItemRowAddedEventPayload'
             - $ref: '#/components/schemas/ChecklistItemDeletedEventPayload'
+            - $ref: '#/components/schemas/ChecklistItemSoftDeletedEventPayload'
+            - $ref: '#/components/schemas/ChecklistItemRestoredEventPayload'
             - $ref: '#/components/schemas/ChecklistItemReorderedEventPayload'
       required:
         - type
-
+    
     ChecklistItemRowDeletedEventPayload:
       type: object
       properties:
@@ -1446,6 +1711,26 @@ components:
           minimum: 1
       required:
         - itemId
+    ChecklistItemSoftDeletedEventPayload:
+      type: object
+      description: Sent when an item is soft-deleted (can be undone via restore)
+      properties:
+        itemId:
+          type: number
+          x-go-type: uint
+          nullable: false
+          format: int64
+          minimum: 1
+      required:
+        - itemId
+    ChecklistItemRestoredEventPayload:
+      type: object
+      description: Sent when a soft-deleted item is restored (undo delete)
+      properties:
+        item:
+          $ref: '#/components/schemas/ChecklistItemResponse'
+      required:
+        - item
     ChecklistItemReorderedEventPayload:
       type: object
       properties:
@@ -1632,12 +1917,121 @@ components:
         - exportedAt
         - checklists
 
-    ClientIdResponse:
+    TemplateResponse:
       type: object
-      description: Response containing a server-generated client ID
       properties:
-        clientId:
+        id:
+          type: number
+          x-go-type: uint
+          format: int64
+        userId:
           type: string
-          description: Secure, server-validated client ID for SSE connections
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateRowResponse'
+        isOwner:
+          type: boolean
+          description: True if the current user owns this template, false if shared
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
       required:
-        - clientId
+        - id
+        - userId
+        - name
+        - rows
+        - isOwner
+        - createdAt
+        - updatedAt
+
+    TemplateRowResponse:
+      type: object
+      properties:
+        id:
+          type: number
+          x-go-type: uint
+          format: int64
+        templateId:
+          type: number
+          x-go-type: uint
+          format: int64
+        name:
+          type: string
+        position:
+          type: number
+          format: double
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - templateId
+        - name
+        - position
+        - createdAt
+        - updatedAt
+
+    CreateTemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateTemplateRowRequest'
+      required:
+        - name
+
+    CreateTemplateRowRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        position:
+          type: number
+          format: double
+      required:
+        - name
+        - position
+
+    CreateTemplateFromItemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        checklistId:
+          type: number
+          x-go-type: uint
+          format: int64
+          description: The checklist to copy the item from
+        checklistItemId:
+          type: number
+          x-go-type: uint
+          format: int64
+          description: The checklist item to copy into the template
+      required:
+        - name
+        - checklistId
+        - checklistItemId
+
+    # DISABLED: TemplateInviteResponse and ClaimTemplateInviteResponse removed
+    # — template sharing replaced by workspace sharing.

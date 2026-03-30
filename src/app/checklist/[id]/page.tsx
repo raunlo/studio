@@ -100,8 +100,8 @@ export default function ChecklistDetailPage() {
   return (
     <div className="w-full bg-background">
       <div className="container mx-auto w-full px-4 py-4 sm:max-w-2xl sm:px-6 sm:py-6">
-        {/* Header with back button - Mobile optimized */}
-        <div className="mb-4 flex items-center justify-between gap-4 sm:mb-6">
+        {/* Header with back button */}
+        <div className="mb-4 sm:mb-6">
           <Button
             variant="ghost"
             onClick={handleBackToOverview}
@@ -157,11 +157,15 @@ export default function ChecklistDetailPage() {
                 checklist={checklist}
                 activeFilter={activeFilter}
                 onFilterChange={setActiveFilter}
+                onTemplateApplied={() => {
+                  mutate(['checklist-items', Number(checklistId)]);
+                }}
               />
             </DragDropContext>
           </div>
         )}
       </div>
+
     </div>
   );
 }

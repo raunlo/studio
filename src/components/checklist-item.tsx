@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,8 +16,10 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { Drawer } from 'vaul';
-import { Plus, Trash2, Check, X, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Check, X, ChevronRight, BookmarkPlus } from 'lucide-react';
 import { ChecklistItem, ChecklistItemRow } from '@/components/shared/types';
+import { useCreateTemplateFromItem, useGetAllTemplates, useUpdateTemplate } from '@/api/template/template';
+import type { Template } from '@/api/template/template';
 import { CheckedState } from '@radix-ui/react-checkbox';
 import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { useTranslation } from 'react-i18next';
@@ -34,6 +36,7 @@ type ChecklistItemProps = {
 
 export function ChecklistItemComponent({
   item,
+  checklistId,
   addRow,
   updateItem,
   deleteItem,
@@ -50,6 +53,21 @@ export function ChecklistItemComponent({
   const [editingRowId, setEditingRowId] = useState<number | null>(null);
   const [titleEditValue, setTitleEditValue] = useState(item.name);
   const [rowEditValue, setRowEditValue] = useState('');
+
+  const [isSaveTemplateOpen, setIsSaveTemplateOpen] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const createTemplateFromItem = useCreateTemplateFromItem();
+  const { data: allTemplates } = useGetAllTemplates();
+  const { trigger: updateTemplateTrigger } = useUpdateTemplate();
+
+  // Find matching template by name
+  const matchingTemplate = useMemo(() => {
+    const name = templateName.trim().toLowerCase();
+    if (!name || !allTemplates) return null;
+    const s =  allTemplates.find((t) => t.name.toLowerCase() === name) ?? null;
+    console.log('Matching template search:', { name, found: s });
+    return s;
+  }, [templateName, allTemplates]);
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const mobileTitleInputRef = useRef<HTMLInputElement>(null);
@@ -242,6 +260,43 @@ export function ChecklistItemComponent({
     setRowEditValue('');
   };
 
+  const handleSaveAsTemplate = async () => {
+    const name = templateName.trim();
+    if (!name || !item.id) return;
+    try {
+      await createTemplateFromItem.trigger({
+        name,
+        checklistId,
+        checklistItemId: item.id,
+      });
+      setIsSaveTemplateOpen(false);
+    } catch {
+      // error handled by SWR
+    }
+  };
+
+  const handleUpdateExistingTemplate = async () => {
+    if (!matchingTemplate || !item.id) return;
+    // Build rows from current checklist item's sub-items
+    const newRows = (item.rows ?? []).map((row, i) => ({
+      name: row.name,
+      position: (i + 1) * 1000,
+    }));
+    try {
+      await updateTemplateTrigger({
+        id: matchingTemplate.id,
+        data: {
+          name: matchingTemplate.name,
+          description: matchingTemplate.description || undefined,
+          rows: newRows,
+        },
+      });
+      setIsSaveTemplateOpen(false);
+    } catch {
+      // error handled by SWR
+    }
+  };
+
   const handleRowKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -366,19 +421,34 @@ export function ChecklistItemComponent({
             </div>
           </div>
 
-          {/* Delete button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteItem(item.id);
-            }}
-            aria-label="Delete item"
-            className="h-8 w-8 shrink-0 touch-manipulation text-muted-foreground/50 transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {/* Item actions */}
+          <div className="flex shrink-0 items-center gap-0.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                setTemplateName(item.name);
+                setIsSaveTemplateOpen(true);
+              }}
+              aria-label="Save as template"
+              className="h-8 w-8 touch-manipulation text-muted-foreground/50 transition-all duration-200 hover:bg-primary/10 hover:text-primary sm:opacity-0 sm:group-hover:opacity-100"
+            >
+              <BookmarkPlus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteItem(item.id);
+              }}
+              aria-label="Delete item"
+              className="h-8 w-8 touch-manipulation text-muted-foreground/50 transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Subitems preview */}
@@ -590,6 +660,163 @@ export function ChecklistItemComponent({
           </Drawer.Portal>
         </Drawer.Root>
       )}
+
+      {/* Bottom Drawer for saving as template */}
+      <Drawer.Root
+        open={isSaveTemplateOpen}
+        onOpenChange={(open) => !open && setIsSaveTemplateOpen(false)}
+        repositionInputs={false}
+      >
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-50 bg-black/40" />
+          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 flex h-auto max-h-[85dvh] flex-col rounded-t-[10px] bg-background outline-none">
+            <div className="mx-auto mb-6 mt-4 h-1.5 w-12 flex-shrink-0 rounded-full bg-muted-foreground/30" />
+            <div
+              className="overflow-y-auto px-6 pb-6"
+              style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+            >
+              <div className="mb-4">
+                <h2 className="mb-1 text-lg font-semibold text-foreground">
+                  {t('item.saveAsTemplate', 'Save as Template')}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {t('item.saveAsTemplateDescription', 'Create a template from this item and its sub-items')}
+                </p>
+              </div>
+              <div className="py-4">
+                <Input
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !matchingTemplate) {
+                      e.preventDefault();
+                      handleSaveAsTemplate();
+                    }
+                  }}
+                  placeholder={t('item.templateNamePlaceholder', 'Template name')}
+                  className="h-12 w-full text-lg"
+                  autoFocus
+                />
+              </div>
+
+              {/* Duplicate detection warning */}
+              {matchingTemplate && (
+                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
+                  <p className="mb-2 text-sm font-medium text-amber-900 dark:text-amber-100">
+                    {t('item.templateExists', 'A template with this name already exists')}
+                  </p>
+
+                  {/* Diff view - only show when there's something to compare */}
+                  {(matchingTemplate.rows.length > 0 || (item.rows?.length ?? 0) > 0) && (
+                  <div className="space-y-2">
+                    {/* Existing template rows */}
+                    {matchingTemplate.rows.length > 0 && (
+                    <div>
+                      <p className="mb-1 text-xs font-medium text-amber-800/70 dark:text-amber-200/70">
+                        {t('item.existingItems', 'In saved template')}
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {matchingTemplate.rows.map((r) => {
+                            const isInCurrent = item.rows?.some(
+                              (cr) => cr.name.toLowerCase() === r.name.toLowerCase(),
+                            );
+                            return (
+                              <span
+                                key={r.id}
+                                className={cn(
+                                  'rounded-md px-2 py-0.5 text-xs',
+                                  isInCurrent
+                                    ? 'bg-amber-200/50 text-amber-900 dark:bg-amber-800/30 dark:text-amber-100'
+                                    : 'bg-red-100 text-red-700 line-through dark:bg-red-900/30 dark:text-red-300',
+                                )}
+                              >
+                                {r.name}
+                              </span>
+                            );
+                          })}
+                      </div>
+                    </div>
+                    )}
+
+                    {/* Current item rows */}
+                    {(item.rows?.length ?? 0) > 0 && (
+                    <div>
+                      <p className="mb-1 text-xs font-medium text-amber-800/70 dark:text-amber-200/70">
+                        {t('item.currentItems', 'In this item')}
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {item.rows!.map((r, i) => {
+                            const isInExisting = matchingTemplate.rows.some(
+                              (tr) => tr.name.toLowerCase() === r.name.toLowerCase(),
+                            );
+                            return (
+                              <span
+                                key={r.id ?? i}
+                                className={cn(
+                                  'rounded-md px-2 py-0.5 text-xs',
+                                  isInExisting
+                                    ? 'bg-amber-200/50 text-amber-900 dark:bg-amber-800/30 dark:text-amber-100'
+                                    : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+                                )}
+                              >
+                                {r.name}
+                              </span>
+                            );
+                          })}
+                      </div>
+                    </div>
+                    )}
+                  </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              {matchingTemplate ? (
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={handleUpdateExistingTemplate}
+                    className="h-12 w-full touch-manipulation"
+                  >
+                    {t('item.updateExisting', 'Update existing template')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleSaveAsTemplate}
+                    className="h-12 w-full touch-manipulation"
+                  >
+                    {t('item.createNew', 'Create new anyway')}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setIsSaveTemplateOpen(false)}
+                    className="h-12 w-full touch-manipulation text-muted-foreground"
+                  >
+                    {t('item.cancel')}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-row gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsSaveTemplateOpen(false)}
+                    className="h-12 flex-1 touch-manipulation"
+                  >
+                    {t('item.cancel')}
+                  </Button>
+                  <Button
+                    onClick={handleSaveAsTemplate}
+                    disabled={!templateName.trim()}
+                    className="h-12 flex-1 touch-manipulation"
+                  >
+                    {t('item.save')}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
 
       {/* Bottom Drawer for editing row - only on mobile */}
       {isMobile && (

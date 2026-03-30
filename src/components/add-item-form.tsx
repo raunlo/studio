@@ -1,26 +1,55 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
 import { getPredefinedItems, PredefinedChecklistItem } from '@/lib/knowledge-base';
 import { PredefinedItemsDropdown } from './predefined-items-dropdown';
+import { useGetAllTemplates, applyTemplate, Template } from '@/api/template/template';
 
 type AddItemFormProps = {
+  checklistId: number;
   onFormSubmit: (text: string) => void;
+  onTemplateApplied?: () => void;
 };
 
-export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
+export function AddItemForm({ checklistId, onFormSubmit, onTemplateApplied }: AddItemFormProps) {
   const { t, ready } = useTranslation();
   const [itemText, setItemText] = useState('');
   const [filteredItems, setFilteredItems] = useState<PredefinedChecklistItem[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isInputFocused, setIsInputFocused] = useState(false); // NEW
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
-  const suppressNextOpenRef = useRef(false); // NEW
+  const suppressNextOpenRef = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
+
+  const { data: templates } = useGetAllTemplates();
+
+
+  const filteredTemplates = useMemo(() => {
+    if (!templates || itemText.trim().length < 1) return [];
+    const q = itemText.toLowerCase();
+    return templates.filter(
+      (tmpl) =>
+        tmpl.name.toLowerCase().includes(q) ||
+        tmpl.rows?.some((r) => r.name.toLowerCase().includes(q)),
+    );
+  }, [templates, itemText]);
+
+  const handleTemplateApply = async (template: Template) => {
+    suppressNextOpenRef.current = true;
+    setItemText('');
+    setIsDropdownOpen(false);
+    setFilteredItems([]);
+    try {
+      await applyTemplate(checklistId, template.id);
+      onTemplateApplied?.();
+    } catch {
+      // error handled by SWR
+    }
+  };
 
   useEffect(() => {
     if (itemText.trim().length > 1) {
@@ -29,7 +58,6 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
 
       const found = allItems.filter((item) => item.text.toLowerCase().includes(lowercasedText));
 
-      // kui just valisime dropdownist, ära ava uuesti
       if (suppressNextOpenRef.current) {
         suppressNextOpenRef.current = false;
         setFilteredItems(found);
@@ -37,13 +65,14 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
         return;
       }
 
+      const hasResults = found.length > 0 || filteredTemplates.length > 0;
       setFilteredItems(found);
-      setIsDropdownOpen(isInputFocused && found.length > 0); // vaid kui input on fookuses
+      setIsDropdownOpen(isInputFocused && hasResults);
     } else {
       setFilteredItems([]);
       setIsDropdownOpen(false);
     }
-  }, [itemText, isInputFocused]);
+  }, [itemText, isInputFocused, filteredTemplates.length]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -94,7 +123,12 @@ export function AddItemForm({ onFormSubmit }: AddItemFormProps) {
           autoComplete="off"
         />
         {isDropdownOpen && (
-          <PredefinedItemsDropdown items={filteredItems} onSelect={handleTemplateClick} />
+          <PredefinedItemsDropdown
+            items={filteredItems}
+            templates={filteredTemplates}
+            onSelect={handleTemplateClick}
+            onTemplateSelect={handleTemplateApply}
+          />
         )}
       </div>
       <Button

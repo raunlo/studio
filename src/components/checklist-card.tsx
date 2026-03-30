@@ -23,10 +23,11 @@ type ChecklistCardProps = {
   checklist: ChecklistResponse | ChecklistWithStats;
   activeFilter?: FilterType;
   onFilterChange?: (filter: FilterType) => void;
+  onTemplateApplied?: () => void;
 };
 
 export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>(
-  ({ checklist, activeFilter = 'all', onFilterChange }, ref) => {
+  ({ checklist, activeFilter = 'all', onFilterChange, onTemplateApplied }, ref) => {
     const { t } = useTranslation();
     const {
       items,
@@ -226,7 +227,11 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
           <CardContent className="flex-grow px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
             {/* Add item form */}
             <div className="mb-2 border-b pb-3">
-              <AddItemForm onFormSubmit={handleFormSubmit} />
+              <AddItemForm
+                checklistId={checklist.id}
+                onFormSubmit={handleFormSubmit}
+                onTemplateApplied={onTemplateApplied}
+              />
             </div>
 
             {/* Filter bar - only show if there are items */}
