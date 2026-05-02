@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
-import { MoreVertical, Edit, Share2, Trash2, Users, LogOut } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Users, LogOut, Circle, ListTodo } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,10 +20,10 @@ interface ChecklistOverviewCardProps {
   isOwner?: boolean;
   isShared?: boolean;
   numberOfSharedUsers?: number;
-  onShare?: (id: number) => void;
   onDelete?: (id: number) => void;
   onEdit?: (id: number) => void;
   onLeave?: (id: number) => void;
+  circleName?: string;
 }
 
 export function ChecklistOverviewCard({
@@ -34,10 +34,10 @@ export function ChecklistOverviewCard({
   isOwner = true,
   isShared = false,
   numberOfSharedUsers = 0,
-  onShare,
   onDelete,
   onEdit,
   onLeave,
+  circleName,
 }: ChecklistOverviewCardProps) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -52,13 +52,6 @@ export function ChecklistOverviewCard({
     e.stopPropagation();
     if (onEdit) {
       onEdit(id);
-    }
-  };
-
-  const handleShare = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onShare) {
-      onShare(id);
     }
   };
 
@@ -88,8 +81,11 @@ export function ChecklistOverviewCard({
       onClick={handleClick}
       className="group relative cursor-pointer overflow-hidden border border-border/60 bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-[var(--shadow-card)] active:scale-[0.98]"
     >
+      {/* Left accent stripe */}
+      <div className="absolute inset-y-0 left-0 w-[3px] bg-primary/20 transition-colors duration-300 group-hover:bg-primary/50" />
+
       {/* Progress bar at top */}
-      <div className="h-1 bg-muted">
+      <div className="h-1.5 bg-border/50">
         <div
           className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-500"
           style={{ width: `${progress}%` }}
@@ -108,10 +104,10 @@ export function ChecklistOverviewCard({
                   <span>{numberOfSharedUsers}</span>
                 </span>
               )}
-              {!isOwner && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                  <Share2 className="h-3 w-3" />
-                  <span>{t('overview.sharedWithMe')}</span>
+              {circleName && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  <Circle className="h-2.5 w-2.5" />
+                  <span>{circleName}</span>
                 </span>
               )}
             </div>
@@ -135,12 +131,6 @@ export function ChecklistOverviewCard({
                 <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
                   <Edit className="mr-2 h-4 w-4" />
                   {t('overview.rename')}
-                </DropdownMenuItem>
-              )}
-              {isOwner && (
-                <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  {t('overview.share')}
                 </DropdownMenuItem>
               )}
               {isOwner ? (
@@ -179,20 +169,25 @@ export function ChecklistOverviewCard({
               </div>
               <span className="text-sm text-muted-foreground">
                 {progress === 100 ? (
-                  <span className="font-medium text-accent">{t('overview.complete')}</span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
+                    {t('overview.complete')}
+                  </span>
                 ) : (
                   `${Math.round(progress)}%`
                 )}
               </span>
             </>
           ) : (
-            <p className="text-sm italic text-muted-foreground">{t('overview.emptyList')}</p>
+            <div className="flex items-center gap-1.5 text-muted-foreground/70">
+              <ListTodo className="h-3.5 w-3.5 flex-shrink-0" />
+              <span className="text-sm">{t('overview.emptyList')}</span>
+            </div>
           )}
         </div>
       </div>
 
       {/* Decorative corner element */}
-      <div className="pointer-events-none absolute bottom-0 right-0 h-16 w-16 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="pointer-events-none absolute bottom-0 right-0 h-16 w-16 opacity-[0.04] transition-opacity group-hover:opacity-[0.12]">
         <svg viewBox="0 0 64 64" className="h-full w-full text-primary/5" fill="currentColor">
           <path d="M64 64V0C64 35.346 35.346 64 0 64h64z" />
         </svg>

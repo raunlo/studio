@@ -1,7 +1,7 @@
 'use client';
 
 import { PredefinedChecklistItem } from '@/lib/knowledge-base';
-import { Template } from '@/api/template/template';
+import type { TemplateResponse as Template } from '@/api/checklistServiceV1.schemas';
 import { FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 

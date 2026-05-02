@@ -1,4 +1,4 @@
-import type { InviteResponse } from '@/api/checklistServiceV1.schemas';
+import type { InviteResponse, WorkspaceInviteResponse } from '@/api/checklistServiceV1.schemas';
 
 export type InviteStatus = 'active' | 'claimed' | 'expired';
 
@@ -115,6 +115,43 @@ export function mapInviteToDisplay(invite: InviteResponse): InviteDisplayData {
       const token = tokenMatch[1];
       // Build frontend URL
       fixedUrl = `${window.location.origin}/invites/${token}/claim`;
+    }
+  }
+
+  return {
+    id: invite.id,
+    url: fixedUrl,
+    status,
+    createdAt: new Date(invite.createdAt),
+    expiresAt,
+    claimedAt,
+    isSingleUse: invite.isSingleUse,
+    expiryLabel: getExpiryLabel(expiresAt, invite.isExpired),
+    statusLabel: getStatusLabel(status),
+  };
+}
+
+/**
+ * Convert workspace API invite response to display-friendly format
+ */
+export function mapWorkspaceInviteToDisplay(invite: WorkspaceInviteResponse): InviteDisplayData {
+  const expiresAt = invite.expiresAt ? new Date(invite.expiresAt) : null;
+  const claimedAt = invite.claimedAt ? new Date(invite.claimedAt) : null;
+
+  let status: InviteStatus;
+  if (invite.isExpired) {
+    status = 'expired';
+  } else if (invite.isClaimed && invite.isSingleUse) {
+    status = 'claimed';
+  } else {
+    status = 'active';
+  }
+
+  let fixedUrl = invite.inviteUrl;
+  if (typeof window !== 'undefined') {
+    const tokenMatch = invite.inviteUrl.match(/\/workspace-invites\/([^/]+)\/claim/);
+    if (tokenMatch && tokenMatch[1]) {
+      fixedUrl = `${window.location.origin}/workspace-invites/${tokenMatch[1]}/claim`;
     }
   }
 

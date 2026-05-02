@@ -2,7 +2,6 @@
 
 import { useTranslation } from 'react-i18next';
 import { ChecklistOverviewCard } from '@/components/checklist-overview-card';
-import { ShareChecklistModal } from '@/components/share-checklist-modal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { leaveSharedChecklist } from '@/api/checklist/checklist';
 import { Button } from '@/components/ui/button';
@@ -14,11 +13,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { useChecklists } from '@/hooks/use-checklists';
+import { useWorkspaces } from '@/hooks/use-workspaces';
 import { AxiosError } from 'axios';
 
 export function ChecklistOverview() {
@@ -34,23 +33,46 @@ export function ChecklistOverview() {
     refreshInterval: 10000,
   });
 
+  const { workspaces } = useWorkspaces();
+  const ownedWorkspaces = (workspaces ?? []).filter((w) => w.isOwner);
+
   const [isCreating, setIsCreating] = useState(false);
   const [newChecklistName, setNewChecklistName] = useState('');
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Auto-select Personal (first owned) workspace when dialog opens
+  const openCreateDialog = () => {
+    setSelectedWorkspaceId(ownedWorkspaces[0]?.id ?? null);
+    setDialogOpen(true);
+  };
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renamingChecklist, setRenamingChecklist] = useState<{ id: number; name: string } | null>(
     null,
   );
   const [newName, setNewName] = useState('');
-  const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [selectedChecklist, setSelectedChecklist] = useState<{ id: number; name: string } | null>(
-    null,
-  );
 
   const checklists = data ?? [];
-  const ownedChecklists = checklists.filter((c) => c.isOwner);
-  const sharedChecklists = checklists.filter((c) => !c.isOwner);
+
+  // Group checklists by circle (includes circle checklists owned by other members)
+  const workspaceMap = new Map((workspaces ?? []).map((w) => [w.id, w.name]));
+  const circleGroups = (workspaces ?? [])
+    .map((w) => ({
+      id: w.id,
+      name: w.name,
+      checklists: checklists.filter((c) => c.workspaceId === w.id),
+    }))
+    .filter((g) => g.checklists.length > 0);
+  // Checklists not in any circle: personal owned or directly shared
+  const ungroupedOwned = checklists.filter(
+    (c) => c.isOwner && (c.workspaceId == null || !workspaceMap.has(c.workspaceId)),
+  );
+  const directlyShared = checklists.filter(
+    (c) => !c.isOwner && (c.workspaceId == null || !workspaceMap.has(c.workspaceId)),
+  );
+  // If user only has one circle (Personal), flatten into a single list
+  const singleCircle = (workspaces ?? []).filter((w) => w.isOwner).length <= 1;
 
   // Time-based emoji for a touch of warmth
   const getTimeEmoji = () => {
@@ -82,21 +104,14 @@ export function ChecklistOverview() {
 
     setIsCreating(true);
     try {
-      await createChecklistMutation(newChecklistName.trim());
+      await createChecklistMutation(newChecklistName.trim(), selectedWorkspaceId ?? undefined);
       setNewChecklistName('');
+      setSelectedWorkspaceId(null);
       setDialogOpen(false);
     } catch (error) {
       console.error('Failed to create checklist:', error);
     } finally {
       setIsCreating(false);
-    }
-  };
-
-  const handleShare = (id: number) => {
-    const checklist = checklists.find((c) => c.id === id);
-    if (checklist) {
-      setSelectedChecklist({ id: checklist.id, name: checklist.name });
-      setShareModalOpen(true);
     }
   };
 
@@ -243,7 +258,7 @@ export function ChecklistOverview() {
           <div className="rounded-xl border-2 border-dashed border-border bg-card px-4 py-20 text-center">
             <div className="mx-auto max-w-md">
               <button
-                onClick={() => setDialogOpen(true)}
+                onClick={openCreateDialog}
                 className="mx-auto mb-4 flex h-16 w-16 cursor-pointer items-center justify-center rounded-xl bg-primary/10 transition-all duration-200 hover:scale-105 hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-95"
                 aria-label={t('overview.newChecklist')}
               >
@@ -252,7 +267,7 @@ export function ChecklistOverview() {
               <h3 className="font-headline text-xl text-foreground">{t('overview.empty')}</h3>
               <p className="mb-6 mt-2 text-muted-foreground">{t('overview.emptyDescription')}</p>
               <Button
-                onClick={() => setDialogOpen(true)}
+                onClick={openCreateDialog}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -261,73 +276,137 @@ export function ChecklistOverview() {
             </div>
           </div>
         ) : (
-          <div className="space-y-8">
-            {/* My Checklists Section */}
-            {ownedChecklists.length > 0 && (
-              <div>
-                {/* Only show section header if there are also shared checklists */}
-                {sharedChecklists.length > 0 && (
-                  <h2 className="mb-4 font-headline text-xl text-foreground">
-                    {t('overview.myChecklists')}
-                  </h2>
+          <div className="space-y-10">
+            {singleCircle ? (
+              /* Single circle (Personal only) — flat list, show circle badge on non-personal items */
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
+                {checklists.map((checklist) => (
+                  <ChecklistOverviewCard
+                    key={checklist.id}
+                    id={checklist.id}
+                    name={checklist.name}
+                    totalItems={checklist.stats.totalItems}
+                    completedItems={checklist.stats.completedItems}
+                    isOwner={checklist.isOwner}
+                    isShared={checklist.isShared}
+                    numberOfSharedUsers={checklist.numberOfSharedUsers}
+                    circleName={checklist.workspaceId ? workspaceMap.get(checklist.workspaceId) : undefined}
+                    onEdit={handleEdit}
+                    onDelete={checklist.isOwner ? handleDelete : undefined}
+                    onLeave={!checklist.isOwner ? handleLeave : undefined}
+                  />
+                ))}
+              </div>
+            ) : (
+              /* Multiple circles — group by circle, then ungrouped */
+              <>
+                {circleGroups.map((group) => (
+                  <div key={group.id}>
+                    <div className="mb-5 flex items-center gap-3">
+                      <div className="h-px flex-1 bg-border/60" />
+                      <h2 className="font-headline text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+                        {group.name}
+                      </h2>
+                      <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary/10 px-1.5 text-xs font-medium text-primary">
+                        {group.checklists.length}
+                      </span>
+                      <div className="h-px flex-1 bg-border/60" />
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
+                      {group.checklists.map((checklist) => (
+                        <ChecklistOverviewCard
+                          key={checklist.id}
+                          id={checklist.id}
+                          name={checklist.name}
+                          totalItems={checklist.stats.totalItems}
+                          completedItems={checklist.stats.completedItems}
+                          isOwner={checklist.isOwner}
+                          isShared={checklist.isShared}
+                          numberOfSharedUsers={checklist.numberOfSharedUsers}
+                          onEdit={checklist.isOwner ? handleEdit : undefined}
+                          onDelete={checklist.isOwner ? handleDelete : undefined}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {ungroupedOwned.length > 0 && (
+                  <div>
+                    <div className="mb-5 flex items-center gap-3">
+                      <div className="h-px flex-1 bg-border/60" />
+                      <h2 className="font-headline text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+                        {t('overview.myChecklists')}
+                      </h2>
+                      <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary/10 px-1.5 text-xs font-medium text-primary">
+                        {ungroupedOwned.length}
+                      </span>
+                      <div className="h-px flex-1 bg-border/60" />
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
+                      {ungroupedOwned.map((checklist) => (
+                        <ChecklistOverviewCard
+                          key={checklist.id}
+                          id={checklist.id}
+                          name={checklist.name}
+                          totalItems={checklist.stats.totalItems}
+                          completedItems={checklist.stats.completedItems}
+                          isOwner={checklist.isOwner}
+                          isShared={checklist.isShared}
+                          numberOfSharedUsers={checklist.numberOfSharedUsers}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 )}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-                  {ownedChecklists.map((checklist) => (
-                    <ChecklistOverviewCard
-                      key={checklist.id}
-                      id={checklist.id}
-                      name={checklist.name}
-                      totalItems={checklist.stats.totalItems}
-                      completedItems={checklist.stats.completedItems}
-                      isOwner={checklist.isOwner}
-                      isShared={checklist.isShared}
-                      numberOfSharedUsers={checklist.numberOfSharedUsers}
-                      onShare={handleShare}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Shared with me Section */}
-            {sharedChecklists.length > 0 && (
-              <div>
-                <h2 className="mb-4 font-headline text-xl text-foreground">
-                  {t('overview.sharedWithMe')}
-                </h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-                  {sharedChecklists.map((checklist) => (
-                    <ChecklistOverviewCard
-                      key={checklist.id}
-                      id={checklist.id}
-                      name={checklist.name}
-                      totalItems={checklist.stats.totalItems}
-                      completedItems={checklist.stats.completedItems}
-                      isOwner={checklist.isOwner}
-                      isShared={checklist.isShared}
-                      onEdit={handleEdit}
-                      onLeave={handleLeave}
-                    />
-                  ))}
-                </div>
-              </div>
+                {directlyShared.length > 0 && (
+                  <div>
+                    <div className="mb-5 flex items-center gap-3">
+                      <div className="h-px flex-1 bg-border/60" />
+                      <h2 className="font-headline text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+                        {t('overview.sharedWithMe')}
+                      </h2>
+                      <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary/10 px-1.5 text-xs font-medium text-primary">
+                        {directlyShared.length}
+                      </span>
+                      <div className="h-px flex-1 bg-border/60" />
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
+                      {directlyShared.map((checklist) => (
+                        <ChecklistOverviewCard
+                          key={checklist.id}
+                          id={checklist.id}
+                          name={checklist.name}
+                          totalItems={checklist.stats.totalItems}
+                          completedItems={checklist.stats.completedItems}
+                          isOwner={checklist.isOwner}
+                          isShared={checklist.isShared}
+                          onEdit={undefined}
+                          onLeave={handleLeave}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
       </div>
 
       {/* Floating Action Button (FAB) */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger asChild>
-          <button
-            className="group fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-elevated)] transition-all duration-200 hover:scale-110 hover:bg-primary/90 hover:shadow-xl active:scale-95 sm:h-16 sm:w-16"
-            aria-label={t('overview.newChecklist')}
-          >
-            <Plus className="h-6 w-6 transition-transform duration-200 group-hover:rotate-90 sm:h-7 sm:w-7" />
-          </button>
-        </DialogTrigger>
+      <button
+        onClick={openCreateDialog}
+        className="group fixed bottom-20 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-elevated)] transition-all duration-200 hover:scale-110 hover:bg-primary/90 hover:shadow-xl active:scale-95 md:bottom-6 sm:h-16 sm:w-16"
+        aria-label={t('overview.newChecklist')}
+      >
+        <Plus className="h-6 w-6 transition-transform duration-200 group-hover:rotate-90 sm:h-7 sm:w-7" />
+      </button>
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open);
+        if (!open) { setNewChecklistName(''); setSelectedWorkspaceId(null); }
+      }}>
         <DialogContent className="p-6 sm:max-w-[450px]">
           <DialogHeader className="space-y-3">
             <DialogTitle className="font-headline text-2xl">
@@ -356,6 +435,29 @@ export function ChecklistOverview() {
                 className="h-11 text-base"
               />
             </div>
+            {ownedWorkspaces.length > 1 && (
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-foreground">
+                  {t('workspace.title')}
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {ownedWorkspaces.map((w) => (
+                    <button
+                      key={w.id}
+                      type="button"
+                      onClick={() => setSelectedWorkspaceId(selectedWorkspaceId === w.id ? null : w.id)}
+                      className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                        selectedWorkspaceId === w.id
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                      }`}
+                    >
+                      {w.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button
@@ -363,6 +465,7 @@ export function ChecklistOverview() {
               onClick={() => {
                 setDialogOpen(false);
                 setNewChecklistName('');
+                setSelectedWorkspaceId(null);
               }}
               disabled={isCreating}
               className="h-10 px-6"
@@ -379,19 +482,6 @@ export function ChecklistOverview() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Share Checklist Modal */}
-      {selectedChecklist && (
-        <ShareChecklistModal
-          checklistId={selectedChecklist.id}
-          checklistName={selectedChecklist.name}
-          isOpen={shareModalOpen}
-          onClose={() => {
-            setShareModalOpen(false);
-            setSelectedChecklist(null);
-          }}
-        />
-      )}
 
       {/* Rename Checklist Modal */}
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>

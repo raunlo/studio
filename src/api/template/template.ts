@@ -18,10 +18,12 @@ import type {
 } from 'swr/mutation';
 
 import type {
+  AssignTemplateToWorkspaceRequest,
   ChecklistItemResponse,
   CreateTemplateFromItemRequest,
   CreateTemplateRequest,
   Error,
+  ErrorResponseResponse,
   TemplateResponse
 } from '../checklistServiceV1.schemas';
 
@@ -278,6 +280,99 @@ export const useDeleteTemplate = <TError = Error>(
 
   const swrKey = swrOptions?.swrKey ?? getDeleteTemplateMutationKey(templateId);
   const swrFn = getDeleteTemplateMutationFetcher(templateId);
+
+  const query = useSWRMutation(swrKey, swrFn, swrOptions)
+
+  return {
+    swrKey,
+    ...query
+  }
+}
+/**
+ * @summary Assign template to a workspace (circle)
+ */
+export const assignTemplateToWorkspace = (
+    templateId: number,
+    assignTemplateToWorkspaceRequest: AssignTemplateToWorkspaceRequest,
+ ) => {
+    return customInstance<void>(
+    {url: `/api/v1/templates/${templateId}/workspaces`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: assignTemplateToWorkspaceRequest
+    },
+    );
+  }
+
+
+
+export const getAssignTemplateToWorkspaceMutationFetcher = (templateId: number, ) => {
+  return (_: Key, { arg }: { arg: AssignTemplateToWorkspaceRequest }) => {
+    return assignTemplateToWorkspace(templateId, arg);
+  }
+}
+export const getAssignTemplateToWorkspaceMutationKey = (templateId: number,) => [`/api/v1/templates/${templateId}/workspaces`] as const;
+
+export type AssignTemplateToWorkspaceMutationResult = NonNullable<Awaited<ReturnType<typeof assignTemplateToWorkspace>>>
+export type AssignTemplateToWorkspaceMutationError = ErrorResponseResponse
+
+/**
+ * @summary Assign template to a workspace (circle)
+ */
+export const useAssignTemplateToWorkspace = <TError = ErrorResponseResponse>(
+  templateId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof assignTemplateToWorkspace>>, TError, Key, AssignTemplateToWorkspaceRequest, Awaited<ReturnType<typeof assignTemplateToWorkspace>>> & { swrKey?: string }, }
+) => {
+
+  const {swr: swrOptions} = options ?? {}
+
+  const swrKey = swrOptions?.swrKey ?? getAssignTemplateToWorkspaceMutationKey(templateId);
+  const swrFn = getAssignTemplateToWorkspaceMutationFetcher(templateId);
+
+  const query = useSWRMutation(swrKey, swrFn, swrOptions)
+
+  return {
+    swrKey,
+    ...query
+  }
+}
+/**
+ * @summary Remove template from a workspace (circle)
+ */
+export const unassignTemplateFromWorkspace = (
+    templateId: number,
+    workspaceId: number,
+ ) => {
+    return customInstance<void>(
+    {url: `/api/v1/templates/${templateId}/workspaces/${workspaceId}`, method: 'DELETE'
+    },
+    );
+  }
+
+
+
+export const getUnassignTemplateFromWorkspaceMutationFetcher = (templateId: number,
+    workspaceId: number, ) => {
+  return (_: Key, __: { arg: Arguments }) => {
+    return unassignTemplateFromWorkspace(templateId, workspaceId);
+  }
+}
+export const getUnassignTemplateFromWorkspaceMutationKey = (templateId: number,
+    workspaceId: number,) => [`/api/v1/templates/${templateId}/workspaces/${workspaceId}`] as const;
+
+export type UnassignTemplateFromWorkspaceMutationResult = NonNullable<Awaited<ReturnType<typeof unassignTemplateFromWorkspace>>>
+export type UnassignTemplateFromWorkspaceMutationError = ErrorResponseResponse
+
+/**
+ * @summary Remove template from a workspace (circle)
+ */
+export const useUnassignTemplateFromWorkspace = <TError = ErrorResponseResponse>(
+  templateId: number,
+    workspaceId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof unassignTemplateFromWorkspace>>, TError, Key, Arguments, Awaited<ReturnType<typeof unassignTemplateFromWorkspace>>> & { swrKey?: string }, }
+) => {
+
+  const {swr: swrOptions} = options ?? {}
+
+  const swrKey = swrOptions?.swrKey ?? getUnassignTemplateFromWorkspaceMutationKey(templateId,workspaceId);
+  const swrFn = getUnassignTemplateFromWorkspaceMutationFetcher(templateId,workspaceId);
 
   const query = useSWRMutation(swrKey, swrFn, swrOptions)
 

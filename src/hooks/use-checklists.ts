@@ -52,7 +52,7 @@ interface ChecklistsHookResult {
   checklists: ChecklistWithStats[] | undefined;
   isLoading: boolean;
   error: Error | null;
-  createChecklist: (name: string) => Promise<ChecklistResponse | void>;
+  createChecklist: (name: string, workspaceId?: number) => Promise<ChecklistResponse | void>;
   deleteChecklist: (checklistId: number) => Promise<void>;
   renameChecklist: (checklistId: number, newName: string) => Promise<void>;
 }
@@ -127,7 +127,7 @@ export function useChecklists(options: ChecklistsHookOptions = {}): ChecklistsHo
    * Create a new checklist with optimistic update
    */
   const createChecklist = useCallback(
-    async (name: string): Promise<ChecklistResponse | void> => {
+    async (name: string, workspaceId?: number): Promise<ChecklistResponse | void> => {
       const trimmedName = name.trim();
       if (!trimmedName) {
         logger.warn('Attempted to create checklist with empty name');
@@ -149,7 +149,7 @@ export function useChecklists(options: ChecklistsHookOptions = {}): ChecklistsHo
       mutateChecklists([...checklistsRef.current, optimisticChecklist], { revalidate: false });
 
       try {
-        const created = await retryableRequest(() => createChecklistAPI({ name: trimmedName }), 1);
+        const created = await retryableRequest(() => createChecklistAPI({ name: trimmedName, workspaceId }), 1);
 
         logger.info('Checklist created successfully:', created);
 

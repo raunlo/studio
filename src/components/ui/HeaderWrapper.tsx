@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { Header } from '@/components/ui/Header';
+import { BottomNav } from '@/components/ui/BottomNav';
 import { markLoggingOut, NEXT_PUBLIC_API_BASE_URL, getCsrfToken } from '@/lib/axios';
 
 // User interface with profile info from backend
@@ -89,8 +90,13 @@ export const HeaderWrapper = () => {
   };
 
   if (isLoggingOut || !user) {
-    return null;
+    return <BottomNav isAuthenticated={false} />;
   }
 
-  return <Header user={user} onLogin={handleLogin} onLogout={handleLogout} />;
+  return (
+    <>
+      <Header user={user} onLogin={handleLogin} onLogout={handleLogout} />
+      <BottomNav isAuthenticated={user.authenticated} />
+    </>
+  );
 };

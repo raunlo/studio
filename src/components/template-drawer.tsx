@@ -15,7 +15,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetAllTemplates, applyTemplate, useCreateTemplate, Template } from '@/api/template/template';
+import { useGetAllTemplates, applyTemplate, useCreateTemplate } from '@/api/template/template';
+import type { TemplateResponse as Template } from '@/api/checklistServiceV1.schemas';
 import { FileText, Plus, Loader2, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 

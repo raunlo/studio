@@ -31,7 +31,7 @@ export default function RootLayout({
       <body className="min-h-dvh bg-background font-body antialiased">
         <Providers>
           <HeaderWrapper />
-          <main className="min-h-dvh bg-background">{children}</main>
+          <main className="min-h-dvh bg-background pb-16 md:pb-0">{children}</main>
         </Providers>
         <Toaster />
       </body>
