@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
 import { getPredefinedItems, PredefinedChecklistItem } from '@/lib/knowledge-base';
 import { PredefinedItemsDropdown } from './predefined-items-dropdown';
-import { useGetAllTemplates, applyTemplate, Template } from '@/api/template/template';
+import { useGetAllTemplates, applyTemplate } from '@/api/template/template';
+import type { TemplateResponse as Template } from '@/api/checklistServiceV1.schemas';
 
 type AddItemFormProps = {
   checklistId: number;

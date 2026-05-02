@@ -3,7 +3,11 @@
     "close": "Sulge",
     "retry": "Proovi uuesti",
     "loading": "Laadimine...",
-    "somethingWentWrong": "Midagi läks valesti"
+    "somethingWentWrong": "Midagi läks valesti",
+    "optional": "valikuline",
+    "cancel": "Tühista",
+    "create": "Loo",
+    "creating": "Loon..."
   },
   "filter": {
     "all": "Kõik",
@@ -79,12 +83,73 @@
     "failedToLeave": "Nimekirjast lahkumine ebaõnnestus",
     "leftTemplate": "Lahkusid mallist",
     "leftTemplateDescription": "Oled edukalt jagatud mallist lahkunud",
-    "failedToLeaveTemplate": "Mallist lahkumine ebaõnnestus"
+    "failedToLeaveTemplate": "Mallist lahkumine ebaõnnestus",
+    "leftWorkspace": "Lahkusid ringist",
+    "leftWorkspaceDescription": "Oled edukalt ringist lahkunud",
+    "failedToLeaveWorkspace": "Ringist lahkumine ebaõnnestus"
   },
   "confirm": {
     "deleteChecklist": "Kas oled kindel, et soovid selle nimekirja kustutada? Seda toimingut ei saa tagasi võtta.",
     "leaveChecklist": "Kas oled kindel, et soovid sellest jagatud nimekirjast lahkuda? Saad kutselingi kaudu uuesti liituda.",
-    "leaveTemplate": "Lahkuda sellest jagatud mallist? Saad kutselingi kaudu uuesti liituda."
+    "leaveTemplate": "Lahkuda sellest jagatud mallist? Saad kutselingi kaudu uuesti liituda.",
+    "deleteWorkspace": "Kas oled kindel, et soovid selle ringi kustutada? Seda toimingut ei saa tagasi võtta.",
+    "leaveWorkspace": "Kas oled kindel, et soovid sellest ringist lahkuda?"
+  },
+  "nav": {
+    "checklists": "Nimekirjad",
+    "templates": "Mallid",
+    "workspaces": "Ringid"
+  },
+  "workspace": {
+    "title": "Ringid",
+    "personal": "Minu personaalne ringkond",
+    "subtitle": "Jagatud ruumid nimekirjadele ja mallidele",
+    "newWorkspace": "Uus ring",
+    "createTitle": "Uus ring",
+    "createDescription": "Anna ringile nimi, et alustada",
+    "renameTitle": "Nimeta ring ümber",
+    "workspaceNameLabel": "Ringi nimi",
+    "workspaceNamePlaceholder": "nt. Kodu, Sõbrad, Raamatuklubi",
+    "descriptionLabel": "Kirjeldus (valikuline)",
+    "descriptionPlaceholder": "Milleks see ring on?",
+    "cancel": "Tühista",
+    "create": "Loo",
+    "creating": "Loon...",
+    "save": "Salvesta",
+    "saving": "Salvestan...",
+    "empty": "Ringe pole",
+    "emptyDescription": "Loo oma esimene ring, et jagada nimekirju teistega",
+    "createFirst": "Loo oma esimene ring",
+    "members": "liiget",
+    "delete": "Kustuta",
+    "rename": "Nimeta ümber",
+    "share": "Kutsu liikmeid",
+    "leave": "Lahku",
+    "settings": "Seaded",
+    "open": "Ava",
+    "templates": "Mallid",
+    "checklists": "Nimekirjad",
+    "noTemplates": "Selles ringis pole malle",
+    "noChecklists": "Selles ringis pole nimekirju",
+    "membersTitle": "Liikmed",
+    "removeMember": "Eemalda",
+    "owner": "Omanik",
+    "deleteWorkspace": "Kustuta ring",
+    "leaveWorkspace": "Lahku ringist",
+    "dangerZone": "Ohutsoon",
+    "settingsTitle": "Ringi seaded ja liikmed"
+  },
+  "workspaceInvite": {
+    "title": "Kutsu ringi",
+    "description": "Loo kutsed, et lisada liikmeid sellesse ringi",
+    "noActiveInvites": "Aktiivseid kutseid pole. Genereeri link inimeste kutsumiseks.",
+    "shareMessage": "Liitu minu ringiga DailyChexly'l!",
+    "joining": "Liitun ringiga...",
+    "successfullyJoined": "Oled ringiga liitunud!",
+    "redirecting": "Suunan ümber...",
+    "unableToJoin": "Ringiga liitumine ebaõnnestus",
+    "failedToClaim": "Ringi kutse kasutamine ebaõnnestus",
+    "backToWorkspaces": "Tagasi ringidesse"
   },
   "error": {
     "apiConnectionError": "Serveriga ühenduse loomine ebaõnnestus. Palun veendu, et API töötab ja on kättesaadav.",

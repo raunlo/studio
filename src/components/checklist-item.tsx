@@ -18,8 +18,8 @@ import {
 import { Drawer } from 'vaul';
 import { Plus, Trash2, Check, X, ChevronRight, BookmarkPlus } from 'lucide-react';
 import { ChecklistItem, ChecklistItemRow } from '@/components/shared/types';
-import { useCreateTemplateFromItem, useGetAllTemplates, useUpdateTemplate } from '@/api/template/template';
-import type { Template } from '@/api/template/template';
+import { useCreateTemplateFromItem, useGetAllTemplates, updateTemplate } from '@/api/template/template';
+import type { TemplateResponse as Template } from '@/api/checklistServiceV1.schemas';
 import { CheckedState } from '@radix-ui/react-checkbox';
 import { useIsMobile } from '@/lib/hooks/use-media-query';
 import { useTranslation } from 'react-i18next';
@@ -58,7 +58,6 @@ export function ChecklistItemComponent({
   const [templateName, setTemplateName] = useState('');
   const createTemplateFromItem = useCreateTemplateFromItem();
   const { data: allTemplates } = useGetAllTemplates();
-  const { trigger: updateTemplateTrigger } = useUpdateTemplate();
 
   // Find matching template by name
   const matchingTemplate = useMemo(() => {
@@ -283,13 +282,10 @@ export function ChecklistItemComponent({
       position: (i + 1) * 1000,
     }));
     try {
-      await updateTemplateTrigger({
-        id: matchingTemplate.id,
-        data: {
-          name: matchingTemplate.name,
-          description: matchingTemplate.description || undefined,
-          rows: newRows,
-        },
+      await updateTemplate(matchingTemplate.id, {
+        name: matchingTemplate.name,
+        description: matchingTemplate.description || undefined,
+        rows: newRows,
       });
       setIsSaveTemplateOpen(false);
     } catch {

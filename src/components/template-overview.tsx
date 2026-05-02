@@ -4,13 +4,22 @@ import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, ChevronRight, Trash2 } from 'lucide-react';
+import { Plus, Search, ChevronRight, Trash2, Circle } from 'lucide-react';
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
-import { useGetAllTemplates, useCreateTemplate, deleteTemplate } from '@/api/template/template';
-import type { Template } from '@/api/template/template';
-// import { ShareTemplateModal } from '@/components/share-template-modal'; // disabled: template sharing via workspace
+import { useGetAllTemplates, useCreateTemplate, deleteTemplate, assignTemplateToWorkspace } from '@/api/template/template';
+import type { TemplateResponse as Template } from '@/api/checklistServiceV1.schemas';
+import { useWorkspaces } from '@/hooks/use-workspaces';
+import { getCircleColor } from '@/lib/circle-colors';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 export function TemplateOverview() {
   const { t } = useTranslation();
@@ -19,9 +28,19 @@ export function TemplateOverview() {
 
   const { data, isLoading, mutate } = useGetAllTemplates();
   const { trigger: createTemplateTrigger, isMutating: isCreating } = useCreateTemplate();
-
+  const { workspaces } = useWorkspaces();
+  const defaultWorkspace = (workspaces ?? []).find((w) => w.isOwner && w.isDefault);
+  const ownedWorkspaces = (workspaces ?? []).filter((w) => w.isOwner && !w.isDefault);
 
   const [search, setSearch] = useState('');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [selectedWorkspaceIds, setSelectedWorkspaceIds] = useState<number[]>([]);
+
+  const openCreateDialog = () => {
+    setSelectedWorkspaceIds([]);
+    setCreateDialogOpen(true);
+  };
 
   const templates: Template[] = data ?? [];
 
@@ -38,10 +57,20 @@ export function TemplateOverview() {
   }, [templates, search]);
 
   const handleCreateTemplate = async () => {
+    const name = newTemplateName.trim() || t('template.untitled', 'Untitled template');
     try {
       const created = await createTemplateTrigger({
-        name: t('template.untitled', 'Untitled template'),
+        name,
+        rows: [],
       });
+      if (created?.id && selectedWorkspaceIds.length > 0) {
+        await Promise.all(
+          selectedWorkspaceIds.map((wId) => assignTemplateToWorkspace(created.id, { workspaceId: wId })),
+        );
+      }
+      setCreateDialogOpen(false);
+      setNewTemplateName('');
+      setSelectedWorkspaceIds([]);
       if (created?.id) {
         router.push(`/templates/${created.id}`);
       }
@@ -87,14 +116,14 @@ export function TemplateOverview() {
   }
 
   return (
-    <div className="relative flex h-[calc(100dvh-4rem)] flex-col">
+    <div className="relative flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 px-4 pb-3 pt-4 sm:px-6">
+      <div className="sticky top-16 z-10 bg-background px-4 pb-3 pt-4 sm:px-6">
         <div className="mb-3 flex items-center justify-between">
           <h1 className="font-headline text-2xl text-foreground">
             {t('template.title', 'Templates')}
           </h1>
-          <Button size="sm" onClick={handleCreateTemplate} disabled={isCreating}>
+          <Button size="sm" onClick={openCreateDialog} disabled={isCreating}>
             <Plus className="mr-1.5 h-4 w-4" />
             {isCreating ? t('common.creating', 'Creating...') : t('template.new', 'New')}
           </Button>
@@ -129,7 +158,7 @@ export function TemplateOverview() {
               'Templates help you quickly create checklists with pre-defined items.',
             )}
           </p>
-          <Button onClick={handleCreateTemplate} disabled={isCreating} className="mt-6">
+          <Button onClick={openCreateDialog} disabled={isCreating} className="mt-6">
             <Plus className="mr-1.5 h-4 w-4" />
             {t('template.createFirst', 'Create your first template')}
           </Button>
@@ -141,14 +170,17 @@ export function TemplateOverview() {
           </p>
         </div>
       ) : (
-        <div className="relative flex flex-1 overflow-hidden">
+        <div className="relative">
           {/* Template list */}
-          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pb-8">
+          <div ref={scrollContainerRef} className="pb-8">
             {filtered.map((template) => (
-              <button
+              <div
                 key={template.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => router.push(`/templates/${template.id}`)}
-                className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors active:bg-accent sm:px-6 sm:hover:bg-accent"
+                onKeyDown={(e) => e.key === 'Enter' && router.push(`/templates/${template.id}`)}
+                className="group flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors active:bg-accent sm:px-6 sm:hover:bg-accent"
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                   {template.name[0]?.toUpperCase()}
@@ -161,6 +193,34 @@ export function TemplateOverview() {
                     {template.rows?.length ?? 0} {t('templates.items', 'items')}
                     {template.description && ` · ${template.description}`}
                   </div>
+                  {(template.workspaceIds?.length ?? 0) > 0 && (() => {
+                    const allOwned = [
+                      ...(defaultWorkspace ? [defaultWorkspace] : []),
+                      ...ownedWorkspaces,
+                    ];
+                    const assigned = (template.workspaceIds ?? [])
+                      .map((id) => {
+                        const idx = allOwned.findIndex((w) => w.id === id);
+                        const w = allOwned[idx];
+                        return w ? { w, color: getCircleColor(idx) } : null;
+                      })
+                      .filter((x): x is NonNullable<typeof x> => x !== null);
+                    if (assigned.length === 0) return null;
+                    return (
+                      <div className="mt-0.5 flex flex-wrap gap-1">
+                        {assigned.map(({ w, color }) => (
+                          <span
+                            key={w.id}
+                            className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs"
+                            style={{ borderColor: color + '80', color, backgroundColor: color + '15' }}
+                          >
+                            <Circle className="h-2 w-2" style={{ fill: color, color }} />
+                            {w.isDefault ? t('workspace.personal', 'Personal') : w.name}
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
                 {template.isOwner && (
                   <button
@@ -171,11 +231,89 @@ export function TemplateOverview() {
                   </button>
                 )}
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30" />
-              </button>
+              </div>
             ))}
           </div>
         </div>
       )}
+
+      <Dialog open={createDialogOpen} onOpenChange={(open) => {
+        setCreateDialogOpen(open);
+        if (!open) { setNewTemplateName(''); setSelectedWorkspaceIds([]); }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('template.new', 'New template')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="template-name">{t('template.name', 'Name')}</Label>
+              <Input
+                id="template-name"
+                value={newTemplateName}
+                onChange={(e) => setNewTemplateName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleCreateTemplate()}
+                placeholder={t('template.namePlaceholder', 'Template name')}
+                autoFocus
+              />
+            </div>
+            {(workspaces ?? []).filter((w) => w.isOwner).length > 1 && (
+              <div className="space-y-2">
+                <Label>{t('workspace.title')}</Label>
+                <div className="flex flex-wrap gap-2">
+                  {defaultWorkspace && (() => {
+                    const color = getCircleColor(0);
+                    const isSelected = selectedWorkspaceIds.includes(defaultWorkspace.id);
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedWorkspaceIds((prev) =>
+                          prev.includes(defaultWorkspace.id) ? prev.filter((id) => id !== defaultWorkspace.id) : [...prev, defaultWorkspace.id]
+                        )}
+                        className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm transition-colors"
+                        style={isSelected
+                          ? { borderColor: color, backgroundColor: color + '20', color }
+                          : { borderColor: color + '60', color }}
+                      >
+                        <Circle className="h-2.5 w-2.5" style={{ fill: color, color }} />
+                        {t('workspace.personal', 'Personal')}
+                      </button>
+                    );
+                  })()}
+                  {ownedWorkspaces.map((w, i) => {
+                    const color = getCircleColor(i + 1);
+                    const isSelected = selectedWorkspaceIds.includes(w.id);
+                    return (
+                      <button
+                        key={w.id}
+                        type="button"
+                        onClick={() => setSelectedWorkspaceIds((prev) =>
+                          prev.includes(w.id) ? prev.filter((id) => id !== w.id) : [...prev, w.id]
+                        )}
+                        className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm transition-colors"
+                        style={isSelected
+                          ? { borderColor: color, backgroundColor: color + '20', color }
+                          : { borderColor: color + '60', color }}
+                      >
+                        <Circle className="h-2.5 w-2.5" style={{ fill: color, color }} />
+                        {w.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button onClick={handleCreateTemplate} disabled={isCreating}>
+              {isCreating ? t('common.creating', 'Creating...') : t('common.create', 'Create')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

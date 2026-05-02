@@ -3,7 +3,7 @@
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'next/navigation';
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { ArrowLeft, Plus, GripVertical, Trash2, MoreVertical, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, GripVertical, Trash2, MoreVertical, Check, Loader2, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,7 +18,11 @@ import {
   useGetTemplateById,
   useUpdateTemplate,
   useDeleteTemplate,
+  assignTemplateToWorkspace,
+  unassignTemplateFromWorkspace,
 } from '@/api/template/template';
+import { useWorkspaces } from '@/hooks/use-workspaces';
+import { getCircleColor } from '@/lib/circle-colors';
 
 interface TemplateDetailProps {
   templateId: number;
@@ -80,6 +84,11 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
     },
   });
 
+  const { workspaces } = useWorkspaces();
+  const defaultWorkspace = (workspaces ?? []).find((w) => w.isOwner && w.isDefault);
+  const ownedWorkspaces = (workspaces ?? []).filter((w) => w.isOwner && !w.isDefault);
+  const [selectedWorkspaceIds, setSelectedWorkspaceIds] = useState<number[]>([]);
+
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
@@ -97,6 +106,10 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
   const rowInputRef = useRef<HTMLInputElement>(null);
   const newRowInputRef = useRef<HTMLInputElement>(null);
   const hasAutoFocused = useRef(false);
+
+  useEffect(() => {
+    if (template) setSelectedWorkspaceIds(template.workspaceIds ?? []);
+  }, [template?.id]);
 
   // Auto-focus name on newly created templates
   useEffect(() => {
@@ -142,6 +155,33 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
     [template, templateId, updateTemplateTrigger],
   );
 
+  const handleWorkspaceToggle = useCallback(
+    async (workspaceId: number) => {
+      const isSelected = selectedWorkspaceIds.includes(workspaceId);
+      setSelectedWorkspaceIds((prev) =>
+        isSelected ? prev.filter((id) => id !== workspaceId) : [...prev, workspaceId],
+      );
+      try {
+        if (isSelected) {
+          await unassignTemplateFromWorkspace(templateId, workspaceId);
+        } else {
+          await assignTemplateToWorkspace(templateId, { workspaceId });
+        }
+        mutate();
+      } catch {
+        setSelectedWorkspaceIds((prev) =>
+          isSelected ? [...prev, workspaceId] : prev.filter((id) => id !== workspaceId),
+        );
+        toast({
+          title: t('common.error', 'Error'),
+          description: t('template.workspaceUpdateFailed', 'Failed to update circle'),
+          variant: 'destructive',
+        });
+      }
+    },
+    [selectedWorkspaceIds, templateId, mutate, t],
+  );
+
   const handleNameSave = useCallback(async () => {
     const trimmed = editedName.trim();
     if (!trimmed) {
@@ -165,7 +205,7 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
   const handleDeleteTemplate = useCallback(async () => {
     if (!window.confirm(t('template.confirmDelete', 'Are you sure you want to delete this template?'))) return;
     try {
-      await deleteTemplateTrigger(templateId);
+      await deleteTemplateTrigger();
     } catch (error) {
       console.error('Failed to delete template:', error);
     }
@@ -373,6 +413,47 @@ export function TemplateDetail({ templateId }: TemplateDetailProps) {
           </p>
         )}
       </div>
+
+      {/* Workspace selector (owners only, shown when user has more than 1 circle) */}
+      {template.isOwner && (workspaces ?? []).filter((w) => w.isOwner).length > 1 && (
+        <div className="mb-6 flex flex-wrap gap-2">
+          {defaultWorkspace && (() => {
+            const color = getCircleColor(0);
+            const isSelected = selectedWorkspaceIds.includes(defaultWorkspace.id);
+            return (
+              <button
+                type="button"
+                onClick={() => handleWorkspaceToggle(defaultWorkspace.id)}
+                className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm transition-colors"
+                style={isSelected
+                  ? { borderColor: color, backgroundColor: color + '20', color }
+                  : { borderColor: color + '60', color }}
+              >
+                <Circle className="h-2.5 w-2.5" style={{ fill: color, color }} />
+                Personal
+              </button>
+            );
+          })()}
+          {ownedWorkspaces.map((w, i) => {
+            const color = getCircleColor(i + 1);
+            const isSelected = selectedWorkspaceIds.includes(w.id);
+            return (
+              <button
+                key={w.id}
+                type="button"
+                onClick={() => handleWorkspaceToggle(w.id)}
+                className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm transition-colors"
+                style={isSelected
+                  ? { borderColor: color, backgroundColor: color + '20', color }
+                  : { borderColor: color + '60', color }}
+              >
+                <Circle className="h-2.5 w-2.5" style={{ fill: color, color }} />
+                {w.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Items section */}
       <div>

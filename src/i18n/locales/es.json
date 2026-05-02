@@ -3,7 +3,11 @@
     "close": "Cerrar",
     "retry": "Reintentar",
     "loading": "Cargando...",
-    "somethingWentWrong": "Algo salió mal"
+    "somethingWentWrong": "Algo salió mal",
+    "optional": "opcional",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "creating": "Creando..."
   },
   "filter": {
     "all": "Todos",
@@ -79,12 +83,73 @@
     "failedToLeave": "Error al salir de la lista",
     "leftTemplate": "Saliste de la plantilla",
     "leftTemplateDescription": "Has salido exitosamente de la plantilla compartida",
-    "failedToLeaveTemplate": "Error al salir de la plantilla"
+    "failedToLeaveTemplate": "Error al salir de la plantilla",
+    "leftWorkspace": "Saliste del círculo",
+    "leftWorkspaceDescription": "Has salido exitosamente del círculo",
+    "failedToLeaveWorkspace": "Error al salir del círculo"
   },
   "confirm": {
     "deleteChecklist": "¿Estás seguro de que quieres eliminar esta lista? Esta acción no se puede deshacer.",
     "leaveChecklist": "¿Estás seguro de que quieres salir de esta lista compartida? Puedes volver a unirte usando el enlace de invitación.",
-    "leaveTemplate": "¿Salir de esta plantilla compartida? Puedes volver a unirte usando el enlace de invitación."
+    "leaveTemplate": "¿Salir de esta plantilla compartida? Puedes volver a unirte usando el enlace de invitación.",
+    "deleteWorkspace": "¿Estás seguro de que quieres eliminar este círculo? Esta acción no se puede deshacer.",
+    "leaveWorkspace": "¿Estás seguro de que quieres salir de este círculo?"
+  },
+  "nav": {
+    "checklists": "Listas",
+    "templates": "Plantillas",
+    "workspaces": "Círculos"
+  },
+  "workspace": {
+    "title": "Círculos",
+    "personal": "Mi círculo personal",
+    "subtitle": "Espacios compartidos para listas y plantillas",
+    "newWorkspace": "Nuevo círculo",
+    "createTitle": "Nuevo círculo",
+    "createDescription": "Dale un nombre a tu círculo para empezar",
+    "renameTitle": "Renombrar círculo",
+    "workspaceNameLabel": "Nombre del círculo",
+    "workspaceNamePlaceholder": "ej. Familia, Amigos, Club de lectura",
+    "descriptionLabel": "Descripción (opcional)",
+    "descriptionPlaceholder": "¿Para qué es este círculo?",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "creating": "Creando...",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "empty": "Sin círculos aún",
+    "emptyDescription": "Crea tu primer círculo para compartir listas con otros",
+    "createFirst": "Crea tu primer círculo",
+    "members": "miembros",
+    "delete": "Eliminar",
+    "rename": "Renombrar",
+    "share": "Invitar miembros",
+    "leave": "Salir",
+    "settings": "Configuración",
+    "open": "Abrir",
+    "templates": "Plantillas",
+    "checklists": "Listas",
+    "noTemplates": "No hay plantillas en este círculo",
+    "noChecklists": "No hay listas en este círculo",
+    "membersTitle": "Miembros",
+    "removeMember": "Eliminar",
+    "owner": "Propietario",
+    "deleteWorkspace": "Eliminar círculo",
+    "leaveWorkspace": "Salir del círculo",
+    "dangerZone": "Zona de peligro",
+    "settingsTitle": "Configuración y miembros del círculo"
+  },
+  "workspaceInvite": {
+    "title": "Invitar al círculo",
+    "description": "Crea enlaces de invitación para agregar miembros a este círculo",
+    "noActiveInvites": "No hay invitaciones activas. Genera un enlace para invitar personas.",
+    "shareMessage": "¡Únete a mi círculo en DailyChexly!",
+    "joining": "Uniéndose al círculo...",
+    "successfullyJoined": "¡Te has unido al círculo!",
+    "redirecting": "Redirigiendo...",
+    "unableToJoin": "No se puede unir al círculo",
+    "failedToClaim": "Error al reclamar la invitación al círculo",
+    "backToWorkspaces": "Volver a círculos"
   },
   "error": {
     "apiConnectionError": "No se pudo conectar al servidor. Por favor verifica que la API esté funcionando y accesible.",

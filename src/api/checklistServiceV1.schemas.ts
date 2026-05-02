@@ -114,7 +114,19 @@ export interface ChecklistUpdateAndCreateRequest {
   name: string;
 }
 
-export type CreateChecklistRequest = ChecklistUpdateAndCreateRequest;
+export interface CreateChecklistRequest {
+  /**
+   * Checklist name (1-200 characters)
+   * @minLength 1
+   * @maxLength 200
+   */
+  name: string;
+  /**
+   * Optional workspace this checklist belongs to
+   * @nullable
+   */
+  workspaceId?: number | null;
+}
 
 export type UpdateChecklistRequest = ChecklistUpdateAndCreateRequest;
 
@@ -159,6 +171,11 @@ export interface ChecklistWithStats {
    * Number of users this checklist is shared with (only included for owners)
    */
   numberOfSharedUsers?: number;
+  /**
+   * Circle this checklist belongs to
+   * @nullable
+   */
+  workspaceId?: number | null;
   /** Statistics about checklist items */
   stats: ChecklistWithStatsStats;
 }
@@ -386,6 +403,71 @@ export interface ClaimInviteResponse {
   message?: string;
 }
 
+export interface WorkspaceResponse {
+  /** @minimum 1 */
+  id: number;
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  name: string;
+  /** @nullable */
+  description?: string | null;
+  isOwner: boolean;
+  isDefault: boolean;
+  /** @minimum 0 */
+  memberCount: number;
+}
+
+export interface CreateWorkspaceRequest {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  name: string;
+  /** @nullable */
+  description?: string | null;
+}
+
+export interface WorkspaceMemberResponse {
+  userId: string;
+  email: string;
+  /** @nullable */
+  name?: string | null;
+  isOwner: boolean;
+}
+
+export interface WorkspaceInviteResponse {
+  /** @minimum 1 */
+  id: number;
+  /** @minimum 1 */
+  workspaceId: number;
+  /** @nullable */
+  name?: string | null;
+  /**
+   * @minLength 64
+   * @maxLength 64
+   */
+  inviteToken: string;
+  inviteUrl: string;
+  createdAt: string;
+  /** @nullable */
+  expiresAt?: string | null;
+  /** @nullable */
+  claimedBy?: string | null;
+  /** @nullable */
+  claimedAt?: string | null;
+  isSingleUse: boolean;
+  isExpired: boolean;
+  isClaimed: boolean;
+}
+
+export interface ClaimWorkspaceInviteResponse {
+  /** @minimum 1 */
+  workspaceId: number;
+  message?: string;
+}
+
 export type UserDataExportChecklistsItemItemsItemRowsItem = {
   id?: number;
   name?: string;
@@ -432,6 +514,8 @@ export interface TemplateResponse {
   name: string;
   /** @nullable */
   description?: string | null;
+  /** Circles this template belongs to */
+  workspaceIds: number[];
   rows: TemplateRowResponse[];
   /** True if the current user owns this template, false if shared */
   isOwner: boolean;
@@ -446,6 +530,14 @@ export interface TemplateRowResponse {
   position: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AssignTemplateToWorkspaceRequest {
+  /**
+   * Workspace (circle) to assign the template to
+   * @minimum 1
+   */
+  workspaceId: number;
 }
 
 export interface CreateTemplateRequest {
