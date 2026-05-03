@@ -76,6 +76,7 @@ export function ChecklistOverviewCard({
     }
   };
 
+
   return (
     <Card
       onClick={handleClick}
@@ -127,10 +128,10 @@ export function ChecklistOverviewCard({
               <MoreVertical className="h-5 w-5 text-muted-foreground" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              {isOwner && (
+              {isOwner && onEdit && (
                 <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
                   <Edit className="mr-2 h-4 w-4" />
-                  {t('overview.rename')}
+                  {t('overview.edit', 'Edit')}
                 </DropdownMenuItem>
               )}
               {isOwner ? (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useClaimInvite } from '@/api/invite/invite';
 import { Button } from '@/components/ui/button';
@@ -20,9 +20,11 @@ export default function ClaimInvitePage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { trigger: claimInvite } = useClaimInvite(token);
+  const hasClaimed = useRef(false);
 
   useEffect(() => {
-    if (token) {
+    if (token && !hasClaimed.current) {
+      hasClaimed.current = true;
       handleClaimInvite();
     }
   }, [token]);
@@ -41,17 +43,15 @@ export default function ClaimInvitePage() {
         }, 1500);
       }
     } catch (error: any) {
-      setStatus('error');
-
-      // Parse error message
-      const message = error?.response?.data?.message || error?.message || t('invite.failedToClaim');
-      setErrorMessage(message);
-
-      // Check if it's an auth error
       if (error?.response?.status === 401) {
         const returnUrl = encodeURIComponent(`/invites/${token}/claim`);
-        router.push(`/?returnUrl=${returnUrl}`);
+        router.replace(`/?returnUrl=${returnUrl}`);
+        return;
       }
+
+      setStatus('error');
+      const message = error?.response?.data?.message || error?.message || t('invite.failedToClaim');
+      setErrorMessage(message);
     }
   };
 

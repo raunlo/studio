@@ -98,19 +98,37 @@ export default function ChecklistDetailPage() {
   }
 
   return (
-    <div className="w-full bg-background">
-      <div className="container mx-auto w-full px-4 py-4 sm:max-w-2xl sm:px-6 sm:py-6">
-        {/* Header with back button */}
-        <div className="mb-4 sm:mb-6">
-          <Button
-            variant="ghost"
-            onClick={handleBackToOverview}
-            className="h-11 touch-manipulation gap-2 px-3 sm:px-4"
-          >
-            <ArrowLeft className="h-5 w-5" />
-            {t('detail.back')}
-          </Button>
-        </div>
+    <>
+      {/* Fixed header */}
+      <div className="fixed inset-x-0 top-0 z-20 flex items-center gap-3 border-b border-border bg-card px-4 py-3 sm:px-6">
+        <button
+          onClick={handleBackToOverview}
+          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted"
+          aria-label={t('detail.back')}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <h1 className="flex-1 truncate font-headline text-xl text-foreground">
+          {checklist?.name ?? ''}
+        </h1>
+        <button
+          onClick={() => {
+            if (navigator.share && checklist) {
+              navigator.share({ title: checklist.name, url: window.location.href }).catch(() => {});
+            }
+          }}
+          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted"
+          aria-label="Share"
+        >
+          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+        </button>
+      </div>
+
+      {/* Offset content below fixed header (py-3 * 2 + icon h-5 = 56px) */}
+      <div className="container mx-auto w-full px-4 pt-[56px] pb-4 sm:max-w-2xl sm:px-6 sm:pt-[56px] sm:pb-6">
 
         {/* Checklist content */}
         {(isLoading || (!checklist && !error)) && (
@@ -165,7 +183,6 @@ export default function ChecklistDetailPage() {
           </div>
         )}
       </div>
-
-    </div>
+    </>
   );
 }

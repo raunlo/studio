@@ -21,6 +21,10 @@ export function BottomNav({ isAuthenticated }: BottomNavProps) {
 
   if (!isAuthenticated) return null;
 
+  // Hide bottom nav when a specific checklist is open
+  const checklistDetailPattern = /^\/checklist\/[^/]+/;
+  if (checklistDetailPattern.test(pathname)) return null;
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-card/95 backdrop-blur-md md:hidden"

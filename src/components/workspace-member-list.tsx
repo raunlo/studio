@@ -24,17 +24,17 @@ interface WorkspaceMemberListProps {
 
 export function WorkspaceMemberList({ workspaceId, isOwner }: WorkspaceMemberListProps) {
   const { t } = useTranslation();
-  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<number | null>(null);
 
   const { data: members = [], isLoading, mutate } = useGetWorkspaceMembers(workspaceId);
 
-  const handleRemove = async (userId: string) => {
+  const handleRemove = async (memberId: number) => {
     if (!confirm(t('workspace.removeMember') + '?')) return;
 
-    setRemovingId(userId);
+    setRemovingId(memberId);
     try {
       await customInstance({
-        url: `/api/v1/workspaces/${workspaceId}/members/${userId}`,
+        url: `/api/v1/workspaces/${workspaceId}/members/${memberId}`,
         method: 'DELETE',
       });
       toast({ title: t('workspace.removeMember') });
@@ -75,23 +75,20 @@ export function WorkspaceMemberList({ workspaceId, isOwner }: WorkspaceMemberLis
   return (
     <div className="space-y-2">
       {members.map((member, memberIndex) => {
-        const initials = (member.name || member.email)
+        const initials = (member.name || '?')
           .slice(0, 2)
           .toUpperCase();
 
         return (
           <div
-            key={member.userId}
+            key={member.memberId}
             className="flex items-center gap-3 rounded-lg border p-3"
           >
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${MEMBER_GRADIENTS[memberIndex % MEMBER_GRADIENTS.length]} text-sm font-semibold text-white shadow-sm`}>
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              {member.name && (
-                <p className="truncate text-sm font-medium">{member.name}</p>
-              )}
-              <p className="truncate text-xs text-muted-foreground">{member.email}</p>
+              <p className="truncate text-sm font-medium">{member.name ?? t('workspace.unknownMember', 'Member')}</p>
             </div>
             {member.isOwner && (
               <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
@@ -102,8 +99,8 @@ export function WorkspaceMemberList({ workspaceId, isOwner }: WorkspaceMemberLis
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => handleRemove(member.userId)}
-                disabled={removingId === member.userId}
+                onClick={() => handleRemove(member.memberId)}
+                disabled={removingId === member.memberId}
                 className="shrink-0 text-xs text-destructive hover:bg-destructive hover:text-destructive-foreground"
               >
                 {t('workspace.removeMember')}

@@ -129,16 +129,29 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
     };
   }, []);
 
+  const getReturnUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('returnUrl') ?? '';
+  };
+
   const handleGoogleLogin = () => {
     setErrorMessage(null);
     onLogin?.();
-    window.location.href = `${NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/google/login`;
+    const returnUrl = getReturnUrl();
+    const loginUrl = returnUrl
+      ? `${NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/google/login?returnUrl=${encodeURIComponent(returnUrl)}`
+      : `${NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/google/login`;
+    window.location.href = loginUrl;
   };
 
   const handleDevLogin = () => {
     setErrorMessage(null);
     onLogin?.();
-    window.location.href = `${NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/dev/login`;
+    const returnUrl = getReturnUrl();
+    const loginUrl = returnUrl
+      ? `${NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/dev/login?returnUrl=${encodeURIComponent(returnUrl)}`
+      : `${NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/dev/login`;
+    window.location.href = loginUrl;
   };
 
   // Check if dev mode is enabled (localhost or DEV_AUTH_BYPASS env)
@@ -150,30 +163,6 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
 
   return (
     <div className="paper-texture flex min-h-dvh w-full items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-primary/5 p-4 pb-safe">
-      {/* Animated decorative elements */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div
-          className="absolute -left-16 -top-16 h-64 w-64 animate-pulse rounded-full border border-primary/20"
-          style={{ animationDuration: '4s' }}
-        />
-        <div
-          className="absolute right-8 top-1/3 h-32 w-32 animate-pulse rounded-full border border-accent/20"
-          style={{ animationDuration: '6s' }}
-        />
-        <div
-          className="absolute -bottom-24 -right-24 h-80 w-80 animate-pulse rounded-full border border-primary/10"
-          style={{ animationDuration: '8s' }}
-        />
-        <div
-          className="absolute left-1/4 top-20 h-2 w-2 animate-ping rounded-full bg-primary/40"
-          style={{ animationDelay: '1s' }}
-        />
-        <div
-          className="absolute bottom-32 right-1/3 h-2 w-2 animate-ping rounded-full bg-accent/40"
-          style={{ animationDelay: '2s' }}
-        />
-      </div>
-
       <div className="relative z-10 w-full max-w-md animate-slide-in">
         {/* Main card - enhanced */}
         <div className="overflow-hidden rounded-3xl border border-border/50 bg-card/95 shadow-2xl backdrop-blur-xl">

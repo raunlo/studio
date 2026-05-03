@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -8,13 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ArrowLeft, Settings, ChevronRight, FileText, Plus, UserPlus } from 'lucide-react';
+import { ArrowLeft, Settings, ChevronRight, FileText, Plus, UserPlus, ListChecks } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   useGetWorkspaceById,
@@ -23,10 +22,11 @@ import {
   getGetWorkspaceChecklistsKey,
   getGetWorkspaceTemplatesKey,
 } from '@/api/workspace/workspace';
-import { useCreateChecklist } from '@/api/checklist/checklist';
+import { useCreateChecklist, useGetAllChecklists, updateChecklistById } from '@/api/checklist/checklist';
 import { useCreateTemplate, assignTemplateToWorkspace } from '@/api/template/template';
 import { mutate } from 'swr';
 import { ShareWorkspaceModal } from '@/components/share-workspace-modal';
+import { WorkspaceMemberList } from '@/components/workspace-member-list';
 
 interface WorkspaceOverviewDetailProps {
   workspaceId: number;
@@ -37,15 +37,32 @@ export function WorkspaceOverviewDetail({ workspaceId }: WorkspaceOverviewDetail
   const router = useRouter();
 
   const [createChecklistOpen, setCreateChecklistOpen] = useState(false);
+  const [assignChecklistOpen, setAssignChecklistOpen] = useState(false);
   const [createTemplateOpen, setCreateTemplateOpen] = useState(false);
   const [newChecklistName, setNewChecklistName] = useState('');
   const [newTemplateName, setNewTemplateName] = useState('');
+  const [assignSearch, setAssignSearch] = useState('');
+  const [assigning, setAssigning] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const { data: workspace, isLoading: workspaceLoading } = useGetWorkspaceById(workspaceId);
   const { data: templates = [], isLoading: templatesLoading } = useGetWorkspaceTemplates(workspaceId);
   const { data: checklistsData, isLoading: checklistsLoading } = useGetWorkspaceChecklists(workspaceId);
   const checklists = checklistsData ?? [];
+
+  const { data: allChecklistsData } = useGetAllChecklists();
+  const allChecklists = allChecklistsData?.checklists ?? [];
+
+  const assignableChecklists = useMemo(() => {
+    const inCircleIds = new Set(checklists.map((c) => c.id));
+    return allChecklists.filter((c) => c.isOwner && !inCircleIds.has(c.id));
+  }, [allChecklists, checklists]);
+
+  const filteredAssignable = useMemo(() => {
+    if (!assignSearch.trim()) return assignableChecklists;
+    const q = assignSearch.toLowerCase();
+    return assignableChecklists.filter((c) => c.name.toLowerCase().includes(q));
+  }, [assignableChecklists, assignSearch]);
 
   const { trigger: triggerCreateChecklist, isMutating: creatingChecklist } = useCreateChecklist();
   const { trigger: triggerCreateTemplate, isMutating: creatingTemplate } = useCreateTemplate();
@@ -56,6 +73,18 @@ export function WorkspaceOverviewDetail({ workspaceId }: WorkspaceOverviewDetail
     await mutate(getGetWorkspaceChecklistsKey(workspaceId));
     setNewChecklistName('');
     setCreateChecklistOpen(false);
+  }
+
+  async function handleAssignChecklist(checklist: { id: number; name: string }) {
+    setAssigning(true);
+    try {
+      await updateChecklistById(checklist.id, { name: checklist.name, workspaceId });
+      await mutate(getGetWorkspaceChecklistsKey(workspaceId));
+      setAssignChecklistOpen(false);
+      setAssignSearch('');
+    } finally {
+      setAssigning(false);
+    }
   }
 
   async function handleCreateTemplate() {
@@ -150,7 +179,16 @@ export function WorkspaceOverviewDetail({ workspaceId }: WorkspaceOverviewDetail
         </TabsList>
 
         <TabsContent value="checklists" className="mt-4 space-y-3">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setAssignChecklistOpen(true)}
+              className="gap-1 text-xs"
+            >
+              <ListChecks className="h-3.5 w-3.5" />
+              {t('workspace.addExisting', 'Add existing')}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -237,66 +275,170 @@ export function WorkspaceOverviewDetail({ workspaceId }: WorkspaceOverviewDetail
       </Tabs>
 
       {/* Create Checklist Dialog */}
-      <Dialog open={createChecklistOpen} onOpenChange={setCreateChecklistOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('workspace.newChecklist', 'New checklist')}</DialogTitle>
+      <Dialog open={createChecklistOpen} onOpenChange={(open) => {
+        setCreateChecklistOpen(open);
+        if (!open) setNewChecklistName('');
+      }}>
+        <DialogContent className="p-6 sm:max-w-[450px]">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="font-headline text-2xl">
+              {t('workspace.newChecklist', 'New checklist')}
+            </DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground">
+              {t('workspace.newChecklistDescription', 'Give your checklist a name and start adding items.')}
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 py-2">
-            <Label htmlFor="checklist-name">{t('checklist.name', 'Name')}</Label>
+          <div className="space-y-3 py-4">
+            <label htmlFor="checklist-name" className="block text-sm font-medium text-foreground">
+              {t('checklist.name', 'Checklist name')}
+            </label>
             <Input
               id="checklist-name"
               value={newChecklistName}
               onChange={(e) => setNewChecklistName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateChecklist()}
-              placeholder={t('checklist.namePlaceholder', 'Checklist name')}
+              onKeyDown={(e) => e.key === 'Enter' && !creatingChecklist && handleCreateChecklist()}
+              placeholder={t('checklist.namePlaceholder', 'e.g., Shopping list')}
               autoFocus
+              className="h-11 text-base"
             />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateChecklistOpen(false)}>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setCreateChecklistOpen(false)}
+              disabled={creatingChecklist}
+              className="h-10 px-6"
+            >
               {t('common.cancel', 'Cancel')}
             </Button>
             <Button
               onClick={handleCreateChecklist}
               disabled={!newChecklistName.trim() || creatingChecklist}
+              className="h-10 min-w-[100px] px-6"
             >
               {t('common.create', 'Create')}
             </Button>
-          </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Existing Checklist Dialog */}
+      <Dialog open={assignChecklistOpen} onOpenChange={(open) => {
+        setAssignChecklistOpen(open);
+        if (!open) setAssignSearch('');
+      }}>
+        <DialogContent className="p-6 sm:max-w-[450px]">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="font-headline text-2xl">
+              {t('workspace.addExistingChecklist', 'Add existing checklist')}
+            </DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground">
+              {t('workspace.addExistingDescription', 'Choose a checklist to add to this circle.')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            <Input
+              placeholder={t('workspace.searchChecklists', 'Search checklists...')}
+              value={assignSearch}
+              onChange={(e) => setAssignSearch(e.target.value)}
+              className="h-11 text-base"
+              autoFocus
+            />
+            {filteredAssignable.length === 0 ? (
+              <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                {assignableChecklists.length === 0
+                  ? t('workspace.noAssignableChecklists', 'All your checklists are already in this circle.')
+                  : t('workspace.noSearchResults', 'No checklists found.')}
+              </p>
+            ) : (
+              <div className="max-h-60 divide-y overflow-y-auto rounded-lg border bg-card">
+                {filteredAssignable.map((checklist) => {
+                  const { totalItems, completedItems } = checklist.stats;
+                  const pct = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+                  return (
+                    <button
+                      key={checklist.id}
+                      onClick={() => !assigning && handleAssignChecklist(checklist)}
+                      disabled={assigning}
+                      className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-muted/50 disabled:opacity-50"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium">{checklist.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {completedItems}/{totalItems} • {pct}%
+                        </p>
+                      </div>
+                      <Plus className="ml-3 h-4 w-4 shrink-0 text-muted-foreground" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setAssignChecklistOpen(false)}
+              className="h-10 px-6"
+            >
+              {t('common.cancel', 'Cancel')}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Create Template Dialog */}
-      <Dialog open={createTemplateOpen} onOpenChange={setCreateTemplateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('workspace.newTemplate', 'New template')}</DialogTitle>
+      <Dialog open={createTemplateOpen} onOpenChange={(open) => {
+        setCreateTemplateOpen(open);
+        if (!open) setNewTemplateName('');
+      }}>
+        <DialogContent className="p-6 sm:max-w-[450px]">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="font-headline text-2xl">
+              {t('workspace.newTemplate', 'New template')}
+            </DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground">
+              {t('workspace.newTemplateDescription', 'Give your template a name to get started.')}
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 py-2">
-            <Label htmlFor="template-name">{t('template.name', 'Name')}</Label>
+          <div className="space-y-3 py-4">
+            <label htmlFor="template-name" className="block text-sm font-medium text-foreground">
+              {t('template.name', 'Template name')}
+            </label>
             <Input
               id="template-name"
               value={newTemplateName}
               onChange={(e) => setNewTemplateName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateTemplate()}
+              onKeyDown={(e) => e.key === 'Enter' && !creatingTemplate && handleCreateTemplate()}
               placeholder={t('template.namePlaceholder', 'Template name')}
               autoFocus
+              className="h-11 text-base"
             />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateTemplateOpen(false)}>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setCreateTemplateOpen(false)}
+              disabled={creatingTemplate}
+              className="h-10 px-6"
+            >
               {t('common.cancel', 'Cancel')}
             </Button>
             <Button
               onClick={handleCreateTemplate}
               disabled={!newTemplateName.trim() || creatingTemplate}
+              className="h-10 min-w-[100px] px-6"
             >
               {t('common.create', 'Create')}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
+
+      {/* Members section */}
+      <div className="mt-6">
+        <WorkspaceMemberList workspaceId={workspaceId} isOwner={workspace?.isOwner ?? false} />
+      </div>
 
       {/* Share Modal */}
       {workspace && (

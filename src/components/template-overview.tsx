@@ -15,11 +15,11 @@ import { getCircleColor } from '@/lib/circle-colors';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { ProfileMenu } from '@/components/ui/ProfileMenu';
 
 export function TemplateOverview() {
   const { t } = useTranslation();
@@ -118,15 +118,18 @@ export function TemplateOverview() {
   return (
     <div className="relative flex flex-col">
       {/* Header */}
-      <div className="sticky top-16 z-10 bg-background px-4 pb-3 pt-4 sm:px-6">
+      <div className="sticky top-0 z-10 bg-background px-4 pb-3 pt-4 sm:px-6">
         <div className="mb-3 flex items-center justify-between">
           <h1 className="font-headline text-2xl text-foreground">
             {t('template.title', 'Templates')}
           </h1>
-          <Button size="sm" onClick={openCreateDialog} disabled={isCreating}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            {isCreating ? t('common.creating', 'Creating...') : t('template.new', 'New')}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={openCreateDialog} disabled={isCreating}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              {isCreating ? t('common.creating', 'Creating...') : t('template.new', 'New')}
+            </Button>
+            <ProfileMenu />
+          </div>
         </div>
 
         {/* Search */}
@@ -241,13 +244,20 @@ export function TemplateOverview() {
         setCreateDialogOpen(open);
         if (!open) { setNewTemplateName(''); setSelectedWorkspaceIds([]); }
       }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('template.new', 'New template')}</DialogTitle>
+        <DialogContent className="p-6 sm:max-w-[450px]">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="font-headline text-2xl">
+              {t('template.new', 'New template')}
+            </DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground">
+              {t('template.newDescription', 'Give your template a name to get started')}
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="template-name">{t('template.name', 'Name')}</Label>
+          <div className="space-y-6 py-6">
+            <div className="space-y-3">
+              <label htmlFor="template-name" className="block text-sm font-medium text-foreground">
+                {t('template.name', 'Name')}
+              </label>
               <Input
                 id="template-name"
                 value={newTemplateName}
@@ -255,11 +265,14 @@ export function TemplateOverview() {
                 onKeyDown={(e) => e.key === 'Enter' && handleCreateTemplate()}
                 placeholder={t('template.namePlaceholder', 'Template name')}
                 autoFocus
+                className="h-11 text-base"
               />
             </div>
             {(workspaces ?? []).filter((w) => w.isOwner).length > 1 && (
-              <div className="space-y-2">
-                <Label>{t('workspace.title')}</Label>
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-foreground">
+                  {t('workspace.title')}
+                </label>
                 <div className="flex flex-wrap gap-2">
                   {defaultWorkspace && (() => {
                     const color = getCircleColor(0);
@@ -304,14 +317,23 @@ export function TemplateOverview() {
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setCreateDialogOpen(false)}
+              disabled={isCreating}
+              className="h-10 px-6"
+            >
               {t('common.cancel', 'Cancel')}
             </Button>
-            <Button onClick={handleCreateTemplate} disabled={isCreating}>
+            <Button
+              onClick={handleCreateTemplate}
+              disabled={!newTemplateName.trim() || isCreating}
+              className="h-10 min-w-[100px] bg-primary px-6 text-primary-foreground hover:bg-primary/90"
+            >
               {isCreating ? t('common.creating', 'Creating...') : t('common.create', 'Create')}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -181,10 +181,7 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
     if (error) {
       return (
         <Card className="flex flex-col rounded-lg border border-destructive bg-card transition-shadow duration-200">
-          <CardHeader className="flex flex-row items-center justify-between px-4 pb-3 pt-4 sm:px-6 sm:pb-4 sm:pt-6">
-            <h2 className="text-xl font-semibold sm:text-2xl">{checklist.name}</h2>
-          </CardHeader>
-          <CardContent className="flex-grow px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
+          <CardContent className="flex-grow px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-6">
             <div className="py-8 text-center">
               <p className="font-medium text-destructive">{t('main.error')}</p>
               <p className="mt-2 text-sm text-muted-foreground">
@@ -200,10 +197,8 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
       <>
         {/* Clean & minimal card design - Mobile-first */}
         <Card className="flex flex-col rounded-lg border border-border bg-card transition-shadow duration-200">
-          <CardHeader className="flex flex-row items-center justify-between px-4 pb-3 pt-4 sm:px-6 sm:pb-4 sm:pt-6">
-            <h2 className="text-xl font-semibold sm:text-2xl">{checklist.name}</h2>
-            {/* Show "Clear all" only when viewing completed items */}
-            {activeFilter === 'completed' && completedCount > 0 && (
+          {activeFilter === 'completed' && completedCount > 0 && (
+            <CardHeader className="flex flex-row items-center justify-end px-4 pb-0 pt-3 sm:px-6">
               <Button
                 variant="ghost"
                 size="sm"
@@ -222,9 +217,9 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                 <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                 {t('detail.clearAll')}
               </Button>
-            )}
-          </CardHeader>
-          <CardContent className="flex-grow px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
+            </CardHeader>
+          )}
+          <CardContent className="flex-grow px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
             {/* Add item form */}
             <div className="mb-2 border-b pb-3">
               <AddItemForm
