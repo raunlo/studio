@@ -24,7 +24,7 @@ export function ChecklistFilterBar({
   const { t } = useTranslation();
 
   return (
-    <div className="sticky top-[56px] z-10 -mx-4 bg-card px-4 py-2 sm:-mx-6 sm:px-6">
+    <div className="-mx-4 bg-card px-4 py-2 sm:-mx-6 sm:px-6">
       <Tabs value={activeFilter} onValueChange={(value) => onFilterChange(value as FilterType)}>
         <TabsList className="grid h-9 w-full touch-manipulation grid-cols-3 sm:h-10">
           <TabsTrigger value="all" className="text-sm sm:text-base">
