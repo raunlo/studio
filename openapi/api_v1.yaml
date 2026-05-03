@@ -1136,7 +1136,7 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 
-  /api/v1/workspaces/{workspaceId}/members/{userId}:
+  /api/v1/workspaces/{workspaceId}/members/{memberId}:
     delete:
       summary: Remove a member from workspace
       operationId: removeWorkspaceMember
@@ -1153,12 +1153,15 @@ paths:
             minimum: 1
             format: int64
           description: Workspace ID
-        - name: userId
+        - name: memberId
           in: path
           required: true
           schema:
-            type: string
-          description: User ID to remove
+            type: number
+            x-go-type: uint
+            minimum: 1
+            format: int64
+          description: Member ID to remove
       responses:
         '204':
           description: Member removed
@@ -1248,6 +1251,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WorkspaceInviteResponse'
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
         '403':
           $ref: '#/components/responses/ErrorResponse'
         '404':
@@ -2372,18 +2377,18 @@ components:
     WorkspaceMemberResponse:
       type: object
       properties:
-        userId:
-          type: string
-        email:
-          type: string
+        memberId:
+          type: number
+          x-go-type: uint
+          format: int64
+          minimum: 1
         name:
           type: string
           nullable: true
         isOwner:
           type: boolean
       required:
-        - userId
-        - email
+        - memberId
         - isOwner
 
     WorkspaceInviteResponse:
@@ -2540,6 +2545,7 @@ components:
           type: array
           items:
             type: integer
+            x-go-type: uint
             format: int64
           description: Circles this template belongs to
         rows:
@@ -2600,6 +2606,7 @@ components:
       properties:
         workspaceId:
           type: integer
+          x-go-type: uint
           format: int64
           minimum: 1
           description: Workspace (circle) to assign the template to

@@ -430,8 +430,8 @@ export interface CreateWorkspaceRequest {
 }
 
 export interface WorkspaceMemberResponse {
-  userId: string;
-  email: string;
+  /** @minimum 1 */
+  memberId: number;
   /** @nullable */
   name?: string | null;
   isOwner: boolean;

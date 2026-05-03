@@ -287,10 +287,10 @@ export const useGetWorkspaceMembers = <TError = ErrorResponseResponse>(
  */
 export const removeWorkspaceMember = (
     workspaceId: number,
-    userId: string,
+    memberId: number,
  ) => {
     return customInstance<void>(
-    {url: `/api/v1/workspaces/${workspaceId}/members/${userId}`, method: 'DELETE'
+    {url: `/api/v1/workspaces/${workspaceId}/members/${memberId}`, method: 'DELETE'
     },
     );
   }
@@ -298,13 +298,13 @@ export const removeWorkspaceMember = (
 
 
 export const getRemoveWorkspaceMemberMutationFetcher = (workspaceId: number,
-    userId: string, ) => {
+    memberId: number, ) => {
   return (_: Key, __: { arg: Arguments }) => {
-    return removeWorkspaceMember(workspaceId, userId);
+    return removeWorkspaceMember(workspaceId, memberId);
   }
 }
 export const getRemoveWorkspaceMemberMutationKey = (workspaceId: number,
-    userId: string,) => [`/api/v1/workspaces/${workspaceId}/members/${userId}`] as const;
+    memberId: number,) => [`/api/v1/workspaces/${workspaceId}/members/${memberId}`] as const;
 
 export type RemoveWorkspaceMemberMutationResult = NonNullable<Awaited<ReturnType<typeof removeWorkspaceMember>>>
 export type RemoveWorkspaceMemberMutationError = ErrorResponseResponse
@@ -314,13 +314,13 @@ export type RemoveWorkspaceMemberMutationError = ErrorResponseResponse
  */
 export const useRemoveWorkspaceMember = <TError = ErrorResponseResponse>(
   workspaceId: number,
-    userId: string, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof removeWorkspaceMember>>, TError, Key, Arguments, Awaited<ReturnType<typeof removeWorkspaceMember>>> & { swrKey?: string }, }
+    memberId: number, options?: { swr?:SWRMutationConfiguration<Awaited<ReturnType<typeof removeWorkspaceMember>>, TError, Key, Arguments, Awaited<ReturnType<typeof removeWorkspaceMember>>> & { swrKey?: string }, }
 ) => {
 
   const {swr: swrOptions} = options ?? {}
 
-  const swrKey = swrOptions?.swrKey ?? getRemoveWorkspaceMemberMutationKey(workspaceId,userId);
-  const swrFn = getRemoveWorkspaceMemberMutationFetcher(workspaceId,userId);
+  const swrKey = swrOptions?.swrKey ?? getRemoveWorkspaceMemberMutationKey(workspaceId,memberId);
+  const swrFn = getRemoveWorkspaceMemberMutationFetcher(workspaceId,memberId);
 
   const query = useSWRMutation(swrKey, swrFn, swrOptions)
 

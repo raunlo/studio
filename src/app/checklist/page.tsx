@@ -49,7 +49,7 @@ export default function ChecklistPage() {
 
   return (
     <div className="min-h-screen w-full bg-background">
-      <div className="container mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+      <div className="container mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8 md:pt-[57px]">
         <ChecklistOverview />
       </div>
     </div>
