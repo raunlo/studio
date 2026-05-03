@@ -72,8 +72,8 @@ export function ChecklistOverview() {
   const directlyShared = checklists.filter(
     (c) => !c.isOwner && (c.workspaceId == null || !workspaceMap.has(c.workspaceId)),
   );
-  // If user only has one circle (Personal), flatten into a single list
-  const singleCircle = (workspaces ?? []).filter((w) => w.isOwner).length <= 1;
+  // If user only has one circle (Personal) and no invited circles, flatten into a single list
+  const singleCircle = (workspaces ?? []).length <= 1;
 
   // Time-based emoji for a touch of warmth
   const getTimeEmoji = () => {
