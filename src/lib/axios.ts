@@ -111,8 +111,15 @@ async function redirectToSessionExpired(): Promise<void> {
     // Mark that we're redirecting
     isRedirectingToSessionExpired = true;
 
-    // Use a hard navigation to fully reset any client state.
-    window.location.href = '/?error=session_expired';
+    // Preserve current page as returnUrl so after login the user lands back here.
+    // Exclude the root page itself to avoid redirect loops.
+    const currentPath = window.location.pathname + window.location.search;
+    const isRootPage = window.location.pathname === '/';
+    if (!isRootPage) {
+      window.location.href = `/?returnUrl=${encodeURIComponent(currentPath)}`;
+    } else {
+      window.location.href = '/?error=session_expired';
+    }
   }
 }
 

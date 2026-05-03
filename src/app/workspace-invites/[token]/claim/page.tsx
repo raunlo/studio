@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useClaimWorkspaceInvite } from '@/api/workspace-invite/workspace-invite';
 import { Button } from '@/components/ui/button';
@@ -20,9 +20,11 @@ export default function ClaimWorkspaceInvitePage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { trigger: claimInvite } = useClaimWorkspaceInvite(token);
+  const hasClaimed = useRef(false);
 
   useEffect(() => {
-    if (token) {
+    if (token && !hasClaimed.current) {
+      hasClaimed.current = true;
       handleClaimInvite();
     }
   }, [token]);
@@ -40,15 +42,15 @@ export default function ClaimWorkspaceInvitePage() {
         }, 1500);
       }
     } catch (error: any) {
-      setStatus('error');
-
-      const message = error?.response?.data?.message || error?.message || t('workspaceInvite.failedToClaim');
-      setErrorMessage(message);
-
       if (error?.response?.status === 401) {
         const returnUrl = encodeURIComponent(`/workspace-invites/${token}/claim`);
-        router.push(`/?returnUrl=${returnUrl}`);
+        router.replace(`/?returnUrl=${returnUrl}`);
+        return;
       }
+
+      setStatus('error');
+      const message = error?.response?.data?.message || error?.message || t('workspaceInvite.failedToClaim');
+      setErrorMessage(message);
     }
   };
 

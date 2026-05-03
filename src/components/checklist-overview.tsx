@@ -3,7 +3,9 @@
 import { useTranslation } from 'react-i18next';
 import { ChecklistOverviewCard } from '@/components/checklist-overview-card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { leaveSharedChecklist } from '@/api/checklist/checklist';
+import { leaveSharedChecklist, updateChecklistById } from '@/api/checklist/checklist';
+import { mutate } from 'swr';
+import { getCircleColor } from '@/lib/circle-colors';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -19,6 +21,7 @@ import { toast } from '@/hooks/use-toast';
 import { useChecklists } from '@/hooks/use-checklists';
 import { useWorkspaces } from '@/hooks/use-workspaces';
 import { AxiosError } from 'axios';
+import { ProfileMenu } from '@/components/ui/ProfileMenu';
 
 export function ChecklistOverview() {
   const { t } = useTranslation();
@@ -28,30 +31,28 @@ export function ChecklistOverview() {
     error,
     createChecklist: createChecklistMutation,
     deleteChecklist: deleteChecklistMutation,
-    renameChecklist: renameChecklistMutation,
   } = useChecklists({
     refreshInterval: 10000,
   });
 
   const { workspaces } = useWorkspaces();
   const ownedWorkspaces = (workspaces ?? []).filter((w) => w.isOwner);
+  const allWorkspaces = workspaces ?? [];
 
   const [isCreating, setIsCreating] = useState(false);
   const [newChecklistName, setNewChecklistName] = useState('');
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Auto-select Personal (first owned) workspace when dialog opens
   const openCreateDialog = () => {
-    setSelectedWorkspaceId(ownedWorkspaces[0]?.id ?? null);
+    setSelectedWorkspaceId(null);
     setDialogOpen(true);
   };
-  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [renamingChecklist, setRenamingChecklist] = useState<{ id: number; name: string } | null>(
-    null,
-  );
-  const [newName, setNewName] = useState('');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingChecklist, setEditingChecklist] = useState<{ id: number; name: string; workspaceId?: number | null } | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editWorkspaceId, setEditWorkspaceId] = useState<number | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const checklists = data ?? [];
 
@@ -115,34 +116,33 @@ export function ChecklistOverview() {
     }
   };
 
-  const handleRename = async (id: number) => {
+  const handleOpenEdit = (id: number) => {
     const checklist = checklists.find((c) => c.id === id);
     if (!checklist) return;
-
-    setRenamingChecklist({ id: checklist.id, name: checklist.name });
-    setNewName(checklist.name);
-    setRenameDialogOpen(true);
+    setEditingChecklist({ id: checklist.id, name: checklist.name, workspaceId: checklist.workspaceId });
+    setEditName(checklist.name);
+    setEditWorkspaceId(checklist.workspaceId ?? null);
+    setEditDialogOpen(true);
   };
 
-  const handleRenameSubmit = async () => {
-    if (!renamingChecklist || !newName.trim() || newName.trim() === renamingChecklist.name) {
-      return;
-    }
-
-    setIsRenaming(true);
+  const handleSaveEdit = async () => {
+    if (!editingChecklist || !editName.trim()) return;
+    setIsSavingEdit(true);
     try {
-      await renameChecklistMutation(renamingChecklist.id, newName.trim());
-      setRenameDialogOpen(false);
-      setRenamingChecklist(null);
-      setNewName('');
-    } catch (error) {
-      console.error('Failed to rename checklist:', error);
+      await updateChecklistById(editingChecklist.id, { name: editName.trim(), workspaceId: editWorkspaceId });
+      await mutate(['checklists']);
+      setEditDialogOpen(false);
+      setEditingChecklist(null);
+    } catch (error: any) {
+      toast({
+        title: t('common.error', 'Error'),
+        description: error?.message || t('common.somethingWentWrong'),
+        variant: 'destructive',
+      });
     } finally {
-      setIsRenaming(false);
+      setIsSavingEdit(false);
     }
   };
-
-  const handleEdit = handleRename;
 
   const handleDelete = async (id: number) => {
     if (!confirm(t('confirm.deleteChecklist'))) {
@@ -242,16 +242,21 @@ export function ChecklistOverview() {
 
   return (
     <>
-      <div className={`space-y-6 ${checklists.length > 0 ? 'pb-20 sm:pb-4' : 'pb-4'}`}>
-        {/* Header Section - without button */}
-        <div>
-          <h1 className="font-headline text-2xl text-foreground sm:text-3xl">
-            {t('overview.title')} {getTimeEmoji()}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-            {t('overview.subtitle')}
-          </p>
+      {/* Sticky header */}
+      <div className="sticky top-0 z-10 bg-background px-0 pb-3 pt-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="font-headline text-2xl text-foreground sm:text-3xl">
+              {t('overview.title')} {getTimeEmoji()}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+              {t('overview.subtitle')}
+            </p>
+          </div>
+          <ProfileMenu />
         </div>
+      </div>
+      <div className={`space-y-6 ${checklists.length > 0 ? 'pb-20 sm:pb-4' : 'pb-4'}`}>
 
         {/* Checklists Grid */}
         {checklists.length === 0 ? (
@@ -291,7 +296,7 @@ export function ChecklistOverview() {
                     isShared={checklist.isShared}
                     numberOfSharedUsers={checklist.numberOfSharedUsers}
                     circleName={checklist.workspaceId ? workspaceMap.get(checklist.workspaceId) : undefined}
-                    onEdit={handleEdit}
+                    onEdit={handleOpenEdit}
                     onDelete={checklist.isOwner ? handleDelete : undefined}
                     onLeave={!checklist.isOwner ? handleLeave : undefined}
                   />
@@ -323,7 +328,7 @@ export function ChecklistOverview() {
                           isOwner={checklist.isOwner}
                           isShared={checklist.isShared}
                           numberOfSharedUsers={checklist.numberOfSharedUsers}
-                          onEdit={checklist.isOwner ? handleEdit : undefined}
+                          onEdit={checklist.isOwner ? handleOpenEdit : undefined}
                           onDelete={checklist.isOwner ? handleDelete : undefined}
                         />
                       ))}
@@ -353,7 +358,7 @@ export function ChecklistOverview() {
                           isOwner={checklist.isOwner}
                           isShared={checklist.isShared}
                           numberOfSharedUsers={checklist.numberOfSharedUsers}
-                          onEdit={handleEdit}
+                          onEdit={handleOpenEdit}
                           onDelete={handleDelete}
                         />
                       ))}
@@ -435,26 +440,32 @@ export function ChecklistOverview() {
                 className="h-11 text-base"
               />
             </div>
-            {ownedWorkspaces.length > 1 && (
+            {allWorkspaces.length > 1 && (
               <div className="space-y-3">
                 <label className="block text-sm font-medium text-foreground">
                   {t('workspace.title')}
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {ownedWorkspaces.map((w) => (
-                    <button
-                      key={w.id}
-                      type="button"
-                      onClick={() => setSelectedWorkspaceId(selectedWorkspaceId === w.id ? null : w.id)}
-                      className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                        selectedWorkspaceId === w.id
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground'
-                      }`}
-                    >
-                      {w.name}
-                    </button>
-                  ))}
+                  {allWorkspaces.map((w, i) => {
+                    const color = getCircleColor(i);
+                    const selected = selectedWorkspaceId === w.id;
+                    return (
+                      <button
+                        key={w.id}
+                        type="button"
+                        onClick={() => setSelectedWorkspaceId(selected ? null : w.id)}
+                        className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
+                          selected
+                            ? 'text-foreground'
+                            : 'border-border text-muted-foreground hover:text-foreground'
+                        }`}
+                        style={selected ? { backgroundColor: color + '22', borderColor: color + '88' } : {}}
+                      >
+                        <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                        {w.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -483,59 +494,80 @@ export function ChecklistOverview() {
         </DialogContent>
       </Dialog>
 
-      {/* Rename Checklist Modal */}
-      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+      {/* Edit Checklist Modal */}
+      <Dialog open={editDialogOpen} onOpenChange={(open) => {
+        setEditDialogOpen(open);
+        if (!open) setEditingChecklist(null);
+      }}>
         <DialogContent className="p-6 sm:max-w-[450px]">
           <DialogHeader className="space-y-3">
             <DialogTitle className="font-headline text-2xl">
-              {t('overview.renameTitle')}
+              {t('overview.editTitle', 'Edit checklist')}
             </DialogTitle>
             <DialogDescription className="text-base text-muted-foreground">
-              {t('overview.renameDescription')}
+              {t('overview.editDescription', 'Update the name and circle for this checklist.')}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-6 py-6">
+          <div className="space-y-6 py-4">
             <div className="space-y-3">
-              <label
-                htmlFor="rename-checklist-name"
-                className="block text-sm font-medium text-foreground"
-              >
+              <label htmlFor="edit-checklist-name" className="block text-sm font-medium text-foreground">
                 {t('overview.checklistNameLabel')}
               </label>
               <Input
-                id="rename-checklist-name"
+                id="edit-checklist-name"
                 placeholder={t('overview.checklistNamePlaceholder')}
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !isRenaming) {
-                    handleRenameSubmit();
-                  }
-                }}
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !isSavingEdit) handleSaveEdit(); }}
                 autoFocus
                 className="h-11 text-base"
               />
             </div>
+            {ownedWorkspaces.length > 0 && (
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-foreground">
+                  {t('workspace.title', 'Circle')}
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {ownedWorkspaces.map((w, i) => {
+                    const color = getCircleColor(i);
+                    const selected = editWorkspaceId === w.id;
+                    return (
+                      <button
+                        key={w.id}
+                        type="button"
+                        onClick={() => setEditWorkspaceId(selected ? null : w.id)}
+                        className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
+                          selected
+                            ? 'text-foreground'
+                            : 'border-border text-muted-foreground hover:text-foreground'
+                        }`}
+                        style={selected ? { backgroundColor: color + '22', borderColor: color + '88' } : {}}
+                      >
+                        <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                        {w.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button
               variant="outline"
-              onClick={() => {
-                setRenameDialogOpen(false);
-                setRenamingChecklist(null);
-                setNewName('');
-              }}
-              disabled={isRenaming}
+              onClick={() => setEditDialogOpen(false)}
+              disabled={isSavingEdit}
               className="h-10 px-6"
             >
               {t('overview.cancel')}
             </Button>
             <Button
-              onClick={handleRenameSubmit}
-              disabled={!newName.trim() || isRenaming || newName.trim() === renamingChecklist?.name}
+              onClick={handleSaveEdit}
+              disabled={!editName.trim() || isSavingEdit}
               className="h-10 min-w-[100px] bg-primary px-6 text-primary-foreground hover:bg-primary/90"
             >
-              {isRenaming ? t('overview.saving') : t('overview.save')}
+              {isSavingEdit ? t('overview.saving', 'Saving…') : t('overview.save', 'Save')}
             </Button>
           </div>
         </DialogContent>

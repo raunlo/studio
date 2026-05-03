@@ -76,14 +76,12 @@ export function ChecklistOverviewCard({
     }
   };
 
+
   return (
     <Card
       onClick={handleClick}
       className="group relative cursor-pointer overflow-hidden border border-border/60 bg-card transition-all duration-300 hover:border-primary/40 hover:shadow-[var(--shadow-card)] active:scale-[0.98]"
     >
-      {/* Left accent stripe */}
-      <div className="absolute inset-y-0 left-0 w-[3px] bg-primary/20 transition-colors duration-300 group-hover:bg-primary/50" />
-
       {/* Progress bar at top */}
       <div className="h-1.5 bg-border/50">
         <div
@@ -127,10 +125,10 @@ export function ChecklistOverviewCard({
               <MoreVertical className="h-5 w-5 text-muted-foreground" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              {isOwner && (
+              {isOwner && onEdit && (
                 <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
                   <Edit className="mr-2 h-4 w-4" />
-                  {t('overview.rename')}
+                  {t('overview.edit', 'Edit')}
                 </DropdownMenuItem>
               )}
               {isOwner ? (

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ShareWorkspaceModal } from '@/components/share-workspace-modal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Plus, Settings, ExternalLink, Users, UserPlus } from 'lucide-react';
+import { Plus, Settings, LogOut, Users, UserPlus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -14,26 +14,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { useWorkspaces } from '@/hooks/use-workspaces';
 import { leaveWorkspace } from '@/api/workspace/workspace';
 import { useRouter } from 'next/navigation';
 import { AxiosError } from 'axios';
 import type { WorkspaceResponse } from '@/api/checklistServiceV1.schemas';
-
-const CIRCLE_COLORS = [
-  '#E07060', // coral
-  '#6B9B7A', // sage
-  '#5B9EC9', // sky
-  '#C4883A', // amber
-  '#8B7BB5', // lavender
-  '#C4607E', // rose
-] as const;
-
-function getCircleColor(index: number): string {
-  return CIRCLE_COLORS[index % CIRCLE_COLORS.length];
-}
+import { getCircleColor } from '@/lib/circle-colors';
+import { ProfileMenu } from '@/components/ui/ProfileMenu';
 
 function StackedAvatars({ count, color }: { count: number; color: string }) {
   const slots = Math.min(count, 3);
@@ -172,13 +160,16 @@ export function WorkspaceOverview() {
 
   return (
     <div className="flex h-[calc(100dvh-4rem)] flex-col">
-      <div className="flex-shrink-0 px-4 pb-3 pt-4 sm:px-6">
+      <div className="sticky top-0 z-10 bg-background px-4 pb-3 pt-4 sm:px-6">
         <div className="mb-1 flex items-center justify-between">
           <h1 className="font-headline text-2xl text-foreground">{t('workspace.title')}</h1>
-          <Button onClick={() => setDialogOpen(true)} size="sm">
-            <Plus className="mr-1.5 h-4 w-4" />
-            {t('workspace.newWorkspace')}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setDialogOpen(true)} size="sm">
+              <Plus className="mr-1.5 h-4 w-4" />
+              {t('workspace.newWorkspace')}
+            </Button>
+            <ProfileMenu />
+          </div>
         </div>
         <p className="text-sm text-muted-foreground">{t('workspace.subtitle')}</p>
       </div>
@@ -244,14 +235,20 @@ export function WorkspaceOverview() {
 
       {/* Create Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('workspace.createTitle')}</DialogTitle>
-            <DialogDescription>{t('workspace.createDescription')}</DialogDescription>
+        <DialogContent className="p-6 sm:max-w-[450px]">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="font-headline text-2xl">
+              {t('workspace.createTitle')}
+            </DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground">
+              {t('workspace.createDescription')}
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <Label htmlFor="workspace-name">{t('workspace.workspaceNameLabel')}</Label>
+          <div className="space-y-6 py-6">
+            <div className="space-y-3">
+              <label htmlFor="workspace-name" className="block text-sm font-medium text-foreground">
+                {t('workspace.workspaceNameLabel')}
+              </label>
               <Input
                 id="workspace-name"
                 placeholder={t('workspace.workspaceNamePlaceholder')}
@@ -260,39 +257,56 @@ export function WorkspaceOverview() {
                 onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
                 maxLength={255}
                 autoFocus
+                className="h-11 text-base"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="workspace-desc">{t('workspace.descriptionLabel')}</Label>
+            <div className="space-y-3">
+              <label htmlFor="workspace-desc" className="block text-sm font-medium text-foreground">
+                {t('workspace.descriptionLabel')}
+              </label>
               <Input
                 id="workspace-desc"
                 placeholder={t('workspace.descriptionPlaceholder')}
                 value={newWorkspaceDescription}
                 onChange={(e) => setNewWorkspaceDescription(e.target.value)}
                 maxLength={500}
+                className="h-11 text-base"
               />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                {t('workspace.cancel')}
-              </Button>
-              <Button onClick={handleCreate} disabled={isCreating || !newWorkspaceName.trim()}>
-                {isCreating ? t('workspace.creating') : t('workspace.create')}
-              </Button>
-            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setDialogOpen(false)}
+              disabled={isCreating}
+              className="h-10 px-6"
+            >
+              {t('workspace.cancel')}
+            </Button>
+            <Button
+              onClick={handleCreate}
+              disabled={isCreating || !newWorkspaceName.trim()}
+              className="h-10 min-w-[100px] bg-primary px-6 text-primary-foreground hover:bg-primary/90"
+            >
+              {isCreating ? t('workspace.creating') : t('workspace.create')}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Rename Dialog */}
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('workspace.renameTitle')}</DialogTitle>
+        <DialogContent className="p-6 sm:max-w-[450px]">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="font-headline text-2xl">
+              {t('workspace.renameTitle')}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <Label htmlFor="rename-workspace">{t('workspace.workspaceNameLabel')}</Label>
+          <div className="space-y-6 py-6">
+            <div className="space-y-3">
+              <label htmlFor="rename-workspace" className="block text-sm font-medium text-foreground">
+                {t('workspace.workspaceNameLabel')}
+              </label>
               <Input
                 id="rename-workspace"
                 value={newName}
@@ -300,16 +314,26 @@ export function WorkspaceOverview() {
                 onKeyDown={(e) => e.key === 'Enter' && handleRename()}
                 maxLength={255}
                 autoFocus
+                className="h-11 text-base"
               />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
-                {t('workspace.cancel')}
-              </Button>
-              <Button onClick={handleRename} disabled={isRenaming || !newName.trim()}>
-                {isRenaming ? t('workspace.saving') : t('workspace.save')}
-              </Button>
-            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setRenameDialogOpen(false)}
+              disabled={isRenaming}
+              className="h-10 px-6"
+            >
+              {t('workspace.cancel')}
+            </Button>
+            <Button
+              onClick={handleRename}
+              disabled={isRenaming || !newName.trim()}
+              className="h-10 min-w-[100px] bg-primary px-6 text-primary-foreground hover:bg-primary/90"
+            >
+              {isRenaming ? t('workspace.saving') : t('workspace.save')}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -365,11 +389,11 @@ function CircleList({ workspaces, onOpen, onSettings, onShare, onLeave }: Worksp
                     {workspace.memberCount} {t('workspace.members')}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="flex items-center gap-1">
                   {workspace.isOwner && !workspace.isDefault && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onShare(workspace); }}
-                      className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      className="rounded-md p-1.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted hover:text-foreground"
                     >
                       <UserPlus className="h-3.5 w-3.5" />
                     </button>
@@ -377,16 +401,17 @@ function CircleList({ workspaces, onOpen, onSettings, onShare, onLeave }: Worksp
                   {workspace.isOwner ? (
                     <button
                       onClick={(e) => { e.stopPropagation(); onSettings(workspace); }}
-                      className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      className="rounded-md p-1.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted hover:text-foreground"
                     >
                       <Settings className="h-3.5 w-3.5" />
                     </button>
-                  ) : (
+                  ) : !workspace.isDefault && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onLeave(workspace); }}
                       className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      title="Leave circle"
                     >
-                      <ExternalLink className="h-3.5 w-3.5" />
+                      <LogOut className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
