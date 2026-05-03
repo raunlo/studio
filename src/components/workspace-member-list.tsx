@@ -24,11 +24,11 @@ interface WorkspaceMemberListProps {
 
 export function WorkspaceMemberList({ workspaceId, isOwner }: WorkspaceMemberListProps) {
   const { t } = useTranslation();
-  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<number | null>(null);
 
   const { data: members = [], isLoading, mutate } = useGetWorkspaceMembers(workspaceId);
 
-  const handleRemove = async (memberId: string) => {
+  const handleRemove = async (memberId: number) => {
     if (!confirm(t('workspace.removeMember') + '?')) return;
 
     setRemovingId(memberId);
@@ -81,7 +81,7 @@ export function WorkspaceMemberList({ workspaceId, isOwner }: WorkspaceMemberLis
 
         return (
           <div
-            key={member.userId}
+            key={member.memberId}
             className="flex items-center gap-3 rounded-lg border p-3"
           >
             <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${MEMBER_GRADIENTS[memberIndex % MEMBER_GRADIENTS.length]} text-sm font-semibold text-white shadow-sm`}>
@@ -99,8 +99,8 @@ export function WorkspaceMemberList({ workspaceId, isOwner }: WorkspaceMemberLis
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => handleRemove(member.userId)}
-                disabled={removingId === member.userId}
+                onClick={() => handleRemove(member.memberId)}
+                disabled={removingId === member.memberId}
                 className="shrink-0 text-xs text-destructive hover:bg-destructive hover:text-destructive-foreground"
               >
                 {t('workspace.removeMember')}

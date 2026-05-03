@@ -253,7 +253,7 @@ export function ChecklistOverview() {
               {t('overview.subtitle')}
             </p>
           </div>
-          <ProfileMenu />
+          <div className="md:hidden"><ProfileMenu /></div>
         </div>
       </div>
       <div className={`space-y-6 ${checklists.length > 0 ? 'pb-20 sm:pb-4' : 'pb-4'}`}>
