@@ -306,7 +306,7 @@ export function ChecklistItemComponent({
   return (
     <div
       className={cn(
-        'flex min-h-[52px] w-full items-start gap-4 rounded-lg px-1 py-3 transition-all duration-300',
+        'group flex min-h-[52px] w-full items-start gap-4 rounded-lg px-1 py-3 transition-all duration-300',
         item.completed && 'opacity-60',
         item._sseHighlight && 'animate-sse-highlight',
       )}
@@ -352,7 +352,7 @@ export function ChecklistItemComponent({
         {/* Title Row - clickable to expand/collapse */}
         <div className="flex items-start justify-between gap-3">
           <div
-            className="group flex flex-grow cursor-pointer flex-col items-start gap-2 text-left"
+            className="flex flex-grow cursor-pointer flex-col items-start gap-2 text-left"
             onClick={() => setExpanded(!expanded)}
           >
             {/* Title with expand indicator */}

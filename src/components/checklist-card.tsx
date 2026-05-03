@@ -270,22 +270,15 @@ export const ChecklistCard = forwardRef<ChecklistCardHandle, ChecklistCardProps>
                                 snapshot.isDragging && 'scale-105 opacity-90 shadow-lg',
                               )}
                             >
-                              <div className="flex w-full items-start gap-3">
-                                <div
-                                  className="flex w-full items-center"
-                                  {...provided.dragHandleProps}
-                                >
-                                  <ChecklistItemComponent
-                                    item={item}
-                                    checklistId={checklist.id}
-                                    deleteRow={deleteRowFn}
-                                    updateItem={updateItemFn}
-                                    addRow={addRowFn}
-                                    deleteItem={handleDeleteItem}
-                                    toggleCompletion={toggleCompletion}
-                                  />
-                                </div>
-                              </div>
+                              <ChecklistItemComponent
+                                item={item}
+                                checklistId={checklist.id}
+                                deleteRow={deleteRowFn}
+                                updateItem={updateItemFn}
+                                addRow={addRowFn}
+                                deleteItem={handleDeleteItem}
+                                toggleCompletion={toggleCompletion}
+                              />
                             </div>
                           )}
                         </Draggable>
