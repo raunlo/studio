@@ -88,12 +88,14 @@ export function TemplateOverview() {
     async (e: React.MouseEvent, templateId: number) => {
       e.stopPropagation();
       if (!window.confirm(t('template.confirmDelete', 'Are you sure?'))) return;
+      mutate((current) => current?.filter((tmpl) => tmpl.id !== templateId), false);
       try {
         await deleteTemplate(templateId);
         mutate();
         toast({ title: t('template.deleted', 'Template deleted') });
       } catch (error) {
         console.error('Failed to delete template:', error);
+        mutate();
         toast({
           title: t('common.error', 'Error'),
           description: t('template.deleteFailed', 'Failed to delete template'),
@@ -124,10 +126,12 @@ export function TemplateOverview() {
             {t('template.title', 'Templates')}
           </h1>
           <div className="flex items-center gap-2">
-            <Button size="sm" onClick={openCreateDialog} disabled={isCreating}>
-              <Plus className="mr-1.5 h-4 w-4" />
-              {isCreating ? t('common.creating', 'Creating...') : t('template.new', 'New')}
-            </Button>
+            {templates.length > 0 && (
+              <Button size="sm" onClick={openCreateDialog} disabled={isCreating}>
+                <Plus className="mr-1.5 h-4 w-4" />
+                {isCreating ? t('common.creating', 'Creating...') : t('template.new', 'New')}
+              </Button>
+            )}
             <ProfileMenu />
           </div>
         </div>
@@ -149,9 +153,13 @@ export function TemplateOverview() {
       {/* Empty state */}
       {templates.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-          <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+          <button
+            onClick={openCreateDialog}
+            disabled={isCreating}
+            className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 transition-colors hover:bg-primary/20 active:bg-primary/25"
+          >
             <Plus className="h-8 w-8 text-primary" />
-          </div>
+          </button>
           <h2 className="font-headline text-lg text-foreground">
             {t('template.emptyTitle', 'No templates yet')}
           </h2>
