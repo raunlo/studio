@@ -75,7 +75,7 @@
     "next": "^16.1.6",
     "next-auth": "^4.24.11",
     "next-i18next": "^15.4.3",
-    "react": "^19.2.4",
+    "react": "^19.2.6",
     "react-day-picker": "^8.10.1",
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.71.2",
