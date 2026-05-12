@@ -393,7 +393,7 @@ function CircleList({ workspaces, onOpen, onSettings, onShare, onLeave }: Worksp
                   {workspace.isOwner && !workspace.isDefault && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onShare(workspace); }}
-                      className="rounded-md p-1.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted hover:text-foreground"
+                      className="rounded-md p-1.5 text-muted-foreground transition-opacity hover:bg-muted hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
                     >
                       <UserPlus className="h-3.5 w-3.5" />
                     </button>
@@ -401,7 +401,7 @@ function CircleList({ workspaces, onOpen, onSettings, onShare, onLeave }: Worksp
                   {workspace.isOwner ? (
                     <button
                       onClick={(e) => { e.stopPropagation(); onSettings(workspace); }}
-                      className="rounded-md p-1.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted hover:text-foreground"
+                      className="rounded-md p-1.5 text-muted-foreground transition-opacity hover:bg-muted hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100"
                     >
                       <Settings className="h-3.5 w-3.5" />
                     </button>

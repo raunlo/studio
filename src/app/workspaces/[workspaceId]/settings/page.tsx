@@ -131,36 +131,37 @@ function WorkspaceSettings({ workspaceId }: { workspaceId: number }) {
         <WorkspaceMemberList workspaceId={workspaceId} isOwner={workspace?.isOwner ?? false} />
       </section>
 
-      {/* Danger zone or Leave */}
+      {/* Leave or Delete */}
       {workspace && (
-        <section className="space-y-4 rounded-lg border border-destructive/30 p-4">
-          <h2 className="text-base font-semibold text-destructive">{t('workspace.dangerZone')}</h2>
+        <section className="space-y-3 rounded-lg border border-border p-4">
           {workspace.isOwner ? (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium">{t('workspace.deleteWorkspace')}</p>
                 <p className="text-xs text-muted-foreground">{t('confirm.deleteWorkspace')}</p>
               </div>
               <Button
-                variant="destructive"
+                variant="outline"
                 size="sm"
                 onClick={handleDelete}
                 disabled={isDeleting}
+                className="shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
                 {isDeleting ? 'Deleting...' : t('workspace.deleteWorkspace')}
               </Button>
             </div>
           ) : (
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium">{t('workspace.leaveWorkspace')}</p>
                 <p className="text-xs text-muted-foreground">{t('confirm.leaveWorkspace')}</p>
               </div>
               <Button
-                variant="destructive"
+                variant="outline"
                 size="sm"
                 onClick={handleLeave}
                 disabled={isLeaving}
+                className="shrink-0"
               >
                 {isLeaving ? 'Leaving...' : t('workspace.leaveWorkspace')}
               </Button>
