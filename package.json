@@ -67,7 +67,7 @@
     "eventsource": "^4.1.0",
     "firebase": "^11.9.1",
     "genkit": "^1.29.0",
-    "google-auth-library": "^9.15.1",
+    "google-auth-library": "^10.6.2",
     "i18next": "^25.8.13",
     "i18next-browser-languagedetector": "^8.2.1",
     "jsonwebtoken": "^9.0.3",
