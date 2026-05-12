@@ -64,7 +64,7 @@
     "date-fns": "^3.6.0",
     "dotenv": "^16.5.0",
     "embla-carousel-react": "^8.6.0",
-    "eventsource": "^3.0.7",
+    "eventsource": "^4.1.0",
     "firebase": "^11.9.1",
     "genkit": "^1.29.0",
     "google-auth-library": "^9.15.1",
