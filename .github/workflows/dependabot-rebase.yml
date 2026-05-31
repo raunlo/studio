@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+      - fix/genkit-security-updates
+  workflow_dispatch:
 
 jobs:
   rebase:
