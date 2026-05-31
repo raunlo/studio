@@ -164,7 +164,7 @@ export function WorkspaceOverview() {
         <div className="mb-1 flex items-center justify-between">
           <h1 className="font-headline text-2xl text-foreground">{t('workspace.title')}</h1>
           <div className="flex items-center gap-2">
-            <Button onClick={() => setDialogOpen(true)} size="sm">
+            <Button onClick={() => setDialogOpen(true)} size="sm" className="hidden md:inline-flex">
               <Plus className="mr-1.5 h-4 w-4" />
               {t('workspace.newWorkspace')}
             </Button>
@@ -347,6 +347,15 @@ export function WorkspaceOverview() {
           onClose={() => { setShareModalOpen(false); setSelectedWorkspace(null); }}
         />
       )}
+
+      {/* Mobile FAB */}
+      <button
+        onClick={() => setDialogOpen(true)}
+        className="fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom))] right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg transition-transform active:scale-95 md:hidden"
+        aria-label={t('workspace.newWorkspace')}
+      >
+        <Plus className="h-6 w-6 text-primary-foreground" />
+      </button>
     </div>
   );
 }

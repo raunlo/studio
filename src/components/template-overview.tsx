@@ -127,7 +127,7 @@ export function TemplateOverview() {
           </h1>
           <div className="flex items-center gap-2">
             {templates.length > 0 && (
-              <Button size="sm" onClick={openCreateDialog} disabled={isCreating}>
+              <Button size="sm" onClick={openCreateDialog} disabled={isCreating} className="hidden md:inline-flex">
                 <Plus className="mr-1.5 h-4 w-4" />
                 {isCreating ? t('common.creating', 'Creating...') : t('template.new', 'New')}
               </Button>
@@ -246,6 +246,18 @@ export function TemplateOverview() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Mobile FAB */}
+      {templates.length > 0 && (
+        <button
+          onClick={openCreateDialog}
+          disabled={isCreating}
+          className="fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom))] right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg transition-transform active:scale-95 disabled:opacity-60 md:hidden"
+          aria-label={t('template.new', 'New template')}
+        >
+          <Plus className="h-6 w-6 text-primary-foreground" />
+        </button>
       )}
 
       <Dialog open={createDialogOpen} onOpenChange={(open) => {
