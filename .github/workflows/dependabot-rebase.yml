@@ -2,9 +2,6 @@ name: Rebase dependabot PRs
 
 on:
   push:
-    branches:
-      - master
-      - fix/genkit-security-updates
   workflow_dispatch:
 
 jobs:
